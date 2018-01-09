@@ -53,6 +53,7 @@ ServletBuilder.new(uvm_lib, "com.untangle.uvm.installer.servlet", ["uvm/servlets
 deps=[]
 
 ServletBuilder.new(uvm_lib, "com.untangle.uvm.admin.servlet", ["./uvm/servlets/admin"], deps)
+ServletBuilder.new(uvm_lib, "com.untangle.uvm.modern.servlet", ["./uvm/servlets/modern"], deps)
 
 ServletBuilder.new(uvm_lib, "com.untangle.uvm.setup.servlet", ["./uvm/servlets/setup"], deps)
 
@@ -115,8 +116,8 @@ end
 end
 
 # jslinting
-JsLintTarget.new(uvm_lib, './uvm/servlets/admin', 'jslint-adminui')
-JsLintTarget.new(uvm_lib, './uvm/js/common', 'jslint-common')
+# JsLintTarget.new(uvm_lib, './uvm/servlets/admin', 'jslint-adminui')
+# JsLintTarget.new(uvm_lib, './uvm/js/common', 'jslint-common')
 
 ## SCSS
 ScssBuilder.new(uvm_lib, "ung-all", "./uvm/servlets/admin/sass", "admin/styles")
