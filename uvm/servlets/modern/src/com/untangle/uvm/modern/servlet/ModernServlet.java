@@ -16,8 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 import com.untangle.uvm.UvmContextFactory;
 
 /**
- * A servlet which will display the admin page
- *
+ * A servlet which will display the modern page test
  */
 @SuppressWarnings("serial")
 public class ModernServlet extends HttpServlet
@@ -25,12 +24,9 @@ public class ModernServlet extends HttpServlet
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
         throws ServletException, IOException
     {
-        String url="/WEB-INF/jsp/index.jsp";
+        String url = "/WEB-INF/jsp/index.jsp";
         ServletContext sc = getServletContext();
         RequestDispatcher rd = sc.getRequestDispatcher(url);
-        req.setAttribute( "companyName", UvmContextFactory.context().brandingManager().getCompanyName() );
-        req.setAttribute( "extjsTheme", UvmContextFactory.context().skinManager().getSkinInfo().getExtjsTheme() );
-        req.setAttribute( "buildStamp", getServletConfig().getInitParameter("buildStamp") );
         rd.forward(req, resp);
     }
 }
