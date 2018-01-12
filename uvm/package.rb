@@ -104,6 +104,11 @@ ungAllDirs = [ 'overrides', 'model', 'store', 'controller',
 ungAllDirs.map! { |e| "uvm/servlets/admin/app/#{e}" }
 JsBuilder.new(uvm_lib, "ung-all", ungAllDirs, "admin/script")
 
+# ung-modern-all
+ungModernAllDirs = [ 'model', 'store', 'controller', 'view', 'util', 'Application.js' ]
+ungModernAllDirs.map! { |e| "uvm/servlets/modern/app/#{e}" }
+JsBuilder.new(uvm_lib, "ung-modern-all", ungModernAllDirs, "modern/script")
+
 # sections
 ['about', 'administration', 'events', 'email', 'local-directory', 'network',
  'system', 'upgrade'].each do |n|

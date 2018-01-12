@@ -53,7 +53,7 @@ import org.apache.log4j.Logger;
 
 import org.apache.tomcat.JarScanner;
 import org.apache.tomcat.JarScannerCallback;
-import org.apache.tomcat.util.scan.StandardJarScanner; 
+import org.apache.tomcat.util.scan.StandardJarScanner;
 
 import com.untangle.uvm.UvmContextFactory;
 import com.untangle.uvm.TomcatManager;
@@ -66,8 +66,8 @@ import com.untangle.uvm.app.IPMatcher;
 public class TomcatManagerImpl implements TomcatManager
 {
     private static final int     TOMCAT_MAX_POST_SIZE = 16777216; // 16MB
-    private static final String  TOMCAT_AJP_MIN_THREADS = "2"; 
-    private static final String  TOMCAT_AJP_MAX_THREADS = "10"; 
+    private static final String  TOMCAT_AJP_MIN_THREADS = "2";
+    private static final String  TOMCAT_AJP_MAX_THREADS = "10";
 
     private static final String WELCOME_URI = "/setup/welcome.do";
     private static final String WELCOME_FILE = System.getProperty("uvm.conf.dir") + "/apache2/conf.d/homepage.conf";
@@ -77,7 +77,7 @@ public class TomcatManagerImpl implements TomcatManager
     private final Tomcat tomcat;
     private final StandardHost baseHost;
     private final String webAppRoot;
-    
+
     private static final String[] tldScanTargets = {"untangle-libuvm-taglib.jar","standard.jar","smtp-servlet-quarantine.jar"};
 
     protected TomcatManagerImpl(UvmContextImpl uvmContext, InheritableThreadLocal<HttpServletRequest> threadRequest, String catalinaHome, String webAppRoot, String logDir)
@@ -115,7 +115,7 @@ public class TomcatManagerImpl implements TomcatManager
         baseHost.setStartStopThreads(Runtime.getRuntime().availableProcessors());
 
         ServletContext ctx;
-        
+
         ctx = loadServlet("/admin", "admin", true );
         ctx.setAttribute("threadRequest", threadRequest);
 
@@ -123,6 +123,10 @@ public class TomcatManagerImpl implements TomcatManager
         ctx.setAttribute("threadRequest", threadRequest);
 
         ctx = loadServlet("/blockpage", "blockpage");
+
+        ctx = loadServlet("/modern", "modern", true );
+        ctx.setAttribute("threadRequest", threadRequest);
+
     }
 
     public ServletContext loadServlet(String urlBase, String rootDir)
@@ -215,7 +219,7 @@ public class TomcatManagerImpl implements TomcatManager
 
         UvmContextFactory.context().execManager().exec("/usr/sbin/service apache2 reload");
     }
-    
+
     protected void startTomcat()
     {
         logger.info("Tomcat starting...");
@@ -230,7 +234,7 @@ public class TomcatManagerImpl implements TomcatManager
         jkConnector.setProperty("minSpareThreads", TOMCAT_AJP_MIN_THREADS);
         jkConnector.setProperty("maxThreads", TOMCAT_AJP_MAX_THREADS);
         jkConnector.setMaxPostSize(TOMCAT_MAX_POST_SIZE);
-        jkConnector.setMaxSavePostSize(TOMCAT_MAX_POST_SIZE); 
+        jkConnector.setMaxSavePostSize(TOMCAT_MAX_POST_SIZE);
 
         String secret = getSecret();
         if (null != secret) {
@@ -299,7 +303,7 @@ public class TomcatManagerImpl implements TomcatManager
                 auth.setDisableProxyCaching(false);
                 pipe.addValve(auth);
             }
-            return ctx.getServletContext(); 
+            return ctx.getServletContext();
         } catch(Exception ex) {
             logger.error("Unable to deploy webapp \"" + urlBase + "\" from directory \"" + fqRoot + "\"", ex);
             return null;
@@ -459,7 +463,7 @@ public class TomcatManagerImpl implements TomcatManager
                     return true;
                 }
 
-                logger.debug("isAccessAllowed( " + request + " ) [scheme: " + request.getScheme() + " HTTP allowed: " + isHttpAllowed + "]"); 
+                logger.debug("isAccessAllowed( " + request + " ) [scheme: " + request.getScheme() + " HTTP allowed: " + isHttpAllowed + "]");
 
                 /**
                  * Always allow from 127.0.0.1
@@ -471,7 +475,7 @@ public class TomcatManagerImpl implements TomcatManager
                  * Otherwise only allow HTTP if enabled
                  */
                 if (request.getScheme().equals("http") && !isHttpAllowed) {
-                    logger.warn("isAccessAllowed( " + request + " ) denied. [scheme: " + request.getScheme() + " HTTP allowed: " + isHttpAllowed + "]"); 
+                    logger.warn("isAccessAllowed( " + request + " ) denied. [scheme: " + request.getScheme() + " HTTP allowed: " + isHttpAllowed + "]");
                     return false;
                 }
 
