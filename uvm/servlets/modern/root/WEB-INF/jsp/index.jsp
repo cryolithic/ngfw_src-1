@@ -36,8 +36,12 @@
         <link href="/ext6.2/fonts/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
 
         <%-- Import custom fonts (see sass/_vars.scss)--%>
+
         <link href="/ext6.2/fonts/source-sans-pro/css/fonts.css" rel="stylesheet" />
         <link href="/ext6.2/fonts/roboto-condensed/css/fonts.css" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" />
+
+        <link href="styles/ung-modern-all.css" rel="stylesheet" />
 
         <%-- app loader style --%>
         <style type="text/css">
@@ -66,7 +70,7 @@
             Ext.onReady(function () {
                 // setups all initializations and load required scrips
                 Bootstrap.load([
-                    // '/script/common/util-all.js', // include custom grid module
+                    '/script/common/util-all.js', // include custom grid module
                     // '/script/common/reports-all.js', // include reports module
                     // '/script/common/ungrid-all.js', // include custom grid module
                     'script/ung-modern-all.js'

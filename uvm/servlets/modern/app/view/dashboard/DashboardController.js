@@ -32,16 +32,28 @@ Ext.define('Ung.view.dashboard.DashboardController', {
         }
     },
 
-    // not used
-    // onAfterRender: function (view) {
-    //     // var me = this;
-    //     // me.getViewModel().bind('{theme}', function (theme) {
-    //     //     Ung.dashboardSettings.theme = theme;
-    //     //     Ext.Array.each(me.lookup('dashboard').query('graphreport'), function (graph) {
-    //     //         graph.getController().setStyles();
-    //     //     });
-    //     // });
+    /**
+     * renders the title of the widget in the dashboard manager grid, based on various conditions
+     */
+    widgetTitleRenderer: function (value, record) {
+        var vm = this.getViewModel(), entry, title, unavailApp, enabled;
+        enabled = record.get('enabled');
 
-    // },
+        if (!value) {
+            return '<span style="font-weight: 400; ' + (!enabled ? 'color: #777;' : 'color: #000;') + '">' + record.get('type') + '</span>'; // <br/><span style="font-size: 10px; color: #777;">Common</span>';
+        }
+        if (vm.get('reportsInstalled')) {
+            entry = Ext.getStore('reports').findRecord('uniqueId', value);
+            if (entry) {
+                unavailApp = Ext.getStore('unavailableApps').first().get(entry.get('category'));
+                title = '<span style="font-weight: 400; ' + ((unavailApp || !enabled) ? 'color: #777;' : 'color: #000;') + '">' + (entry.get('readOnly') ? entry.get('title').t() : entry.get('title')) + '</span>';
+                return title;
+            } else {
+                return 'Unknown Widget'.t();
+            }
+        } else {
+            return '<span style="color: #999;">' + 'App Widget'.t() + '</span>';
+        }
+    }
 
 });

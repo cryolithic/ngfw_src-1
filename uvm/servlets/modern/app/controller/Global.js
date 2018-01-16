@@ -14,7 +14,9 @@ Ext.define('Ung.controller.Global', {
         'Countries',
         'UnavailableApps',
         'Rule',
-
+        'Reports',
+        'ReportsTree',
+        'Categories',
         'PoliciesTree'
     ],
 
@@ -85,39 +87,40 @@ Ext.define('Ung.controller.Global', {
 
     detectChanges: function () {
         var action = arguments[arguments.length - 1]; // arguments length vary, action being the last one
-        var cmp = Ung.app.getMainView().down('#appCard') || Ung.app.getMainView().down('#configCard');
-        if (!cmp) {
-            action.resume(); // resume if there is no app or config view
-            return;
-        }
+        action.resume();
+        // var cmp = Ung.app.getMainView().down('#appCard') || Ung.app.getMainView().down('#configCard');
+        // if (!cmp) {
+        //     action.resume(); // resume if there is no app or config view
+        //     return;
+        // }
 
-        var dirtyFields = false, dirtyGrids = false;
-        Ext.Array.each(cmp.query('field'), function (field) {
-            if (field._isChanged && !dirtyFields) {
-                dirtyFields = true;
-            }
-        });
-        // check for grids changes
-        Ext.Array.each(cmp.query('ungrid'), function (grid) {
-            var store = grid.getStore();
-            if (store.type === 'chained') { return; }
-            if (store.getModifiedRecords().length > 0 || store.getRemovedRecords().length > 0 || store.getNewRecords().length > 0 && !dirtyGrids) {
-                dirtyGrids = true;
-            }
-        });
+        // var dirtyFields = false, dirtyGrids = false;
+        // Ext.Array.each(cmp.query('field'), function (field) {
+        //     if (field._isChanged && !dirtyFields) {
+        //         dirtyFields = true;
+        //     }
+        // });
+        // // check for grids changes
+        // Ext.Array.each(cmp.query('ungrid'), function (grid) {
+        //     var store = grid.getStore();
+        //     if (store.type === 'chained') { return; }
+        //     if (store.getModifiedRecords().length > 0 || store.getRemovedRecords().length > 0 || store.getNewRecords().length > 0 && !dirtyGrids) {
+        //         dirtyGrids = true;
+        //     }
+        // });
 
-        if (dirtyFields || dirtyGrids) {
-            Ext.MessageBox.confirm('Warning'.t(), 'There are unsaved settings which will be lost. Do you want to continue?'.t(),
-            function(btn) {
-                if (btn === 'yes') {
-                    action.resume(); // if user wants to loose changes move on
-                } else {
-                    Ung.app.redirectTo(Ung.app.hashBackup); // otherwise keep it in same view and reset the hash to reflect the same view
-                }
-            });
-        } else {
-            action.resume();
-        }
+        // if (dirtyFields || dirtyGrids) {
+        //     Ext.MessageBox.confirm('Warning'.t(), 'There are unsaved settings which will be lost. Do you want to continue?'.t(),
+        //     function(btn) {
+        //         if (btn === 'yes') {
+        //             action.resume(); // if user wants to loose changes move on
+        //         } else {
+        //             Ung.app.redirectTo(Ung.app.hashBackup); // otherwise keep it in same view and reset the hash to reflect the same view
+        //         }
+        //     });
+        // } else {
+        //     action.resume();
+        // }
     },
 
     onResetFields: function (view) {
@@ -158,18 +161,18 @@ Ext.define('Ung.controller.Global', {
 
 
     onDashboard: function () {
-        this.getMainView().getViewModel().set('activeItem', 'dashboard');
+        this.getMainView().getViewModel().set('activeItem', 'ung-dashboard');
     },
 
     onApps: function (policyId, app, view, subView) {
         var me = this;
-
+        console.log('here');
         policyId = policyId || 1;
         if (!app) {
             Ung.app.redirectTo('#apps/' + policyId);
         }
 
-        this.getMainView().getViewModel().set('activeItem', 'apps');
+        this.getMainView().getViewModel().set('activeItem', 'ung-apps');
         this.getMainView().getViewModel().set('policyId', policyId);
 
         this.getAppsView().setActiveItem('installedApps');
@@ -352,8 +355,9 @@ Ext.define('Ung.controller.Global', {
 
     },
 
-    onSessions: function (params) {
-        this.onMonitor( 'sessions', 'ung.sessions', params);
+    onSessions: function () {
+        this.getMainView().getViewModel().set('activeItem', 'ung-sessions');
+        // this.onMonitor( 'sessions', 'ung.sessions', params);
     },
 
     onHosts: function ( params ) {

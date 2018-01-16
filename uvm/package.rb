@@ -126,6 +126,7 @@ end
 
 ## SCSS
 ScssBuilder.new(uvm_lib, "ung-all", "./uvm/servlets/admin/sass", "admin/styles")
+ScssBuilder.new(uvm_lib, "ung-modern-all", "./uvm/servlets/modern/sass", "modern/styles")
 ScssBuilder.new(uvm, "reports-all", "./uvm/js/common/reports/sass", "script/common")
 
 ## i18n

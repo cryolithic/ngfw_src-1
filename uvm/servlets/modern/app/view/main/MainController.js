@@ -5,7 +5,7 @@ Ext.define('Ung.view.main.MainController', {
 
     control: {
         '#': {
-            beforerender: 'onBeforeRender'
+            painted: 'onPainted'
         }
     },
 
@@ -104,7 +104,7 @@ Ext.define('Ung.view.main.MainController', {
         vm.set('policyId', 1);
     },
 
-    onBeforeRender: function(view) {
+    onPainted: function(view) {
         var me = this,
             vm = view.getViewModel();
 

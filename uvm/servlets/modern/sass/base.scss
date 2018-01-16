@@ -1,0 +1,15 @@
+@import 'vars';
+
+:root {
+    --base-color: #CCC;
+}
+
+html, body {
+    font-family: $custom-font;
+}
+
+.x-toolbar, .x-button {
+    font-family: 'Roboto', sans-serif;
+    // color: #FFF;
+    font-size: 10px;
+}

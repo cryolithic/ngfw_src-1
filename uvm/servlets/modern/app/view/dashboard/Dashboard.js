@@ -4,7 +4,7 @@
 Ext.define('Ung.view.dashboard.Dashboard', {
     extend: 'Ext.panel.Panel',
     alias: 'widget.ung-dashboard',
-    itemId: 'dashboard',
+    // itemId: 'dashboard',
 
     controller: 'dashboard',
     viewModel: {
@@ -32,7 +32,7 @@ Ext.define('Ung.view.dashboard.Dashboard', {
     items: [{
         title: 'Manager',
         docked: 'left',
-        width: 250,
+        width: 350,
         resizable: {
             split: true,
             edges: 'east'
@@ -46,6 +46,35 @@ Ext.define('Ung.view.dashboard.Dashboard', {
         },
         layout: 'fit',
         items: [{
+            xtype: 'toolbar',
+            docked: 'top',
+            margin: 0,
+            items: [{
+                iconCls: 'x-fa fa-plus',
+                ui: 'round',
+                tooltip: {
+                    html: 'Add Widget'.t(),
+                    anchor: true,
+                    align: 'tc-bc'
+                }
+            }, '->', {
+                iconCls: 'x-fa fa-download',
+                ui: 'round',
+                tooltip: {
+                    html: 'Import'.t(),
+                    anchor: true,
+                    align: 'tc-bc'
+                }
+            }, {
+                iconCls: 'x-fa fa-upload',
+                ui: 'round',
+                tooltip: {
+                    html: 'Export'.t(),
+                    anchor: true,
+                    align: 'tc-bc'
+                }
+            }]
+        }, {
             xtype: 'grid',
             hideHeaders: true,
             store: {
@@ -57,11 +86,15 @@ Ext.define('Ung.view.dashboard.Dashboard', {
                 width: 40
             }, {
                 dataIndex: 'entryId',
-                flex: 1
+                renderer: 'widgetTitleRenderer',
+                flex: 1,
+                cell: {
+                    encodeHtml: false
+                }
             }]
         }]
     }, {
-        title: 'content'
+        html: 'Widgets here'
     }]
 
 
