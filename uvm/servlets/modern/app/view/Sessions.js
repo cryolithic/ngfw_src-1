@@ -4,9 +4,42 @@ Ext.define('Ung.view.Sessions', {
 
     layout: 'fit',
 
+    viewModel: true,
+
     items: [{
+        items: [{
+            xtype: 'toolbar',
+            docked: 'top',
+            defaults: {
+                // margin: '0 5',
+                // ui: 'round'
+            },
+            items: [{
+                html: 'Refresh'.t(),
+                iconCls: 'x-fa fa-repeat',
+                tooltip: {
+                    html: 'Refresh'.t()
+                },
+                handler: 'fetchSessions'
+            }, {
+                html: 'Auto Refresh'.t(),
+                iconCls: 'x-fa fa-square-o',
+                enableToggle: true
+            }, {
+                html: 'Reset'.t(),
+                iconCls: 'x-fa fa-refresh',
+            }, '->', {
+                xtype: 'searchfield',
+                width: 250,
+                ui: 'faded',
+                placeholder: 'Filter sessions...'.t()
+            }]
+        }],
+
+        title: 'Sessions'.t(),
+
         xtype: 'grid',
-        title: 'Sessions',
+        reference: 'grid',
         columnLines: true,
         striped: true,
         scrollable: true,
@@ -22,22 +55,24 @@ Ext.define('Ung.view.Sessions', {
             text: 'Hostname'.t(),
             dataIndex: 'hostname'
         }, {
-            text: 'Client'.t(),
+            text: 'Client'.t() + ' (' + 'Pre-NAT'.t() + ')',
             columns: [{
-                text: 'Address'.t() + ' (' + 'Pre-NAT'.t() + ')',
+                text: 'Address'.t(),
                 dataIndex: 'preNatClient',
             }, {
-                text: 'Port'.t() + ' (' + 'Pre-NAT'.t() + ')',
-                dataIndex: 'preNatClientPort'
+                text: 'Port'.t(),
+                dataIndex: 'preNatClientPort',
+                align: 'right'
             }]
         }, {
-            text: 'Server'.t(),
+            text: 'Server'.t() + ' (' + 'Pre-NAT'.t() + ')',
             columns: [{
-                text: 'Address'.t() + ' (' + 'Pre-NAT'.t() + ')',
-                dataIndex: 'preNatServer',
+                text: 'Address'.t(),
+                dataIndex: 'preNatServer'
             }, {
-                text: 'Port'.t() + ' (' + 'Pre-NAT'.t() + ')',
-                dataIndex: 'preNatServerPort'
+                text: 'Port'.t(),
+                dataIndex: 'preNatServerPort',
+                align: 'right'
             }]
         }, {
             text: 'Speed (KB/s)'.t(),
@@ -58,22 +93,35 @@ Ext.define('Ung.view.Sessions', {
                 renderer: function (val) { return val ? val : 0; }
             }]
         }]
+    }, {
+        xtype: 'selectiondetails',
+        title: 'Session full details'.t(),
+        docked: 'right',
+        width: 350,
+        hidden: true,
+        bind: {
+            hidden: '{!grid.selection}',
+        }
     }],
 
     controller: {
         control: {
             '#': {
-                activate: 'onActivate'
+                activate: 'fetchSessions'
             }
         },
 
-        onActivate: function () {
+
+
+        fetchSessions: function () {
             var grid = this.getView().down('grid'),
                 store = Ext.getStore('sessions');
+            console.log('fetch');
 
+            // grid.mask(true);
             Rpc.asyncData('rpc.sessionMonitor.getMergedSessions')
             .then(function(result) {
-                // grid.setLoading(true);
+                // grid.unmask();
                 var sessions = result.list;
 
                 sessions.forEach( function( session ){

@@ -1,15 +1,21 @@
 @import 'vars';
 
 :root {
-    --base-color: #CCC;
+    --base-color: #5eb141;
+    --highlight-color: rgba(17, 17, 17, 0.7);
 }
 
 html, body {
     font-family: $custom-font;
 }
 
-.x-toolbar, .x-button {
-    font-family: 'Roboto', sans-serif;
-    // color: #FFF;
-    font-size: 10px;
+.x-toolbar.nav .x-button {
+    color: #999;
+    font-size: 11px;
+    .x-text-el { text-transform: uppercase; }
+    .x-icon-el { color: #999; }
+    &.x-hovered { color: #FFF; .x-icon-el { color: #FFF; } }
+}
+.x-button {
+    .x-text-el { text-transform: none; }
 }

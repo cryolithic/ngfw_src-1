@@ -105,20 +105,25 @@ ungAllDirs.map! { |e| "uvm/servlets/admin/app/#{e}" }
 JsBuilder.new(uvm_lib, "ung-all", ungAllDirs, "admin/script")
 
 # ung-modern-all
-ungModernAllDirs = [ 'model', 'store', 'controller', 'view', 'util', 'Application.js' ]
+ungModernAllDirs = [ 'model', 'store', 'controller', 'view', 'util', 'cmp', 'Application.js' ]
 ungModernAllDirs.map! { |e| "uvm/servlets/modern/app/#{e}" }
 JsBuilder.new(uvm_lib, "ung-modern-all", ungModernAllDirs, "modern/script")
 
 # sections
-['about', 'administration', 'events', 'email', 'local-directory', 'network',
- 'system', 'upgrade'].each do |n|
-  JsBuilder.new(uvm_lib, n, "uvm/servlets/admin/config/#{n}", "admin/script/config")
-end
+# ['about', 'administration', 'events', 'email', 'local-directory', 'network',
+#  'system', 'upgrade'].each do |n|
+#   JsBuilder.new(uvm_lib, n, "uvm/servlets/admin/config/#{n}", "admin/script/config")
+# end
 
 # common
 ['reports', 'ungrid', 'util'].each do |n|
   JsBuilder.new(uvm_lib, "#{n}-all", "uvm/js/common/#{n}", "script/common")
 end
+
+['network'].each do |o|
+  JsBuilder.new(uvm_lib, o, "uvm/servlets/modern/config/#{o}", "modern/script/config")
+end
+
 
 # jslinting
 # JsLintTarget.new(uvm_lib, './uvm/servlets/admin', 'jslint-adminui')

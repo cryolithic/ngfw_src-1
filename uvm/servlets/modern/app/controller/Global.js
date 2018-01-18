@@ -3,6 +3,7 @@ Ext.define('Ung.controller.Global', {
     namespace: 'Ung',
 
     stores: [
+        'ConfigTree',
         'Policies',
         'Metrics',
         'Stats',
@@ -35,6 +36,7 @@ Ext.define('Ung.controller.Global', {
             dashboardView: '#dashboard',
             appsView: '#apps',
             reportsView: '#reports',
+            configView: '#config',
         },
 
         routes: {
@@ -272,28 +274,36 @@ Ext.define('Ung.controller.Global', {
 
 
     onConfig: function (config, view, subView) {
-        var me = this, mainView = me.getMainView();
-        mainView.getViewModel().set('activeItem', 'config');
+        var me = this, mainView = me.getMainView(), configView = me.getConfigView();
+        mainView.getViewModel().set('activeItem', 'ung-config');
+        console.log(view, subView);
         if (config) {
-            if (mainView.down('config-' + config)) {
+            if (configView.down('config-' + config)) {
+                console.log('aaaa');
                 // if config card already exists activate it and select given view
-                mainView.getViewModel().set('activeItem', 'configCard');
-                var viewTarget = mainView.down('config-' + config).setActiveItem(view || 0);
-                if(subView){
-                    var subViewTarget = viewTarget.down('tabpanel');
-                    if(subViewTarget){
-                        subViewTarget.setActiveTab(subView);
-                    }
-                }
+                // mainView.getViewModel().set('activeItem', 'configCard');
+                console.log(configView.down('config-' + config));
+                configView.down('config-' + config).setActiveItem('config-' + config + '-' + view || 0);
+                // if(subView){
+                //     var subViewTarget = viewTarget.down('tabpanel');
+                //     if(subViewTarget){
+                //         subViewTarget.setActiveTab(subView);
+                //     }
+                // }
                 return;
             } else {
-                mainView.remove('configCard');
+                console.log(mainView);
+                // mainView.remove('configCard');
             }
-            mainView.setLoading(true);
+
+            var tree = configView.down('treelist');
+            var node = tree.getStore().findNode('href', window.location.hash);
+            tree.setSelection(node);
+            // mainView.setLoading(true);
             Ext.Loader.loadScript({
                 url: 'script/config/' + config + '.js',
                 onLoad: function () {
-                    mainView.add({
+                    configView.add({
                         xtype: 'config-' + config,
                         name: config,
                         itemId: 'configCard',
@@ -306,9 +316,9 @@ Ext.define('Ung.controller.Global', {
                             }
                         }
                     });
-                    mainView.getViewModel().set('activeItem', 'configCard');
-                    mainView.getViewModel().notify();
-                    mainView.setLoading(false);
+                    // mainView.getViewModel().set('activeItem', 'configCard');
+                    // mainView.getViewModel().notify();
+                    // mainView.setLoading(false);
                 }
             });
         }

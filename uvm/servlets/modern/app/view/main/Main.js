@@ -27,7 +27,10 @@ Ext.define('Ung.view.main.Main', {
     }, {
         xtype: 'ung-sessions'
     }, {
+        xtype: 'ung-config'
+    }, {
         xtype: 'toolbar',
+        cls: 'nav',
         docked: 'top',
         padding: 5,
         style: {
@@ -52,7 +55,7 @@ Ext.define('Ung.view.main.Main', {
         }, {
             text: 'Config'.t(),
             iconCls: 'x-fa fa-cogs',
-            handler: function () { Ung.app.redirectTo('#apps'); }
+            handler: function () { Ung.app.redirectTo('#config'); }
         }, {
             text: 'Reports'.t(),
             iconCls: 'x-fa fa-line-chart',
