@@ -24,7 +24,10 @@ Ext.define('Ung.config.network.Interface', {
         },
         items: [{
             title: 'IPv4 Configuration'.t(),
-            html: 'tab 1'
+            items: [{
+                xtype: 'pickerfield',
+                label: 'pick'
+            }]
         }, {
             title: 'IPv6 Configuration'.t(),
             html: 'tab 2'

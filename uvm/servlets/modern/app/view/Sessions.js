@@ -118,10 +118,10 @@ Ext.define('Ung.view.Sessions', {
                 store = Ext.getStore('sessions');
             console.log('fetch');
 
-            // grid.mask(true);
+            grid.mask();
             Rpc.asyncData('rpc.sessionMonitor.getMergedSessions')
             .then(function(result) {
-                // grid.unmask();
+                grid.unmask();
                 var sessions = result.list;
 
                 sessions.forEach( function( session ){

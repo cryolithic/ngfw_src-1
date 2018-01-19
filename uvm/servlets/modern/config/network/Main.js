@@ -25,11 +25,11 @@ Ext.define('Ung.config.network.Main', {
                 iconCls: 'x-fa fa-floppy-o'
             }]
         },
-        { xtype: 'config-network-interfaces' }
+        { xtype: 'config-network-interfaces' },
         // { xtype: 'config-network-hostname' },
         // { xtype: 'config-network-services' },
         // { xtype: 'config-network-port-forward-rules' },
-        // { xtype: 'config-network-nat-rules' },
+        { xtype: 'config-network-nat-rules' },
         // { xtype: 'config-network-bypass-rules' },
         // { xtype: 'config-network-filter-rules' },
         // { xtype: 'config-network-routes' },

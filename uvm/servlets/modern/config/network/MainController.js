@@ -32,7 +32,11 @@ Ext.define('Ung.config.network.MainController', {
             v = this.getView(),
             vm = this.getViewModel();
 
-        v.mask();
+        v.mask({
+            xtype: 'loadmask',
+            message: 'loading ...',
+            indicator: false
+        });
         Ext.Deferred.sequence([
             Rpc.asyncPromise('rpc.networkManager.getNetworkSettings'),
             Rpc.asyncPromise('rpc.networkManager.getInterfaceStatus'),
@@ -94,7 +98,93 @@ Ext.define('Ung.config.network.MainController', {
     },
 
 
+    conditionsRenderer: function (value) {
+        if (!value) { return ''; } // if conditions are null return empty string
 
+
+
+        var view = this.getView().down('config-network-nat-rules'),
+            conds = value.list,
+            resp = [], i, valueRenderer = [];
+
+        for (i = 0; i < conds.length; i += 1) {
+            valueRenderer = [];
+
+            switch (conds[i].conditionType) {
+            case 'SRC_INTF':
+            case 'DST_INTF':
+                conds[i].value.toString().split(',').forEach(function (intfff) {
+                    valueRenderer.push(Util.interfacesListNamesMap()[intfff]);
+                });
+                break;
+            case 'DST_LOCAL':
+            case 'WEB_FILTER_FLAGGED':
+                valueRenderer.push('true'.t());
+                break;
+            case 'DAY_OF_WEEK':
+                conds[i].value.toString().split(',').forEach(function (day) {
+                    valueRenderer.push(Util.weekdaysMap[day]);
+                });
+                break;
+            default:
+                // to avoid exceptions, in some situations condition value is null
+                if (conds[i].value !== null) {
+                    valueRenderer = conds[i].value.toString().split(',');
+                } else {
+                    valueRenderer = [];
+                }
+            }
+            // for boolean conditions just add 'True' string as value
+            // if (view.conditionsMap[conds[i].conditionType].type === 'boolean') {
+            //     valueRenderer = ['True'.t()];
+            // }
+
+            resp.push(view.conditionsMap[conds[i].conditionType].displayName + '<strong>' + (conds[i].invert ? ' &nrArr; ' : ' &rArr; ') + '<span class="cond-val ' + (conds[i].invert ? 'invert' : '') + '">' + valueRenderer.join(', ') + '</span>' + '</strong>');
+        }
+        return resp.length > 0 ? resp.join(' &nbsp;&bull;&nbsp; ') : '<em>' + 'No conditions' + '</em>';
+    },
+
+
+    getMenu: function () {
+        var menu = this.rulesMenu,
+            view = this.getView().down('config-network-nat-rules');
+
+        console.log(view);
+        if (!menu) {
+            this.rulesMenu = menu = Ext.create(Ext.apply({
+                ownerCmp: view
+            }, view.rulesMenu));
+        }
+        return menu;
+    },
+
+    updateMenu: function (record, el, e, align) {
+        var menu = this.getMenu(),
+            conds = record.get('conditions').list;
+        console.log(conds);
+        // this.getViewModel().set('record', record.get('conditions').list);
+        Ext.Array.each(menu.getItems().items, function (item) {
+            if (item.xtype === 'toolbar') { return; }
+            var found = Ext.Array.findBy(conds, function (c) {
+                c.value = '1,2,3,4,5';
+                return c.conditionType === item.val;
+            });
+            if (found) {
+                var menu2 = item.getMenu();
+                // menu2.getItems().items[0].setChecked(!found.invert);
+                // menu2.getItems().items[1].setChecked(found.invert);
+            }
+            item.setChecked(found ? true : false);
+        });
+        menu.showBy(el, align);
+    },
+
+    setExpand: function (grid, context) {
+        this.updateMenu(context.record, context.tool.el, context.event, 't0-b0');
+        // menu.show();
+        // var rec = info.record;
+        // console.log(rec);
+    }
 
 
     // saveSettings: function () {

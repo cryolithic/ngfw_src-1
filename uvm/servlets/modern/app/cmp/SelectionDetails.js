@@ -29,7 +29,7 @@ Ext.define('Ung.cmp.SelectionDetails', {
         xtype: 'grid',
         columnLines: true,
         striped: true,
-        hideHeaders: true,
+        headers: false,
         disableSelection: true,
         rowLines: false,
         bind: {
@@ -40,7 +40,7 @@ Ext.define('Ung.cmp.SelectionDetails', {
         columns: [{
             text: 'Key',
             dataIndex: 'key',
-            width: '50%',
+            flex: 1,
             align: 'right',
             cell: {
                 bodyStyle: {
@@ -52,7 +52,7 @@ Ext.define('Ung.cmp.SelectionDetails', {
         }, {
             text: 'Value',
             dataIndex: 'val',
-            width: '50%',
+            flex: 1,
             cell: {
                 bodyStyle: {
                     padding: '2px 10px',

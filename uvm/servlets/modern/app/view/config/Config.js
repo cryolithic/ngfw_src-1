@@ -26,21 +26,16 @@ Ext.define('Ung.view.config.Config', {
                 }
             }]
         },
-        // header: {
-        //     items: [{
-        //         xtype: 'searchfield',
-        //         ui: 'alt',
-        //         flex: 1,
-        //         placeholder: 'Filter ...'.t()
-        //     }, {
-        //         xtype: 'component',
-        //     }]
-        // },
-
         resizable: {
             split: true,
             edges: 'east'
         },
+        // collapsible: {
+        //     collapsed: false,
+        //     animation: false,
+        //     direction: 'left',
+        //     useDrawer: false
+        // },
         items: [{
             xtype: 'treelist',
             scrollable: true,
@@ -61,12 +56,13 @@ Ext.define('Ung.view.config.Config', {
                         allowDrag: true,
                         // icon: '/skins/modern-rack/images/admin/config/icon_config_network.png',
                         iconCls: 'x-fa fa-cogs',
+                        // href: '#config/network/interfaces',
                         children: [
                             { text: 'Interfaces'.t(), leaf: true, href: '#config/network/interfaces' },
                             { text: 'Hostname'.t(), leaf: true, href: '#config/network/hostname' },
                             { text: 'Services'.t(), leaf: true },
                             { text: 'Port Forward Rules'.t(), leaf: true },
-                            { text: 'NAT Rules'.t(), leaf: true },
+                            { text: 'NAT Rules'.t(), leaf: true, href: '#config/network/nat-rules' },
                             { text: 'Bypass Rules'.t(), leaf: true },
                             { text: 'Filter Rules'.t(), leaf: true },
                             { text: 'Routes'.t(), leaf: true },
