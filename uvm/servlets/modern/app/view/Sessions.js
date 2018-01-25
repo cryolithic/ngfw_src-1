@@ -43,6 +43,7 @@ Ext.define('Ung.view.Sessions', {
         columnLines: true,
         striped: true,
         scrollable: true,
+        userSelectable: true,
         store: 'sessions',
         columns: [{
             text: 'Protocol'.t(),

@@ -162,11 +162,11 @@ Ext.define('Ung.config.network.MainController', {
         var menu = this.getMenu(),
             conds = record.get('conditions').list;
         console.log(conds);
-        // this.getViewModel().set('record', record.get('conditions').list);
+        this.getViewModel().set('record', record.get('conditions').list);
         Ext.Array.each(menu.getItems().items, function (item) {
             if (item.xtype === 'toolbar') { return; }
             var found = Ext.Array.findBy(conds, function (c) {
-                c.value = '1,2,3,4,5';
+                // c.value = '1,2,3,4,5';
                 return c.conditionType === item.val;
             });
             if (found) {
@@ -184,8 +184,17 @@ Ext.define('Ung.config.network.MainController', {
         // menu.show();
         // var rec = info.record;
         // console.log(rec);
-    }
+    },
 
+    check: function (item) {
+        // console.log(item.up('menu'));
+        var rules = this.getViewModel().get('natRules');
+        var conds = rules.getData().items[0].get('conditions');
+
+        rules.getData().items[0].set('conditions.list', []);
+        // conds.set('list', []);
+        //conds.list[0].value = '1, 2, 3, 4, any';
+    },
 
     // saveSettings: function () {
     //     var view = this.getView();

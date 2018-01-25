@@ -32,6 +32,10 @@ Ext.define('Ung.cmp.SelectionDetails', {
         headers: false,
         disableSelection: true,
         rowLines: false,
+        userSelectable: {
+            element: true,
+            bodyElement: true
+        },
         bind: {
             store: {
                 data: '{d}'
@@ -57,6 +61,10 @@ Ext.define('Ung.cmp.SelectionDetails', {
                 bodyStyle: {
                     padding: '2px 10px',
                     fontSize: '11px'
+                },
+                userSelectable: {
+                    element: true,
+                    bodyElement: true
                 }
             },
             renderer: function (val) { return !val ? '-' : val; }

@@ -239,18 +239,26 @@ Ext.define('Ung.config.network.view.NatRules', {
             menu: {
                 padding: '10 0',
                 tbar: {
+                    layout: {
+                        pack: 'center'
+                    },
                     items: [{
-                        xtype: 'combobox',
-                        queryMode: 'local',
-                        displayField: 'text',
-                        valueField: 'invert',
-                        editable: false,
-                        value: false,
-                        flex: 1,
-                        store: [
-                            { text: 'Equals'.t(), invert: false },
-                            { text: 'Not Equals'.t(), invert: true }
-                        ]
+                        xtype: 'togglefield',
+                        label: 'Equals',
+                        labelAlign: 'left',
+                        labelWidth: 'auto',
+                        boxLabel: 'NOT Equals'
+                        // xtype: 'combobox',
+                        // queryMode: 'local',
+                        // displayField: 'text',
+                        // valueField: 'invert',
+                        // editable: false,
+                        // value: false,
+                        // flex: 1,
+                        // store: [
+                        //     { text: 'Equals'.t(), invert: false },
+                        //     { text: 'Not Equals'.t(), invert: true }
+                        // ]
                     }]
                 }
             }
@@ -281,6 +289,9 @@ Ext.define('Ung.config.network.view.NatRules', {
             menu: {
                 minWidth: 150,
                 defaultType: 'menucheckitem',
+                defaults: {
+                    handler: 'check'
+                },
                 items: [
                     { text: 'Any' },
                     { text: 'Any Non-WAN' },
