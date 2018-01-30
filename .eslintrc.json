@@ -37,6 +37,7 @@
         "Renderer": true,
         "DashboardQueue": true,
         "Theme": true,
-        "Converter": true
+        "Converter": true,
+        "Condition": true
     }
 }

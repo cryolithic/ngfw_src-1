@@ -18,22 +18,28 @@ Ext.define('Ung.config.network.view.NatRules', {
     // }],
 
     items: [{
-        xtype: 'grid',
+        xtype: 'mastergrid',
         flex: 3,
 
-        items: [{
-            xtype: 'toolbar',
-            docked: 'top',
-            items: [{
-                text: 'Add'.t(),
-                ui: 'action',
-                iconCls: 'x-fa fa-plus'
-            }]
-        }],
+        conditions: [
+            Condition.DST_ADDR,
+            Condition.DST_PORT,
+            Condition.DST_INTF,
+            Condition.SRC_ADDR,
+            Condition.SRC_PORT,
+            Condition.SRC_INTF,
+            Condition.PROTOCOL,
+            Condition.CLIENT_TAGGED,
+            Condition.SERVER_TAGGED
+        ],
 
         plugins: {
             gridcellediting: true
         },
+
+        // listeners: {
+        //     painted: 'onPainted'
+        // },
 
         // tbar: ['@add', '->', '@import', '@export'],
         // recordActions: ['edit', 'delete', 'reorder'],
@@ -75,21 +81,27 @@ Ext.define('Ung.config.network.view.NatRules', {
             cell: {
                 tools: {
                     expand: {
-                        iconCls: 'x-fa fa-arrows',
+                        iconCls: 'x-fa fa-arrows-v',
                         xtype: 'button',
                         arrow: false,
                         menu: {
-                            // indented: false,
+                            indented: false,
                             minWidth: 150,
                             items: [{
-                                text: 'Move First'.t(),
-                                iconCls: 'x-fa fa-arrow-up'
+                                text: 'First'.t(),
+                                iconCls: 'x-fa fa-angle-double-up'
                             }, {
-                                text: 'Move Last'.t(),
-                                iconCls: 'x-fa fa-arrow-down'
+                                text: 'Up'.t(),
+                                iconCls: 'x-fa fa-angle-up'
+                            }, {
+                                text: 'Down'.t(),
+                                iconCls: 'x-fa fa-angle-down'
+                            }, {
+                                text: 'Last'.t(),
+                                iconCls: 'x-fa fa-angle-double-down'
                             }, '-', {
                                 text: 'Move After Rule'.t(),
-                                iconCls: 'x-fa fa-arrow-right',
+                                // iconCls: 'x-fa fa-angle-right',
                                 menu: {
                                     indented: false,
                                     minWidth: 150,
@@ -133,7 +145,7 @@ Ext.define('Ung.config.network.view.NatRules', {
                 tools: {
                     menu: {
                         margin: '0 20 0 0',
-                        handler: 'setExpand',
+                        handler: 'showMenu',
                         // zone: 'end'
                     }
                 }
@@ -220,165 +232,165 @@ Ext.define('Ung.config.network.view.NatRules', {
         // ]
     }],
 
-    rulesMenu: {
-        xtype: 'menu',
-        viewModel: {},
-        anchor: true,
-        padding: '10 0',
-        defaultType: 'menucheckitem',
-        mouseLeaveDelay: 0,
-        // maxHeight: 200,
-        // scrollable: true,
-        tbar: {
-            items: [{
-                xtype: 'component',
-                html: 'Conditions'.t()
-            }]
-        },
-        defaults: {
-            menu: {
-                padding: '10 0',
-                tbar: {
-                    layout: {
-                        pack: 'center'
-                    },
-                    items: [{
-                        xtype: 'togglefield',
-                        label: 'Equals',
-                        labelAlign: 'left',
-                        labelWidth: 'auto',
-                        boxLabel: 'NOT Equals'
-                        // xtype: 'combobox',
-                        // queryMode: 'local',
-                        // displayField: 'text',
-                        // valueField: 'invert',
-                        // editable: false,
-                        // value: false,
-                        // flex: 1,
-                        // store: [
-                        //     { text: 'Equals'.t(), invert: false },
-                        //     { text: 'Not Equals'.t(), invert: true }
-                        // ]
-                    }]
-                }
-            }
-        },
-        items: [{
-            text: 'Destination Address'.t(),
-            val: 'DST_ADDR',
-            menu: {
-                minWidth: 150,
-                indented: false,
-                items: [
-                    { xtype: 'textfield', placeholder: 'enter address', iconCls: 'x-fa fa-font' }
-                ],
-            }
-        }, {
-            text: 'Destination Port'.t(),
-            val: 'DST_PORT',
-            menu: {
-                minWidth: 150,
-                indented: false,
-                items: [
-                    { xtype: 'numberfield', placeholder: 'enter port' }
-                ]
-            }
-        }, {
-            text: 'Destination Interface'.t(),
-            val: 'DST_INTF',
-            menu: {
-                minWidth: 150,
-                defaultType: 'menucheckitem',
-                defaults: {
-                    handler: 'check'
-                },
-                items: [
-                    { text: 'Any' },
-                    { text: 'Any Non-WAN' },
-                    { text: 'Any WAN' },
-                    { text: 'External' },
-                    { text: 'Internal' },
-                    { text: 'vlan test' },
-                    { text: 'vlan 2' },
-                    { text: 'vlan 3' },
-                    { text: 'OpenVPN' },
-                    { text: 'L2TP' },
-                    { text: 'XAUTH' },
-                    { text: 'GRE' }
-                ],
-            }
-        }, {
-            text: 'Source Address'.t(),
-            val: 'SRC_ADDR',
-            checked: false,
-            menu: {
-                minWidth: 150,
-                indented: false,
-                items: [
-                    { xtype: 'textfield', placeholder: 'enter address' },
-                ]
-            }
-        }, {
-            text: 'Source Interface'.t(),
-            val: 'SRC_INTF',
-            menu: {
-                minWidth: 150,
-                // maxHeight: 300,
-                // scrollable: true,
-                defaultType: 'menucheckitem',
-                items: [
-                    { text: 'Any' },
-                    { text: 'Any Non-WAN' },
-                    { text: 'Any WAN' },
-                    { text: 'External' },
-                    { text: 'Internal' },
-                    { text: 'vlan test' },
-                    { text: 'vlan 2' },
-                    { text: 'vlan 3' },
-                    { text: 'OpenVPN' },
-                    { text: 'L2TP' },
-                    { text: 'XAUTH' },
-                    { text: 'GRE' }
-                ],
-            }
-        }, {
-            text: 'Protocol'.t(),
-            val: 'PROTOCOL',
-            menu: {
-                minWidth: 150,
-                defaultType: 'menucheckitem',
-                items: [
-                    { text: 'TCP' },
-                    { text: 'UDP' },
-                    { text: 'ICMP' },
-                    { text: 'GRE' },
-                    { text: 'ESP' },
-                    { text: 'AH' },
-                    { text: 'SCTP' }
-                ],
-            }
-        }, {
-            text: 'Client Tagged'.t(),
-            val: 'CLIENT_TAGGED',
-            checked: false,
-            menu: {
-                minWidth: 150,
-                indented: false,
-                items: [
-                    { xtype: 'textfield', placeholder: 'enter target' },
-                ]
-            }
-        }, {
-            text: 'Server Tagged'.t(),
-            val: 'SERVER_TAGGED',
-            checked: false,
-            menu: {
-                minWidth: 150,
-                indented: false,
-                items: [
-                    { xtype: 'textfield', placeholder: 'enter target' },
-                ]
-            }
-        }]
-    }
+    // rulesMenu: {
+    //     xtype: 'menu',
+    //     viewModel: {},
+    //     anchor: true,
+    //     padding: '10 0',
+    //     defaultType: 'menucheckitem',
+    //     mouseLeaveDelay: 0,
+    //     // maxHeight: 200,
+    //     // scrollable: true,
+    //     tbar: {
+    //         items: [{
+    //             xtype: 'component',
+    //             html: 'Conditions'.t()
+    //         }]
+    //     },
+    //     defaults: {
+    //         menu: {
+    //             padding: '10 0',
+    //             tbar: {
+    //                 layout: {
+    //                     pack: 'center'
+    //                 },
+    //                 items: [{
+    //                     xtype: 'togglefield',
+    //                     label: 'Equals',
+    //                     labelAlign: 'left',
+    //                     labelWidth: 'auto',
+    //                     boxLabel: 'NOT Equals'
+    //                     // xtype: 'combobox',
+    //                     // queryMode: 'local',
+    //                     // displayField: 'text',
+    //                     // valueField: 'invert',
+    //                     // editable: false,
+    //                     // value: false,
+    //                     // flex: 1,
+    //                     // store: [
+    //                     //     { text: 'Equals'.t(), invert: false },
+    //                     //     { text: 'Not Equals'.t(), invert: true }
+    //                     // ]
+    //                 }]
+    //             }
+    //         }
+    //     },
+    //     items: [{
+    //         text: 'Destination Address'.t(),
+    //         val: 'DST_ADDR',
+    //         menu: {
+    //             minWidth: 150,
+    //             indented: false,
+    //             items: [
+    //                 { xtype: 'textfield', placeholder: 'enter address', iconCls: 'x-fa fa-font' }
+    //             ],
+    //         }
+    //     }, {
+    //         text: 'Destination Port'.t(),
+    //         val: 'DST_PORT',
+    //         menu: {
+    //             minWidth: 150,
+    //             indented: false,
+    //             items: [
+    //                 { xtype: 'numberfield', placeholder: 'enter port' }
+    //             ]
+    //         }
+    //     }, {
+    //         text: 'Destination Interface'.t(),
+    //         val: 'DST_INTF',
+    //         menu: {
+    //             minWidth: 150,
+    //             defaultType: 'menucheckitem',
+    //             defaults: {
+    //                 handler: 'check'
+    //             },
+    //             items: [
+    //                 { text: 'Any' },
+    //                 { text: 'Any Non-WAN' },
+    //                 { text: 'Any WAN' },
+    //                 { text: 'External' },
+    //                 { text: 'Internal' },
+    //                 { text: 'vlan test' },
+    //                 { text: 'vlan 2' },
+    //                 { text: 'vlan 3' },
+    //                 { text: 'OpenVPN' },
+    //                 { text: 'L2TP' },
+    //                 { text: 'XAUTH' },
+    //                 { text: 'GRE' }
+    //             ],
+    //         }
+    //     }, {
+    //         text: 'Source Address'.t(),
+    //         val: 'SRC_ADDR',
+    //         checked: false,
+    //         menu: {
+    //             minWidth: 150,
+    //             indented: false,
+    //             items: [
+    //                 { xtype: 'textfield', placeholder: 'enter address' },
+    //             ]
+    //         }
+    //     }, {
+    //         text: 'Source Interface'.t(),
+    //         val: 'SRC_INTF',
+    //         menu: {
+    //             minWidth: 150,
+    //             // maxHeight: 300,
+    //             // scrollable: true,
+    //             defaultType: 'menucheckitem',
+    //             items: [
+    //                 { text: 'Any' },
+    //                 { text: 'Any Non-WAN' },
+    //                 { text: 'Any WAN' },
+    //                 { text: 'External' },
+    //                 { text: 'Internal' },
+    //                 { text: 'vlan test' },
+    //                 { text: 'vlan 2' },
+    //                 { text: 'vlan 3' },
+    //                 { text: 'OpenVPN' },
+    //                 { text: 'L2TP' },
+    //                 { text: 'XAUTH' },
+    //                 { text: 'GRE' }
+    //             ],
+    //         }
+    //     }, {
+    //         text: 'Protocol'.t(),
+    //         val: 'PROTOCOL',
+    //         menu: {
+    //             minWidth: 150,
+    //             defaultType: 'menucheckitem',
+    //             items: [
+    //                 { text: 'TCP' },
+    //                 { text: 'UDP' },
+    //                 { text: 'ICMP' },
+    //                 { text: 'GRE' },
+    //                 { text: 'ESP' },
+    //                 { text: 'AH' },
+    //                 { text: 'SCTP' }
+    //             ],
+    //         }
+    //     }, {
+    //         text: 'Client Tagged'.t(),
+    //         val: 'CLIENT_TAGGED',
+    //         checked: false,
+    //         menu: {
+    //             minWidth: 150,
+    //             indented: false,
+    //             items: [
+    //                 { xtype: 'textfield', placeholder: 'enter target' },
+    //             ]
+    //         }
+    //     }, {
+    //         text: 'Server Tagged'.t(),
+    //         val: 'SERVER_TAGGED',
+    //         checked: false,
+    //         menu: {
+    //             minWidth: 150,
+    //             indented: false,
+    //             items: [
+    //                 { xtype: 'textfield', placeholder: 'enter target' },
+    //             ]
+    //         }
+    //     }]
+    // }
 });

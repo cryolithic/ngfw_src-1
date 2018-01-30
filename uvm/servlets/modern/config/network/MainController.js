@@ -26,6 +26,26 @@ Ext.define('Ung.config.network.MainController', {
         // }
     },
 
+    onPainted: function(grid) {
+        console.log(grid.conditions);
+        grid.menu = {
+            xtype: 'menu',
+            viewModel: {},
+            anchor: true,
+            padding: '10 0',
+            defaultType: 'menucheckitem',
+            mouseLeaveDelay: 0,
+            // maxHeight: 200,
+            // scrollable: true,
+            tbar: {
+                items: [{
+                    xtype: 'component',
+                    html: 'Conditions'.t()
+                }]
+            }
+        };
+    },
+
     loadSettings: function () {
         console.log('loading');
         var me = this,
@@ -146,36 +166,39 @@ Ext.define('Ung.config.network.MainController', {
 
 
     getMenu: function () {
-        var menu = this.rulesMenu,
+        var menu, menuOpts = this.getView().down('config-network-nat-rules > grid').menu,
             view = this.getView().down('config-network-nat-rules');
 
-        console.log(view);
-        if (!menu) {
-            this.rulesMenu = menu = Ext.create(Ext.apply({
-                ownerCmp: view
-            }, view.rulesMenu));
-        }
+
+        // if (!menu) {
+        this.rulesMenu = menu = Ext.create(Ext.apply({
+            ownerCmp: view
+        }, menuOpts));
+        // }
+        console.log(menu);
         return menu;
     },
 
     updateMenu: function (record, el, e, align) {
-        var menu = this.getMenu(),
-            conds = record.get('conditions').list;
-        console.log(conds);
-        this.getViewModel().set('record', record.get('conditions').list);
-        Ext.Array.each(menu.getItems().items, function (item) {
-            if (item.xtype === 'toolbar') { return; }
-            var found = Ext.Array.findBy(conds, function (c) {
-                // c.value = '1,2,3,4,5';
-                return c.conditionType === item.val;
-            });
-            if (found) {
-                var menu2 = item.getMenu();
-                // menu2.getItems().items[0].setChecked(!found.invert);
-                // menu2.getItems().items[1].setChecked(found.invert);
-            }
-            item.setChecked(found ? true : false);
-        });
+        var menu = this.getMenu();
+
+        console.log(menu);
+        //     conds = record.get('conditions').list;
+        // console.log(conds);
+        // this.getViewModel().set('record', record.get('conditions').list);
+        // Ext.Array.each(menu.getItems().items, function (item) {
+        //     if (item.xtype === 'toolbar') { return; }
+        //     var found = Ext.Array.findBy(conds, function (c) {
+        //         // c.value = '1,2,3,4,5';
+        //         return c.conditionType === item.val;
+        //     });
+        //     if (found) {
+        //         var menu2 = item.getMenu();
+        //         // menu2.getItems().items[0].setChecked(!found.invert);
+        //         // menu2.getItems().items[1].setChecked(found.invert);
+        //     }
+        //     item.setChecked(found ? true : false);
+        // });
         menu.showBy(el, align);
     },
 

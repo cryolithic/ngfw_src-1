@@ -21,6 +21,13 @@ html, body {
     .x-text-el { text-transform: none; }
 }
 
+.x-menucheckitem .x-body-el {
+    height: 24px;
+}
+
+.x-menu .x-mask {
+    background-color: #FFF;
+}
 // .x-gridcell-body-el {
 //     padding: 6px;
 // }
