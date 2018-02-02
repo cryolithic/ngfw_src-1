@@ -8,6 +8,7 @@ Ext.define('Ung.cmp.MasterGrid', {
     },
 
     disableSelection: true,
+    // defaultListenerScope: true,
     // striped: true,
 
     enableMove: false,
@@ -27,9 +28,9 @@ Ext.define('Ung.cmp.MasterGrid', {
     controller: {
         onInitialize: function (grid) {
             var columns = [];
-            if (grid.enableMove)   { grid._columns.unshift(Column.MOVE); }
-            if (grid.enableDelete) { grid._columns.push(Column.DELETE); }
-            Ext.Array.each(grid._columns, function (column) {
+            if (grid.enableMove)   { grid.columnsDef.unshift(Column.MOVE); }
+            if (grid.enableDelete) { grid.columnsDef.push(Column.DELETE); }
+            Ext.Array.each(grid.columnsDef, function (column) {
                 columns.push(Ext.create(column));
             });
             grid.setColumns(columns);
@@ -37,87 +38,26 @@ Ext.define('Ung.cmp.MasterGrid', {
 
 
         onPainted: function () {
-            this._generateRulesMenu();
+            // var me = this;
+            // if (me.conditionsMenu) {
+            //     console.log('SUUUUUNT');
+            // } else {
+            //     console.log('NU SUUUUUNT');
+
+            // }
+            this.generateMenus();
         },
 
-        showMenu: function (grid, context) {
-            var me = this;
 
-            // uncheck all conditions
-            Ext.Array.each(me.menu.getItems().items, function (item) {
-                if (Ext.isFunction(item.getMenu)) {
-                    item.setChecked(false);
-                    item.getMenu().setMasked(true);
+        generateMenus: function () {
+            var me = this, grid = me.getView();
 
-                    if (item.getMenu().down('togglefield')) {
-                        item.getMenu().down('togglefield').setValue(false);
-                    }
-
-                    if (item.getMenu().getDefaultType() === 'textfield') {
-                        item.getMenu().down('textfield').setValue('');
-                    }
-                    if (item.getMenu().getDefaultType() === 'menucheckitem') {
-                        Ext.Array.each(item.getMenu().getItems().items, function (item2) {
-                            if (Ext.isFunction(item2.setChecked)) {
-                                item2.setChecked(false);
-                            }
-                        });
-                    }
-                    if (item.getMenu().getDefaultType() === 'menuradioitem') {
-                        item.getMenu().setGroups({ option: false });
-                    }
-                }
-            });
-
-            Ext.Array.each(context.record.get('conditions').list, function (cond) {
-                var found = Ext.Array.findBy(me.menu.getItems().items, function (item) {
-                    return item.conditionType === cond.conditionType;
-                });
-                if (found) {
-                    // console.log(cond);
-                    // console.log(found);
-                    found.setChecked(true);
-                    // console.log(found.getMenu().getDefaultType());
-
-                    if (found.getMenu().down('togglefield')) {
-                        found.getMenu().down('togglefield').setValue(cond.invert);
-                    }
-
-                    if (found.getMenu().getDefaultType() === 'textfield') {
-                        found.getMenu().down('textfield').setValue(cond.value);
-                    }
-                    if (found.getMenu().getDefaultType() === 'menucheckitem') {
-                        Ext.Array.each(cond.value.split(','), function (val) {
-                            var found2 = Ext.Array.findBy(found.getMenu().getItems().items, function (item2) {
-                                if (!Ext.isFunction(item2.getValue)) { return; }
-                                return item2.getValue() === val;
-                            });
-                            if (found2) {
-                                found2.setChecked(true);
-                            }
-                        });
-                    }
-                    if (found.getMenu().getDefaultType() === 'menuradioitem') {
-                        found.getMenu().setGroups({ option: cond.invert });
-                    }
-                }
-            }, this);
-
-            this.menu.record = context.record;
-            this.menu.showBy(context.tool.el, 't0-b0');
-        },
-
-        _generateRulesMenu: function () {
-            var me = this;
-            me.menu = Ext.create({
+            me.conditionsMenu = Ext.create({
                 xtype: 'menu',
-                // viewModel: {},
                 anchor: true,
                 padding: '10 0',
                 defaultType: 'menucheckitem',
                 mouseLeaveDelay: 30,
-                // maxHeight: 200,
-                // scrollable: true,
                 tbar: {
                     items: [{
                         xtype: 'component',
@@ -125,7 +65,8 @@ Ext.define('Ung.cmp.MasterGrid', {
                     }]
                 },
                 listeners: {
-                    beforehide: me.onBeforeHide
+                    beforehide: 'onBeforeHideConditions',
+                    scope: me
                 },
                 defaults: {
                     menu: {
@@ -136,7 +77,7 @@ Ext.define('Ung.cmp.MasterGrid', {
                 }
             });
 
-            Ext.Array.each(this.getView().conditions, function(condition) {
+            Ext.Array.each(grid.conditions, function(condition) {
                 var mitem = {
                     text: condition.text,
                     conditionType: condition.conditionType,
@@ -191,30 +132,20 @@ Ext.define('Ung.cmp.MasterGrid', {
                         layout: {
                             pack: 'center'
                         },
+                        padding: 0,
                         items: [{
                             xtype: 'togglefield',
                             label: 'IS',
                             labelAlign: 'left',
                             labelWidth: 'auto',
                             boxLabel: 'IS NOT'
-                            // xtype: 'combobox',
-                            // queryMode: 'local',
-                            // displayField: 'text',
-                            // valueField: 'invert',
-                            // editable: false,
-                            // value: false,
-                            // flex: 1,
-                            // store: [
-                            //     { text: 'Equals'.t(), invert: false },
-                            //     { text: 'Not Equals'.t(), invert: true }
-                            // ]
                         }]
                     };
                 }
-                this.menu.add(mitem);
-            }, this);
+                me.conditionsMenu.add(mitem);
+            });
 
-
+            // move menu
             me.moveMenu = Ext.create({
                 xtype: 'menu',
                 itemId: 'moveMenu',
@@ -242,18 +173,78 @@ Ext.define('Ung.cmp.MasterGrid', {
                     position: 'last',
                     handler: me.moveRecord
                 }]
-                // listeners: {
-                //     hide: function (menu) {
-                //         // menu.down('#moveAfterMenu').getMenu().removeAll();
-                //     }
-                // }
             });
-
-
         },
 
-        onBeforeHide: function (menu) {
-            var list = [], invert = false, value, arrValue = [];
+        showConditionsMenu: function (grid, context) {
+            var me = this;
+
+            Ext.Array.each(me.conditionsMenu.getItems().items, function (item) {
+                if (Ext.isFunction(item.getMenu)) {
+                    item.setChecked(false);
+                    item.getMenu().setMasked(true);
+
+                    if (item.getMenu().down('togglefield')) {
+                        item.getMenu().down('togglefield').setValue(false);
+                    }
+
+                    if (item.getMenu().getDefaultType() === 'textfield') {
+                        item.getMenu().down('textfield').setValue('');
+                    }
+                    if (item.getMenu().getDefaultType() === 'menucheckitem') {
+                        Ext.Array.each(item.getMenu().getItems().items, function (item2) {
+                            if (Ext.isFunction(item2.setChecked)) {
+                                item2.setChecked(false);
+                            }
+                        });
+                    }
+                    if (item.getMenu().getDefaultType() === 'menuradioitem') {
+                        item.getMenu().setGroups({ option: false });
+                    }
+                }
+            });
+
+            Ext.Array.each(context.record.get('conditions').list, function (cond) {
+                var found = Ext.Array.findBy(me.conditionsMenu.getItems().items, function (item) {
+                    return item.conditionType === cond.conditionType;
+                });
+                if (found) {
+                    // console.log(cond);
+                    // console.log(found);
+                    found.setChecked(true);
+                    // console.log(found.getMenu().getDefaultType());
+
+                    if (found.getMenu().down('togglefield')) {
+                        found.getMenu().down('togglefield').setValue(cond.invert);
+                    }
+
+                    if (found.getMenu().getDefaultType() === 'textfield') {
+                        found.getMenu().down('textfield').setValue(cond.value);
+                    }
+                    if (found.getMenu().getDefaultType() === 'menucheckitem') {
+                        Ext.Array.each(cond.value.split(','), function (val) {
+                            var found2 = Ext.Array.findBy(found.getMenu().getItems().items, function (item2) {
+                                if (!Ext.isFunction(item2.getValue)) { return; }
+                                return item2.getValue() === val;
+                            });
+                            if (found2) {
+                                found2.setChecked(true);
+                            }
+                        });
+                    }
+                    if (found.getMenu().getDefaultType() === 'menuradioitem') {
+                        found.getMenu().setGroups({ option: cond.invert });
+                    }
+                }
+            });
+
+            me.conditionsMenu.record = context.record;
+            me.conditionsMenu.showBy(context.tool.el, 't0-b0');
+        },
+
+        onBeforeHideConditions: function (menu) {
+            var me = this, list = [], invert = false, value, arrValue = [];
+            console.log(me);
             Ext.Array.each(menu.getItems().items, function (item) {
                 if (!Ext.isFunction(item.getMenu)) { return; }
 
@@ -281,7 +272,7 @@ Ext.define('Ung.cmp.MasterGrid', {
                     list.push({
                         conditionType: item.conditionType,
                         invert: invert,
-                        javaClass: 'com.untangle.uvm.network.NatRuleCondition',
+                        javaClass: me.getView().conditionClass,
                         value: value
                     });
                 }
@@ -291,9 +282,6 @@ Ext.define('Ung.cmp.MasterGrid', {
                 list: list
             });
         },
-
-
-
 
         showMoveMenu: function (grid, context) {
             var me = this;
@@ -326,18 +314,6 @@ Ext.define('Ung.cmp.MasterGrid', {
                 recMenuItems.push({ text: '#' + record.get('ruleId') + ' - ' +  record.get('description'), position: index });
             });
 
-            // this.moveMenu.down('#moveAfterMenu').add(recMenuItems);
-            // Ext.Array(this.moveMenu.down('#moveAfterMenu').getItems(), function (item) {
-            //     item.addListener()
-            // }, this);
-            // this.moveMenu.down('#moveAfterMenu').setMenu({
-            //     indented: false,
-            //     itemId: 'moveAfterMenu',
-            //     defaults: {
-            //         handler: me.moveRecord
-            //     },
-            //     items: recMenuItems
-            // });
             this.moveMenu.add({
                 text: 'Move After',
                 iconCls: 'x-fa fa-angle-right',

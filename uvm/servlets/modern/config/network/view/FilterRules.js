@@ -1,12 +1,12 @@
-Ext.define('Ung.config.network.view.NatRules', {
+Ext.define('Ung.config.network.view.FilterRules', {
     extend: 'Ext.Panel',
-    alias: 'widget.config-network-nat-rules',
-    itemId: 'nat-rules',
+    alias: 'widget.config-network-filter-rules',
+    itemId: 'filter-rules',
     scrollable: true,
 
     viewModel: true,
 
-    title: 'NAT Rules'.t(),
+    title: 'Filter Rules'.t(),
 
     layout: 'fit',
 
@@ -17,7 +17,8 @@ Ext.define('Ung.config.network.view.NatRules', {
         enableMove: true,
         enableDelete: true,
 
-        settingsProperty: 'natRules',
+        emptyText: 'No Filter Rules defined'.t(),
+        settingsProperty: 'filterRules',
         conditions: [
             Condition.HOST_IN_PENALTY_BOX,
             Condition.DST_ADDR,
@@ -30,12 +31,12 @@ Ext.define('Ung.config.network.view.NatRules', {
             Condition.CLIENT_TAGGED,
             Condition.SERVER_TAGGED
         ],
-        conditionClass: 'com.untangle.uvm.network.NatRuleCondition',
+        conditionClass: 'com.untangle.uvm.network.FilterRuleCondition',
         newRecord: {
             ruleId: -1,
             enabled: true,
             auto: true,
-            javaClass: 'com.untangle.uvm.network.NatRule',
+            javaClass: 'com.untangle.uvm.network.FilterRule',
             conditions: {
                 javaClass: 'java.util.LinkedList',
                 list: []
@@ -54,26 +55,16 @@ Ext.define('Ung.config.network.view.NatRules', {
 
         sortable: false,
 
-        bind: '{natRules}',
+        bind: '{filterRules}',
 
         columnsDef: [
             Column.RULEID,
             Column.ENABLED,
             Column.DESCRIPTION,
-            Column.CONDITIONS,
-            Column.NAT_TYPE, {
-                xtype: 'gridcolumn',
-                text: 'New Source'.t(),
-                dataIndex: 'newSource',
-                width: 150,
-                editable: true,
-                editor: {
-                    xtype: 'textfield'
-                }
-                // renderer: Ung.config.network.MainController.natNewSourceRenderer
-            }]
+            Column.CONDITIONS
+        ]
     }, {
         xtype: 'paneldescription',
-        html: 'NAT Rules control the rewriting of the IP source address of traffic (Network Address Translation). The rules are evaluated in order.'.t()
+        html: 'Filter Rules control what sessions are passed/blocked. Filter rules process all sessions including bypassed sessions. The rules are evaluated in order.'.t()
     }]
 });

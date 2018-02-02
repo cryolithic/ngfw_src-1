@@ -35,5 +35,108 @@ Ext.define('Ung.util.Column', {
                 }
             }
         }
+    },
+
+    RULEID: {
+        xtype: 'gridcolumn',
+        text: '#' + 'id'.t(),
+        width: 44,
+        align: 'right',
+        resizable: false,
+        menuDisabled: true,
+        dataIndex: 'ruleId',
+        cell: {
+            encodeHtml: false
+        }
+    },
+
+    ENABLED: {
+        text: '<span class="x-fa fa-check"></span>',
+        width: 44,
+        xtype: 'checkcolumn',
+        headerCheckbox: false,
+        dataIndex: 'enabled',
+        resizable: false
+    },
+
+    DESCRIPTION: {
+        xtype: 'gridcolumn',
+        text: 'Description',
+        width: 200,
+        dataIndex: 'description',
+        editable: true,
+        cell: {
+            encodeHtml: false
+        },
+        renderer: function (val) {
+            if (!val) {
+                return '<em style="color: #999;">add a description</em>';
+            }
+            return val;
+        }
+    },
+
+    CONDITIONS: {
+        xtype: 'gridcolumn',
+        text: 'Conditions'.t(),
+        width: Renderer.messageWidth,
+        flex: 1,
+        dataIndex: 'conditions',
+        cell: {
+            encodeHtml: false,
+            bodyCls: 'cond',
+            tools: {
+                menu: {
+                    iconCls: 'x-fa fa-filter',
+                    margin: '0 10 0 0',
+                    handler: 'showConditionsMenu',
+                    // zone: 'end'
+                }
+            }
+        },
+        renderer: function (value) {
+            var html = [], condition;
+
+            if (value.list.length === 0) {
+                return '<span class="x-fa fa-arrow-left" style="color: #999;"></span> &nbsp;&nbsp;&nbsp; <em style="color: #999;">click to add conditions</em>';
+            }
+
+            Ext.Array.each(value.list, function (cond) {
+                condition = Condition[cond.conditionType];
+
+                if (condition.type === 'menuradioitem') {
+                    html.push('<div><span class="type">' + condition.text + '</span><span class="' + (cond.invert ? 'bool-no' : 'bool-yes') + '">' + (cond.invert ? '<span class="x-fa fa-times" style="padding: 0;"></span>' : '<span class="x-fa fa-check" style="padding: 0;"></span>') + '</span></div>');
+                    return;
+                }
+
+                html.push('<div><span class="type">' + Condition[cond.conditionType].text + '</span><span class="invert">' + (cond.invert ? 'NOT' : 'IS')  + '</span><span class="value">' + (cond.value || '<span class="x-fa fa-question-circle" style="padding: 0; color: orangered;"></span>' ) + '</span></div>');
+            });
+            // return html.split(',');
+            return html.join('');
+        }
+    },
+
+    NAT_TYPE: {
+        xtype: 'gridcolumn',
+        text: 'NAT Type'.t(),
+        width: 150,
+        dataIndex: 'auto',
+        cell: {
+            xtype: 'widgetcell',
+            widget: {
+                xtype: 'combobox',
+                margin: '0 10',
+                editable: false,
+                queryMode: 'local',
+                displayField: 'name',
+                valueField: 'value',
+                // bind: '{record.auto}',
+                store: [
+                    { name: 'Auto'.t(), value: true },
+                    { name: 'Custom'.t(), value: false }
+                ]
+            }
+        }
+        // renderer: Ung.config.network.MainController.natTypeRenderer
     }
 });
