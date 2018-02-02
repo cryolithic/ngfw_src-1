@@ -436,7 +436,7 @@ Ext.define('Ung.util.Renderer', {
     },
 
     id: function(value){
-        return ( value < 0 || value === undefined ) ? 'new'.t() : value;
+        return ( value < 0 || value === undefined ) ? 'new'.t() : '<span style="color: #999;">#</span>' + value;
     },
 
 });

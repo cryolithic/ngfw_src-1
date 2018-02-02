@@ -21,7 +21,9 @@ Ext.define('Ung.config.network.view.NatRules', {
         xtype: 'mastergrid',
         flex: 3,
 
+        settingsProperty: 'natRules',
         conditions: [
+            Condition.HOST_IN_PENALTY_BOX,
             Condition.DST_ADDR,
             Condition.DST_PORT,
             Condition.DST_INTF,
@@ -33,9 +35,29 @@ Ext.define('Ung.config.network.view.NatRules', {
             Condition.SERVER_TAGGED
         ],
 
-        plugins: {
-            gridcellediting: true
+        newRecord: {
+            ruleId: -1,
+            enabled: true,
+            auto: true,
+            javaClass: 'com.untangle.uvm.network.NatRule',
+            conditions: {
+                javaClass: 'java.util.LinkedList',
+                list: []
+            },
+            description: ''
         },
+
+        plugins: {
+            gridcellediting: true,
+            gridviewoptions: false
+        },
+
+        // defaults: {
+        //     menuDisabled: true
+        // },
+
+        sortable: false,
+        // columnMenu: null,
 
         // listeners: {
         //     painted: 'onPainted'
@@ -75,66 +97,111 @@ Ext.define('Ung.config.network.view.NatRules', {
 
         bind: '{natRules}',
 
-        columns: [{
-            text: 'Move'.t(),
+        columns: [
+        //     {
+        //     text: 'Move'.t(),
+        //     align: 'center',
+        //     width: 60,
+        //     cell: {
+        //         tools: {
+        //             menu: {
+        //                 iconCls: 'x-fa fa-arrows-v',
+        //                 margin: '0 20 0 0',
+        //                 handler: 'showMenu',
+        //             }
+        //         }
+        //     }
+        //     // cell: {
+        //     //     tools: {
+        //     //         expand: {
+        //     //             iconCls: 'x-fa fa-arrows-v',
+        //     //             xtype: 'button',
+        //     //             arrow: false,
+        //     //             menu: {
+        //     //                 indented: false,
+        //     //                 minWidth: 150,
+        //     //                 items: [{
+        //     //                     text: 'First'.t(),
+        //     //                     iconCls: 'x-fa fa-angle-double-up',
+        //     //                     handler: 'moveRecord'
+        //     //                 }, {
+        //     //                     text: 'Up'.t(),
+        //     //                     iconCls: 'x-fa fa-angle-up',
+        //     //                     handler: 'moveRecord'
+        //     //                 }, {
+        //     //                     text: 'Down'.t(),
+        //     //                     iconCls: 'x-fa fa-angle-down',
+        //     //                     handler: 'moveRecord'
+        //     //                 }, {
+        //     //                     text: 'Last'.t(),
+        //     //                     iconCls: 'x-fa fa-angle-double-down',
+        //     //                     handler: 'moveRecord'
+        //     //                 }, '-', {
+        //     //                     text: 'Move After Rule'.t(),
+        //     //                     // iconCls: 'x-fa fa-angle-right',
+        //     //                     menu: {
+        //     //                         indented: false,
+        //     //                         minWidth: 150,
+        //     //                         items: [
+        //     //                             { text: '#1 cccccccc' },
+        //     //                             { text: '#2 test' },
+        //     //                             { text: '#3 new one' }
+        //     //                         ]
+        //     //                     }
+        //     //                 }]
+        //     //             }
+        //     //         }
+        //     //     }
+        //     // }
+        // },
+            {
+            text: '<span class="x-fa fa-sort"></span>',
+            width: 44,
             align: 'center',
+            resizable: false,
+            menuDisabled: true,
             cell: {
                 tools: {
-                    expand: {
-                        iconCls: 'x-fa fa-arrows-v',
-                        xtype: 'button',
-                        arrow: false,
-                        menu: {
-                            indented: false,
-                            minWidth: 150,
-                            items: [{
-                                text: 'First'.t(),
-                                iconCls: 'x-fa fa-angle-double-up'
-                            }, {
-                                text: 'Up'.t(),
-                                iconCls: 'x-fa fa-angle-up'
-                            }, {
-                                text: 'Down'.t(),
-                                iconCls: 'x-fa fa-angle-down'
-                            }, {
-                                text: 'Last'.t(),
-                                iconCls: 'x-fa fa-angle-double-down'
-                            }, '-', {
-                                text: 'Move After Rule'.t(),
-                                // iconCls: 'x-fa fa-angle-right',
-                                menu: {
-                                    indented: false,
-                                    minWidth: 150,
-                                    items: [
-                                        { text: '#1 cccccccc' },
-                                        { text: '#2 test' },
-                                        { text: '#3 new one' }
-                                    ]
-                                }
-                            }]
-                        }
+                    menu: {
+                        iconCls: 'x-fa fa-sort',
+                        margin: '0 20 0 0',
+                        handler: 'showMoveMenu',
                     }
                 }
             }
         }, {
-            text: 'Rule Id'.t(),
-            width: Renderer.idWidth,
+            text: '#' + 'id'.t(),
+            width: 44,
             align: 'right',
             resizable: false,
+            menuDisabled: true,
             dataIndex: 'ruleId',
-            renderer: Renderer.id
+            renderer: Renderer.id,
+            cell: {
+                encodeHtml: false
+            }
         }, {
-            text: 'Enable'.t(),
+            // text: 'Enable'.t(),
+            text: '<span class="x-fa fa-check"></span>',
+            width: 44,
             xtype: 'checkcolumn',
             headerCheckbox: false,
             dataIndex: 'enabled',
-            resizable: false,
-            width: Renderer.booleanWidth,
+            resizable: false
         }, {
             text: 'Description',
             width: 200,
             dataIndex: 'description',
-            editable: true
+            editable: true,
+            cell: {
+                encodeHtml: false
+            },
+            renderer: function (val) {
+                if (!val) {
+                    return '<em style="color: #999;">add a description</em>';
+                }
+                return val;
+            }
         }, {
             text: 'Conditions'.t(),
             width: Renderer.messageWidth,
@@ -142,22 +209,36 @@ Ext.define('Ung.config.network.view.NatRules', {
             dataIndex: 'conditions',
             cell: {
                 encodeHtml: false,
+                bodyCls: 'cond',
                 tools: {
                     menu: {
-                        margin: '0 20 0 0',
+                        iconCls: 'x-fa fa-filter',
+                        margin: '0 10 0 0',
                         handler: 'showMenu',
                         // zone: 'end'
                     }
                 }
             },
             renderer: function (value) {
-                var html = [];
+                var html = [], condition;
+
+                if (value.list.length === 0) {
+                    return '<span class="x-fa fa-arrow-left" style="color: #999;"></span> &nbsp;&nbsp;&nbsp; <em style="color: #999;">click to add conditions</em>';
+                }
+
                 Ext.Array.each(value.list, function (cond) {
-                    html.push(cond.conditionType + ' = ' + cond.value);
+                    condition = Condition[cond.conditionType];
+
+                    if (condition.type === 'menuradioitem') {
+                        html.push('<div><span class="type">' + condition.text + '</span><span class="' + (cond.invert ? 'bool-no' : 'bool-yes') + '">' + (cond.invert ? '<span class="x-fa fa-times" style="padding: 0;"></span>' : '<span class="x-fa fa-check" style="padding: 0;"></span>') + '</span></div>');
+                        return;
+                    }
+
+                    html.push('<div><span class="type">' + Condition[cond.conditionType].text + '</span><span class="invert">' + (cond.invert ? 'NOT' : 'IS')  + '</span><span class="value">' + (cond.value || '<span class="x-fa fa-question-circle" style="padding: 0; color: orangered;"></span>' ) + '</span></div>');
                 });
                 // return html.split(',');
-
-                return html.join(', ');
+                return html.join('');
+                // return html.join(', ');
                 // for (var i = 0; i < value.list.length; i += 1) {
                 //     var valueRenderer = [];
 
@@ -195,9 +276,24 @@ Ext.define('Ung.config.network.view.NatRules', {
             }
         }, {
             text: 'NAT Type'.t(),
+            width: 150,
             dataIndex: 'auto',
-            xtype: 'checkcolumn',
-            headerCheckbox: false
+            cell: {
+                xtype: 'widgetcell',
+                widget: {
+                    xtype: 'combobox',
+                    margin: '0 10',
+                    editable: false,
+                    queryMode: 'local',
+                    displayField: 'name',
+                    valueField: 'value',
+                    // bind: '{record.auto}',
+                    store: [
+                        { name: 'Auto'.t(), value: true },
+                        { name: 'Custom'.t(), value: false }
+                    ]
+                }
+            }
             // renderer: Ung.config.network.MainController.natTypeRenderer
         }, {
             text: 'New Source'.t(),
@@ -205,20 +301,20 @@ Ext.define('Ung.config.network.view.NatRules', {
             width: 150,
             editable: true,
             editor: {
-                xtype: 'textfield',
-                inputMask: '999.999.999.999'
+                xtype: 'textfield'
             }
             // renderer: Ung.config.network.MainController.natNewSourceRenderer
         }, {
             align: 'center',
+            text: '<span class="x-fa fa-trash"></span>',
+            width: 44,
+            resizable: false,
+            menuDisabled: true,
             cell: {
                 tools: {
-                    expand: {
-                        iconCls: 'x-fa fa-pencil green',
-                        handler: 'onEditInterface'
-                    },
                     minus: {
-                        iconCls: 'x-fa fa-minus-circle'
+                        iconCls: 'x-fa fa-trash',
+                        handler: 'removeRecord',
                     }
                 }
             }

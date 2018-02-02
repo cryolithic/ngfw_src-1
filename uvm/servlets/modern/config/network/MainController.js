@@ -108,6 +108,67 @@ Ext.define('Ung.config.network.MainController', {
         });
     },
 
+    saveSettings: function() {
+        var view = this.getView();
+        var vm = this.getViewModel();
+        var me = this;
+
+        console.log(vm.get('settings'));
+
+        view.query('mastergrid').forEach(function (grid) {
+            var store = grid.getStore();
+
+            console.log(store.getModifiedRecords(), store.getNewRecords());
+            // vm.set(grid.listProperty, Ext.Array.pluck(store.getRange(), 'data'));
+
+            vm.set('settings.' + grid.settingsProperty + '.list', Ext.Array.pluck(store.getRange(), 'data'));
+
+            console.log(vm.get('settings'));
+
+            // if(store.type == "chained"){
+            //     return;
+            // }
+            // if(grid.listProperty == null){
+            //     return;
+            // }
+
+            /**
+             * Important!
+             * update custom grids only if are modified records or it was reordered via drag/drop
+             */
+            // if (store.getModifiedRecords().length > 0 || store.isReordered) {
+            //     store.each(function (record) {
+            //         if (record.get('markedForDelete')) {
+            //             record.drop();
+            //         }
+            //     });
+            //     store.isReordered = undefined;
+            //     vm.set(grid.listProperty, Ext.Array.pluck(store.getRange(), 'data'));
+            //     // store.commitChanges();
+            // }
+        });
+
+        view.mask();
+        Rpc.asyncData('rpc.networkManager.setNetworkSettings', vm.get('settings'))
+        .then(function(result) {
+            me.loadSettings();
+            Ext.toast({
+                message: 'Settings saved',
+                centered: true,
+                timeout: 2000,
+                showAnimation: {
+                    type: 'slide',
+                    duration: 250,
+                    easing: 'ease-out'
+                }
+            });
+            // Util.successToast('Network'.t() + ' settings saved!');
+            // Ext.fireEvent('resetfields', view);
+        }).always(function () {
+            view.unmask();
+        });
+    },
+
 
     onEditInterface: function () {
         var view = this.getView(),

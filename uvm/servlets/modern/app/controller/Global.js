@@ -298,8 +298,12 @@ Ext.define('Ung.controller.Global', {
 
             var tree = configView.down('treelist');
             var node = tree.getStore().findNode('href', window.location.hash);
+
             tree.setSelection(node);
             // mainView.setLoading(true);
+
+            console.log(view);
+
             Ext.Loader.loadScript({
                 url: 'script/config/' + config + '.js',
                 onLoad: function () {
@@ -307,8 +311,8 @@ Ext.define('Ung.controller.Global', {
                         xtype: 'config-' + config,
                         name: config,
                         itemId: 'configCard',
-                        activeTab: view || 0,
-                        subTab: subView || 0,
+                        activeItem: view ? 'config-' + config + '-' + view : 0,
+                        // subTab: subView || 0,
                         listeners: {
                             deactivate: function () {
                                 // remove the config container

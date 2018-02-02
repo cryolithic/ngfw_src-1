@@ -22,7 +22,8 @@ Ext.define('Ung.config.network.Main', {
             items: [{
                 text: 'Save Network Settings'.t(),
                 ui: 'action',
-                iconCls: 'x-fa fa-floppy-o'
+                iconCls: 'x-fa fa-floppy-o',
+                handler: 'saveSettings'
             }]
         },
         { xtype: 'config-network-interfaces' },
