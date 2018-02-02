@@ -21,6 +21,9 @@ Ext.define('Ung.config.network.view.NatRules', {
         xtype: 'mastergrid',
         flex: 3,
 
+        enableMove: true,
+        enableDelete: true,
+
         settingsProperty: 'natRules',
         conditions: [
             Condition.HOST_IN_PENALTY_BOX,
@@ -57,119 +60,11 @@ Ext.define('Ung.config.network.view.NatRules', {
         // },
 
         sortable: false,
-        // columnMenu: null,
-
-        // listeners: {
-        //     painted: 'onPainted'
-        // },
-
-        // tbar: ['@add', '->', '@import', '@export'],
-        // recordActions: ['edit', 'delete', 'reorder'],
-
-        // emptyText: 'No NAT Rules defined'.t(),
-
-        // listProperty: 'settings.natRules.list',
-        // ruleJavaClass: 'com.untangle.uvm.network.NatRuleCondition',
-
-        // conditions: [
-        //     {name:"DST_ADDR",displayName: "Destination Address".t(), type: 'textfield', visible: true, vtype:"ipMatcher"},
-        //     {name:"DST_PORT",displayName: "Destination Port".t(), type: 'textfield',vtype:"portMatcher", visible: true},
-        //     {name:"DST_INTF",displayName: "Destination Interface".t(), type: 'checkboxgroup', values: Util.getInterfaceList(true, true), visible: true},
-        //     {name:"SRC_ADDR",displayName: "Source Address".t(), type: 'textfield', visible: true, vtype:"ipMatcher"},
-        //     {name:"SRC_PORT",displayName: "Source Port".t(), type: 'textfield',vtype:"portMatcher", visible: rpc.isExpertMode},
-        //     {name:"SRC_INTF",displayName: "Source Interface".t(), type: 'checkboxgroup', values: Util.getInterfaceList(true, true), visible: true},
-        //     {name:"PROTOCOL",displayName: "Protocol".t(), type: 'checkboxgroup', values: [["TCP","TCP"],["UDP","UDP"],["ICMP","ICMP"],["GRE","GRE"],["ESP","ESP"],["AH","AH"],["SCTP","SCTP"]], visible: true},
-        //     {name:"CLIENT_TAGGED",displayName: 'Client Tagged'.t(), type: 'textfield', visible: true},
-        //     {name:"SERVER_TAGGED",displayName: 'Server Tagged'.t(), type: 'textfield', visible: true},
-        // ],
-
-        // emptyRow: {
-        //     ruleId: -1,
-        //     enabled: true,
-        //     auto: true,
-        //     javaClass: 'com.untangle.uvm.network.NatRule',
-        //     conditions: {
-        //         javaClass: 'java.util.LinkedList',
-        //         list: []
-        //     },
-        //     description: ''
-        // },
 
         bind: '{natRules}',
 
-        columns: [
-        //     {
-        //     text: 'Move'.t(),
-        //     align: 'center',
-        //     width: 60,
-        //     cell: {
-        //         tools: {
-        //             menu: {
-        //                 iconCls: 'x-fa fa-arrows-v',
-        //                 margin: '0 20 0 0',
-        //                 handler: 'showMenu',
-        //             }
-        //         }
-        //     }
-        //     // cell: {
-        //     //     tools: {
-        //     //         expand: {
-        //     //             iconCls: 'x-fa fa-arrows-v',
-        //     //             xtype: 'button',
-        //     //             arrow: false,
-        //     //             menu: {
-        //     //                 indented: false,
-        //     //                 minWidth: 150,
-        //     //                 items: [{
-        //     //                     text: 'First'.t(),
-        //     //                     iconCls: 'x-fa fa-angle-double-up',
-        //     //                     handler: 'moveRecord'
-        //     //                 }, {
-        //     //                     text: 'Up'.t(),
-        //     //                     iconCls: 'x-fa fa-angle-up',
-        //     //                     handler: 'moveRecord'
-        //     //                 }, {
-        //     //                     text: 'Down'.t(),
-        //     //                     iconCls: 'x-fa fa-angle-down',
-        //     //                     handler: 'moveRecord'
-        //     //                 }, {
-        //     //                     text: 'Last'.t(),
-        //     //                     iconCls: 'x-fa fa-angle-double-down',
-        //     //                     handler: 'moveRecord'
-        //     //                 }, '-', {
-        //     //                     text: 'Move After Rule'.t(),
-        //     //                     // iconCls: 'x-fa fa-angle-right',
-        //     //                     menu: {
-        //     //                         indented: false,
-        //     //                         minWidth: 150,
-        //     //                         items: [
-        //     //                             { text: '#1 cccccccc' },
-        //     //                             { text: '#2 test' },
-        //     //                             { text: '#3 new one' }
-        //     //                         ]
-        //     //                     }
-        //     //                 }]
-        //     //             }
-        //     //         }
-        //     //     }
-        //     // }
-        // },
-            {
-            text: '<span class="x-fa fa-sort"></span>',
-            width: 44,
-            align: 'center',
-            resizable: false,
-            menuDisabled: true,
-            cell: {
-                tools: {
-                    menu: {
-                        iconCls: 'x-fa fa-sort',
-                        margin: '0 20 0 0',
-                        handler: 'showMoveMenu',
-                    }
-                }
-            }
-        }, {
+        _columns: [{
+            xtype: 'gridcolumn',
             text: '#' + 'id'.t(),
             width: 44,
             align: 'right',
@@ -189,6 +84,7 @@ Ext.define('Ung.config.network.view.NatRules', {
             dataIndex: 'enabled',
             resizable: false
         }, {
+            xtype: 'gridcolumn',
             text: 'Description',
             width: 200,
             dataIndex: 'description',
@@ -203,6 +99,7 @@ Ext.define('Ung.config.network.view.NatRules', {
                 return val;
             }
         }, {
+            xtype: 'gridcolumn',
             text: 'Conditions'.t(),
             width: Renderer.messageWidth,
             flex: 1,
@@ -238,43 +135,9 @@ Ext.define('Ung.config.network.view.NatRules', {
                 });
                 // return html.split(',');
                 return html.join('');
-                // return html.join(', ');
-                // for (var i = 0; i < value.list.length; i += 1) {
-                //     var valueRenderer = [];
-
-                //     switch (conds[i].conditionType) {
-                //     case 'SRC_INTF':
-                //     case 'DST_INTF':
-                //         conds[i].value.toString().split(',').forEach(function (intfff) {
-                //             valueRenderer.push(Util.interfacesListNamesMap()[intfff]);
-                //         });
-                //         break;
-                //     case 'DST_LOCAL':
-                //     case 'WEB_FILTER_FLAGGED':
-                //         valueRenderer.push('true'.t());
-                //         break;
-                //     case 'DAY_OF_WEEK':
-                //         conds[i].value.toString().split(',').forEach(function (day) {
-                //             valueRenderer.push(Util.weekdaysMap[day]);
-                //         });
-                //         break;
-                //     default:
-                //         // to avoid exceptions, in some situations condition value is null
-                //         if (conds[i].value !== null) {
-                //             valueRenderer = conds[i].value.toString().split(',');
-                //         } else {
-                //             valueRenderer = [];
-                //         }
-                //     }
-                //     // for boolean conditions just add 'True' string as value
-                //     // if (view.conditionsMap[conds[i].conditionType].type === 'boolean') {
-                //     //     valueRenderer = ['True'.t()];
-                //     // }
-
-                //     resp.push(view.conditionsMap[conds[i].conditionType].displayName + '<strong>' + (conds[i].invert ? ' &nrArr; ' : ' &rArr; ') + '<span class="cond-val ' + (conds[i].invert ? 'invert' : '') + '">' + valueRenderer.join(', ') + '</span>' + '</strong>');
-                // }
             }
         }, {
+            xtype: 'gridcolumn',
             text: 'NAT Type'.t(),
             width: 150,
             dataIndex: 'auto',
@@ -296,6 +159,7 @@ Ext.define('Ung.config.network.view.NatRules', {
             }
             // renderer: Ung.config.network.MainController.natTypeRenderer
         }, {
+            xtype: 'gridcolumn',
             text: 'New Source'.t(),
             dataIndex: 'newSource',
             width: 150,
@@ -304,28 +168,7 @@ Ext.define('Ung.config.network.view.NatRules', {
                 xtype: 'textfield'
             }
             // renderer: Ung.config.network.MainController.natNewSourceRenderer
-        }, {
-            align: 'center',
-            text: '<span class="x-fa fa-trash"></span>',
-            width: 44,
-            resizable: false,
-            menuDisabled: true,
-            cell: {
-                tools: {
-                    minus: {
-                        iconCls: 'x-fa fa-trash',
-                        handler: 'removeRecord',
-                    }
-                }
-            }
         }]
-        // editorFields: [
-        //     Field.enableRule('Enable NAT Rule'.t()),
-        //     Field.description,
-        //     Field.conditions,
-        //     Field.natType,
-        //     Field.natSource
-        // ]
     }],
 
     // rulesMenu: {

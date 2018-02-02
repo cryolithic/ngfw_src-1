@@ -3,12 +3,15 @@ Ext.define('Ung.cmp.MasterGrid', {
     alias: 'widget.mastergrid',
 
     listeners: {
-        // initialize: 'onInitialize',
+        initialize: 'onInitialize',
         painted: 'onPainted'
     },
 
     disableSelection: true,
     // striped: true,
+
+    enableMove: false,
+    enableDelete: false,
 
     items: [{
         xtype: 'toolbar',
@@ -23,21 +26,13 @@ Ext.define('Ung.cmp.MasterGrid', {
 
     controller: {
         onInitialize: function (grid) {
-            console.log(grid.getColumns());
-            var columns = grid.getColumns();
-            // Ext.Array.each(columns, function (col) {
-            //     delete col['$initParent'];
-            // });
-            columns.push(Ext.create({
-                xtype: 'gridcolumn',
-                text: 'aaa',
-                width: 100
-            }));
-            console.log(columns);
+            var columns = [];
+            if (grid.enableMove)   { grid._columns.unshift(Column.MOVE); }
+            if (grid.enableDelete) { grid._columns.push(Column.DELETE); }
+            Ext.Array.each(grid._columns, function (column) {
+                columns.push(Ext.create(column));
+            });
             grid.setColumns(columns);
-            grid.refresh();
-            // // columns.push(newcol);
-            // grid.headerCt.insert(columns.length, newcol);
         },
 
 
