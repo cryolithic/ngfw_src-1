@@ -43,7 +43,8 @@ Ext.define('Ung.view.main.Main', {
         items: [{
             xtype: 'component',
             padding: '0 10',
-            html: '<img src="' + '/images/BrandingLogo.png" style="height: 40px;"/>'
+            // html: '<img src="' + '/images/BrandingLogo.png" style="height: 40px;"/>'
+            html: '<img src="' + '/icons/ad-blocker.svg" style="height: 40px;"/>'
         }, {
             text: 'Dashboard'.t(),
             iconCls: 'x-fa fa-home',

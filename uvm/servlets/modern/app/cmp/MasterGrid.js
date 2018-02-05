@@ -2,38 +2,93 @@ Ext.define('Ung.cmp.MasterGrid', {
     extend: 'Ext.grid.Grid',
     alias: 'widget.mastergrid',
 
+    layout: 'fit',
+
     listeners: {
         initialize: 'onInitialize',
         painted: 'onPainted'
     },
 
+    plugins: {
+        gridcellediting: true,
+        gridviewoptions: false
+    },
+
     disableSelection: true,
     // defaultListenerScope: true,
     // striped: true,
+    sortable: false,
 
     enableMove: false,
     enableDelete: false,
 
-    items: [{
-        xtype: 'toolbar',
-        docked: 'top',
-        items: [{
+    actions: {
+        ADD: {
             text: 'Add'.t(),
-            ui: 'action',
             iconCls: 'x-fa fa-plus',
             handler: 'addRecord'
-        }]
-    }],
+        }
+    },
+
+    // items: [{
+    //     xtype: 'toolbar',
+    //     docked: 'top',
+    //     items: [{
+    //         text: 'Add'.t(),
+    //         ui: 'action',
+    //         iconCls: 'x-fa fa-plus',
+    //         handler: 'addRecord'
+    //     }]
+    // }],
+
+    // items: [{
+    //     docked: 'top',
+    //     xtype: 'toolbar',
+    //     itemId: 'description',
+    //     padding: 16,
+    //     hidden: true,
+    //     style: {
+    //         background: '#F5F5F5',
+    //         fontSize: '14px'
+    //     }
+    // }],
 
     controller: {
         onInitialize: function (grid) {
-            var columns = [];
+            var columns = [], actions = [];
             if (grid.enableMove)   { grid.columnsDef.unshift(Column.MOVE); }
             if (grid.enableDelete) { grid.columnsDef.push(Column.DELETE); }
             Ext.Array.each(grid.columnsDef, function (column) {
                 columns.push(Ext.create(column));
             });
             grid.setColumns(columns);
+
+            if (grid.toolbarActions) {
+                Ext.Array.each(grid.toolbarActions, function (action) {
+                    actions.push(grid.actions[action])
+                });
+                grid.insert(1, {
+                    xtype: 'toolbar',
+                    docked: 'top',
+                    items: actions
+                });
+            }
+            if (grid.description) {
+                // grid.down('#description').setHtml(grid.description);
+                grid.insert(1, {
+                    xtype: 'toolbar',
+                    docked: 'top',
+                    shadow: false,
+                    padding: 16,
+                    style: {
+                        // background: '#F5F5F5',
+                        fontSize: '14px',
+                        fontWeight: 400,
+                        zIndex: 10
+                    },
+                    html: grid.description
+                });
+            }
         },
 
 

@@ -91,6 +91,23 @@ html, body {
     }
 }
 
+.x-treelist-item-icon.tree {
+    width: 30px;
+    height: 30px;
+    margin: 6px 0 0 0;
+    background-size: contain;
+    background-repeat: no-repeat;
+    &.network { background-image: url('/skins/modern-rack/images/admin/config/icon_config_network.png'); }
+    &.administration { background-image: url('/skins/modern-rack/images/admin/config/icon_config_administration.png'); }
+    &.events { background-image: url('/skins/modern-rack/images/admin/config/icon_config_events.png'); }
+    &.email { background-image: url('/skins/modern-rack/images/admin/config/icon_config_email.png'); }
+    &.directory { background-image: url('/skins/modern-rack/images/admin/config/icon_config_directory.png'); }
+    &.system { background-image: url('/skins/modern-rack/images/admin/config/icon_config_system.png'); }
+    &.upgrade { background-image: url('/skins/modern-rack/images/admin/config/icon_config_upgrade.png'); }
+    &.about { background-image: url('/skins/modern-rack/images/admin/config/icon_config_about.png'); }
+}
+
+
 // .x-gridcell-body-el {
 //     padding: 6px;
 // }

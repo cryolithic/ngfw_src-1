@@ -55,7 +55,7 @@ Ext.define('Ung.view.config.Config', {
                         text: 'Network'.t(),
                         allowDrag: true,
                         // icon: '/skins/modern-rack/images/admin/config/icon_config_network.png',
-                        iconCls: 'x-fa fa-cogs',
+                        iconCls: 'tree network',
                         // href: '#config/network/interfaces',
                         children: [
                             { text: 'Interfaces'.t(), leaf: true, href: '#config/network/interfaces' },
@@ -83,7 +83,7 @@ Ext.define('Ung.view.config.Config', {
                         ]
                     }, {
                         text: 'Administration'.t(),
-                        iconCls: 'x-fa fa-lock',
+                        iconCls: 'tree administration',
                         children: [
                             { text: 'Admin'.t(), leaf: true },
                             { text: 'Certificates'.t(), leaf: true },
@@ -92,7 +92,7 @@ Ext.define('Ung.view.config.Config', {
                         ]
                     }, {
                         text: 'Events'.t(),
-                        iconCls: 'x-fa fa-list',
+                        iconCls: 'tree events',
                         children: [
                             { text: 'Alerts'.t(), leaf: true },
                             { text: 'Triggers'.t(), leaf: true },
@@ -100,7 +100,7 @@ Ext.define('Ung.view.config.Config', {
                         ]
                     }, {
                         text: 'Email'.t(),
-                        iconCls: 'x-fa fa-envelope',
+                        iconCls: 'tree email',
                         children: [
                             { text: 'Outgoing Server'.t(), leaf: true },
                             { text: 'Safe List'.t(), leaf: true },
@@ -108,13 +108,13 @@ Ext.define('Ung.view.config.Config', {
                         ]
                     }, {
                         text: 'Local Directory'.t(),
-                        iconCls: 'x-fa fa-folder',
+                        iconCls: 'tree directory',
                         children: [
                             { text: 'Local Users'.t(), leaf: true }
                         ]
                     }, {
                         text: 'System'.t(),
-                        iconCls: 'x-fa fa-desktop',
+                        iconCls: 'tree system',
                         children: [
                             { text: 'Regional'.t(), leaf: true },
                             { text: 'Support'.t(), leaf: true },
@@ -125,10 +125,10 @@ Ext.define('Ung.view.config.Config', {
                         ]
                     }, {
                         text: 'Upgrade'.t(), leaf: true,
-                        iconCls: 'x-fa fa-arrow-circle-up',
+                        iconCls: 'tree upgrade',
                     }, {
                         text: 'About'.t(),
-                        iconCls: 'x-fa fa-info',
+                        iconCls: 'tree about',
                         children: [
                             { text: 'Server'.t(), leaf: true },
                             { text: 'License'.t(), leaf: true },
