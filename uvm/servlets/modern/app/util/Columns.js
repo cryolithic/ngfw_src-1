@@ -64,9 +64,13 @@ Ext.define('Ung.util.Column', {
         text: 'Description',
         width: 200,
         dataIndex: 'description',
-        editable: true,
         cell: {
             encodeHtml: false
+        },
+        editable: true,
+        editor: {
+            xtype: 'textfield',
+            // required: true
         },
         renderer: function (val) {
             if (!val) {

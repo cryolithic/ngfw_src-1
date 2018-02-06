@@ -61,7 +61,7 @@ Ext.define('Ung.config.network.MainModel', {
         // Port Forward
         portForwardRules:   { data: '{settings.portForwardRules.list}' },
         // NAT
-        natRules:           { data: '{settings.natRules.list}' },
+        // natRules:           { data: '{settings.natRules.list}', listeners: { update: function () { console.log('update'); } }},
         // Bypass
         bypassRules:        { data: '{settings.bypassRules.list}' },
         // Routes

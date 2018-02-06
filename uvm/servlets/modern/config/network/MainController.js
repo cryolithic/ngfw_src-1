@@ -280,6 +280,11 @@ Ext.define('Ung.config.network.MainController', {
         //conds.list[0].value = '1, 2, 3, 4, any';
     },
 
+
+    onDataUpdate: function (el, record) {
+        console.log(record);
+    },
+
     // saveSettings: function () {
     //     var view = this.getView();
     //     var vm = this.getViewModel();

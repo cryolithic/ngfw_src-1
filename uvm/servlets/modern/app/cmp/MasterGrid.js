@@ -6,7 +6,36 @@ Ext.define('Ung.cmp.MasterGrid', {
 
     listeners: {
         initialize: 'onInitialize',
-        painted: 'onPainted'
+        painted: 'onPainted',
+        navigate: function (el, to, from) {
+            if (!from) { return; }
+            console.log(el.getColumns());
+            console.log(from);
+            console.log(el.getAt(from.recordIndex));
+
+            var validation = from.record.getValidation().getData();
+            console.log(validation);
+            Ext.Array.each(from.row.cells, function (cell) {
+                if (validation.hasOwnProperty(cell.dataIndex) && validation[cell.dataIndex] !== true ) {
+                    cell.setUserCls('invalid-cell');
+                } else {
+                    console.log('valid');
+                    cell.setUserCls('');
+                }
+            });
+
+
+            // var validation = from.record.getValidation();
+            // console.log(validation.getData());
+            // Ext.Object.each(from.record.getValidation().getData(), function (field, error) {
+            //     if (field === '_id') { return; }
+
+            // });
+            // if (!from.record.getValidation()) {
+            //     from.cell.setUserCls('invalid-cell');
+            // }
+
+        }
     },
 
     plugins: {
@@ -14,6 +43,7 @@ Ext.define('Ung.cmp.MasterGrid', {
         gridviewoptions: false
     },
 
+    markDirty: true,
     disableSelection: true,
     // defaultListenerScope: true,
     // striped: true,
@@ -65,7 +95,7 @@ Ext.define('Ung.cmp.MasterGrid', {
 
             if (grid.toolbarActions) {
                 Ext.Array.each(grid.toolbarActions, function (action) {
-                    actions.push(grid.actions[action])
+                    actions.push(grid.actions[action]);
                 });
                 grid.insert(1, {
                     xtype: 'toolbar',
@@ -412,7 +442,10 @@ Ext.define('Ung.cmp.MasterGrid', {
 
         removeRecord: function (grid, context) {
             context.record.drop();
-        }
+        },
+
+
+
     }
 
 });
