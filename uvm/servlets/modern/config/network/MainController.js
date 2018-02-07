@@ -64,7 +64,7 @@ Ext.define('Ung.config.network.MainController', {
         ], this).then(function (result) {
             v.unmask();
             var intfStatus, devStatus;
-
+            console.log(result);
             rpc.networkSettings = result[0]; // update rpc.networkSettings with latest data (usually after save)
 
             result[0].interfaces.list.forEach(function (intf) {
@@ -150,23 +150,23 @@ Ext.define('Ung.config.network.MainController', {
 
         view.mask();
         Rpc.asyncData('rpc.networkManager.setNetworkSettings', vm.get('settings'))
-        .then(function(result) {
-            me.loadSettings();
-            Ext.toast({
-                message: 'Settings saved',
-                centered: true,
-                timeout: 2000,
-                showAnimation: {
-                    type: 'slide',
-                    duration: 250,
-                    easing: 'ease-out'
-                }
+            .then(function(result) {
+                me.loadSettings();
+                Ext.toast({
+                    message: 'Settings saved',
+                    centered: true,
+                    timeout: 2000,
+                    showAnimation: {
+                        type: 'slide',
+                        duration: 250,
+                        easing: 'ease-out'
+                    }
+                });
+                // Util.successToast('Network'.t() + ' settings saved!');
+                // Ext.fireEvent('resetfields', view);
+            }).always(function () {
+                view.unmask();
             });
-            // Util.successToast('Network'.t() + ' settings saved!');
-            // Ext.fireEvent('resetfields', view);
-        }).always(function () {
-            view.unmask();
-        });
     },
 
 

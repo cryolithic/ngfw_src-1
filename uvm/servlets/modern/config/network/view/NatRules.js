@@ -6,14 +6,14 @@ Ext.define('Ung.config.network.view.NatRules', {
     bind: {
         store: {
             data: '{settings.natRules.list}',
-            model: 'NatRules'
+            model: 'Ung.model.NatRules'
         }
     },
 
     title: 'NAT Rules'.t(),
     description: 'NAT Rules control the rewriting of the IP source address of traffic (Network Address Translation). The rules are evaluated in order.'.t(),
 
-    toolbarActions: ['ADD'],
+    toolbarActions: ['ADD', 'REVERT'],
     enableMove: true,
     enableDelete: true,
 

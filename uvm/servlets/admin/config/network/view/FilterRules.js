@@ -45,7 +45,7 @@ Ext.define('Ung.config.network.view.FilterRules', {
         emptyRow: {
             ruleId: -1,
             enabled: true,
-            ipvsEnabled: false,
+            ipv6Enabled: false,
             description: '',
             javaClass: 'com.untangle.uvm.network.FilterRule',
             conditions: {

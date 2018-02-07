@@ -142,5 +142,46 @@ Ext.define('Ung.util.Column', {
             }
         }
         // renderer: Ung.config.network.MainController.natTypeRenderer
-    }
+    },
+
+    BYPASS: {
+        text: 'Bypass'.t(),
+        width: 60,
+        xtype: 'checkcolumn',
+        headerCheckbox: false,
+        dataIndex: 'bypass',
+        resizable: false
+    },    
+
+    IPV6ENABLED: {
+        text: 'IPv6'.t(),
+        width: 60,
+        xtype: 'checkcolumn',
+        headerCheckbox: false,
+        dataIndex: 'ipv6Enabled',
+        resizable: false
+    },
+
+    BLOCKED: {
+        xtype: 'gridcolumn',
+        text: 'Action'.t(),
+        width: 150,
+        dataIndex: 'blocked',
+        cell: {
+            xtype: 'widgetcell',
+            widget: {
+                xtype: 'combobox',
+                margin: '0 10',
+                editable: false,
+                queryMode: 'local',
+                displayField: 'name',
+                valueField: 'value',
+                store: [
+                    { name: 'Block'.t(), value: true },
+                    { name: 'Pass'.t(), value: false }
+                ]
+            }
+        }
+    } 
+
 });

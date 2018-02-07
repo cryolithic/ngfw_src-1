@@ -3,7 +3,12 @@ Ext.define('Ung.config.network.view.FilterRules', {
     alias: 'widget.config-network-filter-rules',
     itemId: 'filter-rules',
 
-    bind: '{filterRules}',
+    bind: {
+        store: {
+            data: '{settings.filterRules.list}',
+            model: 'Ung.model.FilterRules'
+        }
+    },
 
     title: 'Filter Rules'.t(),
     description: 'Filter Rules control what sessions are passed/blocked. Filter rules process all sessions including bypassed sessions. The rules are evaluated in order.'.t(),
@@ -15,7 +20,6 @@ Ext.define('Ung.config.network.view.FilterRules', {
     settingsProperty: 'filterRules',
     conditionClass: 'com.untangle.uvm.network.FilterRuleCondition',
     conditions: [
-        Condition.HOST_IN_PENALTY_BOX,
         Condition.DST_ADDR,
         Condition.DST_PORT,
         Condition.DST_INTF,
@@ -32,19 +36,22 @@ Ext.define('Ung.config.network.view.FilterRules', {
     newRecord: {
         ruleId: -1,
         enabled: true,
-        auto: true,
+        ipv6Enabled: true,
+        description: '',
         javaClass: 'com.untangle.uvm.network.FilterRule',
         conditions: {
             javaClass: 'java.util.LinkedList',
             list: []
         },
-        description: ''
+        blocked: true
     },
 
     columnsDef: [
         Column.RULEID,
         Column.ENABLED,
+        Column.IPV6ENABLED,
         Column.DESCRIPTION,
-        Column.CONDITIONS
+        Column.CONDITIONS,
+        Column.BLOCKED
     ]
 });

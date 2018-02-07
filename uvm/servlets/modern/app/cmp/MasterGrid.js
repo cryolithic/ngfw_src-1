@@ -6,36 +6,8 @@ Ext.define('Ung.cmp.MasterGrid', {
 
     listeners: {
         initialize: 'onInitialize',
-        painted: 'onPainted',
-        navigate: function (el, to, from) {
-            if (!from) { return; }
-            console.log(el.getColumns());
-            console.log(from);
-            console.log(el.getAt(from.recordIndex));
-
-            var validation = from.record.getValidation().getData();
-            console.log(validation);
-            Ext.Array.each(from.row.cells, function (cell) {
-                if (validation.hasOwnProperty(cell.dataIndex) && validation[cell.dataIndex] !== true ) {
-                    cell.setUserCls('invalid-cell');
-                } else {
-                    console.log('valid');
-                    cell.setUserCls('');
-                }
-            });
-
-
-            // var validation = from.record.getValidation();
-            // console.log(validation.getData());
-            // Ext.Object.each(from.record.getValidation().getData(), function (field, error) {
-            //     if (field === '_id') { return; }
-
-            // });
-            // if (!from.record.getValidation()) {
-            //     from.cell.setUserCls('invalid-cell');
-            // }
-
-        }
+        painted: 'onPainted'
+        // navigate: function (el, to, from) { }
     },
 
     plugins: {
@@ -57,7 +29,12 @@ Ext.define('Ung.cmp.MasterGrid', {
             text: 'Add'.t(),
             iconCls: 'x-fa fa-plus',
             handler: 'addRecord'
-        }
+        },
+        REVERT: {
+            text: 'Revert'.t(),
+            iconCls: 'x-fa fa-refresh',
+            handler: 'revertChanges'
+        }        
     },
 
     // items: [{
@@ -122,15 +99,33 @@ Ext.define('Ung.cmp.MasterGrid', {
         },
 
 
-        onPainted: function () {
-            // var me = this;
-            // if (me.conditionsMenu) {
-            //     console.log('SUUUUUNT');
-            // } else {
-            //     console.log('NU SUUUUUNT');
+        onPainted: function (grid) {
+            var store = grid.getStore();
+            if (!store) {
+                grid.on('storechange', function (sender, store) {
+                    this.validate(store);
+                    store.on({
+                        datachanged: this.validate,
+                        scope: this
+                    });                 
+                }, this);                
+            } else {
+                this.validate(store);
+                grid.getStore().on({
+                    datachanged: this.validate,
+                    scope: this
+                });             
+            }
 
-            // }
             this.generateMenus();
+            // grid.on('storechange', function (sender, store) {
+            //     console.log('storechange');
+            //     this.validate(store);
+            //     store.on({
+            //         datachanged: this.validate,
+            //         scope: this
+            //     });                 
+            // }, this);
         },
 
 
@@ -440,11 +435,57 @@ Ext.define('Ung.cmp.MasterGrid', {
             grid.getStore().add(Ext.clone(grid.newRecord));
         },
 
+        revertChanges: function () {
+            var me = this;
+            me.getView().getStore().rejectChanges();
+        },
+
+
         removeRecord: function (grid, context) {
             context.record.drop();
         },
 
 
+
+        validate: function (store) {
+            var grid = this.getView(), row, validation;
+            // if (!grid.isVisible()) { return; }
+            console.log('validate');
+            // var store = this.getView().getStore();
+            // console.log(grid.getItemAt(0));
+            // console.log(store);
+
+            store.each(function (record) {
+                row = grid.getItemAt(store.indexOf(record));
+                validation = record.getValidation().getData();
+
+                Ext.Array.each(row.cells, function (cell) {
+                    if (validation.hasOwnProperty(cell.dataIndex) && validation[cell.dataIndex] !== true ) {
+                        cell.setUserCls('invalid-cell');
+                    } else {
+                        // console.log('valid');
+                        cell.setUserCls('');
+                    }
+                });
+                // Ext.Array.each(validations, function (validation) {
+                //     console.log(validation);
+                // });
+            });
+
+
+
+            // var records = store.getRecords(), validations;
+            // console.log(records);
+            // Ext.Array.each(records, function (record) {
+            //     var row = grid.getItemAt(store.indexOf(record));
+            //     console.log(row);
+            //     validations = record.getValidation().getData();
+            //     Ext.Array.each(validations, function (validation) {
+            //         console.log(validation);
+            //     });
+            // });                
+           
+        }
 
     }
 

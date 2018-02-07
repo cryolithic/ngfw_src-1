@@ -3,7 +3,13 @@ Ext.define('Ung.config.network.view.BypassRules', {
     alias: 'widget.config-network-bypass-rules',
     itemId: 'bypass-rules',
 
-    bind: '{bypassRules}',
+    bind: {
+        store: {
+            data: '{settings.bypassRules.list}',
+            model: 'Ung.model.BypassRules'
+        }
+    },
+    
 
     title: 'Bypass Rules'.t(),
     description: 'Bypass Rules control what traffic is scanned by the applications. Bypassed traffic skips application processing. The rules are evaluated in order. Sessions that meet no rule are not bypassed.'.t(),
@@ -15,7 +21,6 @@ Ext.define('Ung.config.network.view.BypassRules', {
     settingsProperty: 'bypassRules',
     conditionClass: 'com.untangle.uvm.network.BypassRuleCondition',
     conditions: [
-        Condition.HOST_IN_PENALTY_BOX,
         Condition.DST_ADDR,
         Condition.DST_PORT,
         Condition.DST_INTF,
@@ -32,7 +37,7 @@ Ext.define('Ung.config.network.view.BypassRules', {
     newRecord: {
         ruleId: -1,
         enabled: true,
-        auto: true,
+        bypass: true,
         javaClass: 'com.untangle.uvm.network.BypassRule',
         conditions: {
             javaClass: 'java.util.LinkedList',
@@ -43,8 +48,9 @@ Ext.define('Ung.config.network.view.BypassRules', {
 
     columnsDef: [
         Column.RULEID,
-        Ext.apply(Column.ENABLED, { renderer: Renderer.id }),
+        Column.ENABLED,
         Column.DESCRIPTION,
-        Column.CONDITIONS
+        Column.CONDITIONS,
+        Column.BYPASS
     ]
 });
