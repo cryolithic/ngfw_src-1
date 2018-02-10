@@ -39,7 +39,8 @@ Ext.define('Ung.view.config.Config', {
         items: [{
             xtype: 'treelist',
             scrollable: true,
-            ui: 'nav',
+            // ui: 'nav',
+            // micro: true,
             singleExpand: true,
             expanderFirst: false,
             expanderOnly: false,
@@ -66,7 +67,7 @@ Ext.define('Ung.view.config.Config', {
                             { text: 'Bypass Rules'.t(), leaf: true, href: '#config/network/bypass-rules' },
                             { text: 'Filter Rules'.t(), leaf: true, href: '#config/network/filter-rules' },
                             { text: 'Routes'.t(), leaf: true },
-                            { text: 'DNS Server'.t(), leaf: true },
+                            { text: 'DNS Server'.t(), leaf: true, href: '#config/network/dns-server' },
                             { text: 'DHCP Server'.t(), leaf: true },
                             { text: 'Advanced'.t(),
                                 children: [

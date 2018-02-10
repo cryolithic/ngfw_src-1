@@ -118,6 +118,9 @@ html, body {
     &.about { background-image: url('/skins/modern-rack/images/admin/config/icon_config_about.png'); }
 }
 
+.x-gridcell-body-el em {
+    color: #999;
+}
 
 // .x-gridcell-body-el {
 //     padding: 6px;

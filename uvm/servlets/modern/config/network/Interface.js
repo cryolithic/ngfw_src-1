@@ -9,6 +9,8 @@ Ext.define('Ung.config.network.Interface', {
     closable: true,
     maximizable: true,
 
+    fullscreen: true,
+
     layout: 'fit',
     bodyPadding: 0,
     items: [{
