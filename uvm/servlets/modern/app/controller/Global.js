@@ -276,13 +276,11 @@ Ext.define('Ung.controller.Global', {
     onConfig: function (config, view, subView) {
         var me = this, mainView = me.getMainView(), configView = me.getConfigView();
         mainView.getViewModel().set('activeItem', 'ung-config');
-        console.log(view, subView);
+
         if (config) {
             if (configView.down('config-' + config)) {
-                console.log('aaaa');
                 // if config card already exists activate it and select given view
                 // mainView.getViewModel().set('activeItem', 'configCard');
-                console.log(configView.down('config-' + config));
                 configView.down('config-' + config).setActiveItem('config-' + config + '-' + view || 0);
                 // if(subView){
                 //     var subViewTarget = viewTarget.down('tabpanel');
@@ -301,8 +299,6 @@ Ext.define('Ung.controller.Global', {
 
             tree.setSelection(node);
             // mainView.setLoading(true);
-
-            console.log(view);
 
             Ext.Loader.loadScript({
                 url: 'script/config/' + config + '.js',
@@ -329,16 +325,45 @@ Ext.define('Ung.controller.Global', {
     },
 
     onReports: function (categoryName, reportName) {
-        var reportsVm = this.getReportsView().getViewModel();
-        var hash = '';
+        console.log('reports');
+        var me = this, mainView = me.getMainView(), reportsView = me.getReportsView();
+        mainView.getViewModel().set('activeItem', 'ung-reports');
+
         if (categoryName) {
-            hash += categoryName;
+            // if (configView.down('config-' + config)) {
+            //     // if config card already exists activate it and select given view
+            //     // mainView.getViewModel().set('activeItem', 'configCard');
+            //     configView.down('config-' + config).setActiveItem('config-' + config + '-' + view || 0);
+            //     // if(subView){
+            //     //     var subViewTarget = viewTarget.down('tabpanel');
+            //     //     if(subViewTarget){
+            //     //         subViewTarget.setActiveTab(subView);
+            //     //     }
+            //     // }
+            //     return;
+            // } else {
+            //     console.log(mainView);
+            //     // mainView.remove('configCard');
+            // }
+
+            var tree = reportsView.down('treelist');
+            var node = Ext.getStore('reportstree').findNode('url', window.location.hash.replace('#reports/', ''));
+            tree.setSelection(node);
+            // mainView.setLoading(true);
         }
-        if (reportName) {
-            hash += '/' + reportName;
-        }
-        reportsVm.set('hash', hash);
-        this.getMainView().getViewModel().set('activeItem', 'reports');
+
+
+
+        // // var reportsVm = this.getReportsView().getViewModel();
+        // var hash = '';
+        // if (categoryName) {
+        //     hash += categoryName;
+        // }
+        // if (reportName) {
+        //     hash += '/' + reportName;
+        // }
+        // reportsVm.set('hash', hash);
+        // // this.getMainView().getViewModel().set('activeItem', 'reports');
     },
 
     onMonitor: function(id, xtype, params){

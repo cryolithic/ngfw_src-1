@@ -12,7 +12,7 @@ Ext.define('Ung.view.config.Config', {
 
     items: [{
         docked: 'left',
-        width: 300,
+        width: 250,
         layout: 'fit',
 
         tbar: {
@@ -39,8 +39,12 @@ Ext.define('Ung.view.config.Config', {
         items: [{
             xtype: 'treelist',
             scrollable: true,
-            // ui: 'nav',
+            ui: 'nav',
             // micro: true,
+            // selectable: {
+            //     mode: 'single'
+            // },
+            floatLeafItems: false,
             singleExpand: true,
             expanderFirst: false,
             expanderOnly: false,
@@ -140,6 +144,7 @@ Ext.define('Ung.view.config.Config', {
             },
             listeners: {
                 selectionchange: function (el, record) {
+                    // console.log(record);
                     if (!record || !record.get('href')) { return; }
                     Ung.app.redirectTo(record.get('href'));
                 }

@@ -36,14 +36,14 @@ Ext.define('Ung.view.config.Config', {
     items: [{
         xtype: 'dataview',
         store: {data: [
-                { name: 'Network'.t(), url: 'network', icon: 'icon_config_network.png' },
-                { name: 'Administration'.t(), url: 'administration', icon: 'icon_config_administration.png' },
-                { name: 'Events'.t(), url: 'events', icon: 'icon_config_events.png' },
-                { name: 'Email'.t(), url: 'email', icon: 'icon_config_email.png' },
-                { name: 'Local Directory'.t(), url: 'local-directory', icon: 'icon_config_directory.png' },
-                { name: 'Upgrade'.t(), url: 'upgrade', icon: 'icon_config_upgrade.png' },
-                { name: 'System'.t(), url: 'system', icon: 'icon_config_system.png' },
-                { name: 'About'.t(), url: 'about', icon: 'icon_config_about.png' }
+            { name: 'Network'.t(), url: 'network', icon: 'icon_config_network.png' },
+            { name: 'Administration'.t(), url: 'administration', icon: 'icon_config_administration.png' },
+            { name: 'Events'.t(), url: 'events', icon: 'icon_config_events.png' },
+            { name: 'Email'.t(), url: 'email', icon: 'icon_config_email.png' },
+            { name: 'Local Directory'.t(), url: 'local-directory', icon: 'icon_config_directory.png' },
+            { name: 'Upgrade'.t(), url: 'upgrade', icon: 'icon_config_upgrade.png' },
+            { name: 'System'.t(), url: 'system', icon: 'icon_config_system.png' },
+            { name: 'About'.t(), url: 'about', icon: 'icon_config_about.png' }
         ]},
         tpl: '<p class="apps-title">' + 'Configuration'.t() + '</p>' +
              '<tpl for=".">' +

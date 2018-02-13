@@ -57,7 +57,7 @@ Ext.define('Ung.Application', {
                     Ext.getStore('categories').loadData(Ext.Array.merge(Util.baseCategories, result[3].list));
                 }
 
-                // // Ext.getStore('reportstree').build();
+                Ext.getStore('reportstree').build();
                 // Ext.getStore('policiestree').build();
                 // Ext.fireEvent('init');
             }, function (ex) {

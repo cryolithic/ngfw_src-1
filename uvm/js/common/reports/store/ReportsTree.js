@@ -14,7 +14,7 @@ Ext.define('Ung.store.ReportsTree', {
         expanded: true,
         children: [{
             text: 'Loading...'.t(),
-            icon: 'fa-spinner fa-spin',
+            iconCls: 'x-fa fa-spinner fa-spin',
             leaf: true
         }]
     },

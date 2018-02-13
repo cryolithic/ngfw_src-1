@@ -103,9 +103,9 @@ html, body {
 }
 
 .x-treelist-item-icon.tree {
-    width: 30px;
-    height: 30px;
-    margin: 6px 0 0 0;
+    width: 20px;
+    height: 20px;
+    margin: 4px 0 0 0;
     background-size: contain;
     background-repeat: no-repeat;
     &.network { background-image: url('/skins/modern-rack/images/admin/config/icon_config_network.png'); }
@@ -120,6 +120,36 @@ html, body {
 
 .x-gridcell-body-el em {
     color: #999;
+}
+
+.x-treelist-nav {
+    .x-treelist-row {
+        padding-left: 16px;
+        padding-right: 8px;
+    }
+    .x-treelist-item-text {
+        line-height: 28px;
+        margin-left: 30px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+    .x-treelist-item-expander {
+        line-height: 28px;
+        &::after {
+            line-height: 28px !important; 
+        }
+    }
+    .x-treelist-item-icon:before {
+        line-height: 28px !important;
+        font-size: 16px;
+    }
+    // .x-treelist-item-expanded > * > * > .x-treelist-item-expander::after {
+    //     line-height: 28px !important;
+    // }
+}
+
+.x-treelist-item-selected {
+    background: #EEE;
 }
 
 // .x-gridcell-body-el {
