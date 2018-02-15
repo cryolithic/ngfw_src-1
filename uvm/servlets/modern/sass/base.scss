@@ -162,3 +162,14 @@ html, body {
 // .x-gridcell {
 //     // vertical-align: top;
 // }
+
+
+
+.x-grid-events {
+    .x-gridcell {
+        font: 400 11px/11px Roboto, sans-serif;
+    }
+    .x-gridcell-body-el {
+        padding: 8px 12px;
+    }
+}

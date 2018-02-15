@@ -51,19 +51,20 @@ Ext.define('Ung.view.reports.Reports', {
         reference: 'graphreport',
         flex: 1,
         padding: 5,
-        border: true
+        border: true,
+        hidden: true
     }, {
-        title: 'Event Report',
+        xtype: 'eventreport',
         reference: 'eventreport',
-        flex: 1,
-        padding: 5,
+        flex: 2,
         border: true
     }, {
         title: 'Text Report',
         reference: 'textreport',
         flex: 1,
         padding: 5,
-        border: true
+        border: true,
+        hidden: true
     }]
 
 
