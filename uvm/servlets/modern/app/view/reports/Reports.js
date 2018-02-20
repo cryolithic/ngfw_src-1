@@ -8,7 +8,7 @@ Ext.define('Ung.view.reports.Reports', {
     // viewModel: true,
 
     defaultType: 'panel',
-    layout: 'hbox',
+    layout: 'fit',
 
     listeners: {
         painted: 'onInitialize',
@@ -44,27 +44,58 @@ Ext.define('Ung.view.reports.Reports', {
             store: 'reportstree',
             listeners: {
                 selectionchange: 'onSelectionChange'
-            }            
+            }
         }]
     }, {
-        title: 'Graph Report',
-        reference: 'graphreport',
-        flex: 1,
-        padding: 5,
-        border: true,
-        hidden: true
-    }, {
-        xtype: 'eventreport',
-        reference: 'eventreport',
-        flex: 2,
-        border: true
-    }, {
-        title: 'Text Report',
-        reference: 'textreport',
-        flex: 1,
-        padding: 5,
-        border: true,
-        hidden: true
+        xtype: 'panel',
+        layout: 'hbox',
+        bind: {
+            title: '{entry.title}'
+        },
+        tbar: {
+            style: {
+                // background: '#F5F5F5',
+                fontSize: '14px',
+                fontWeight: 400,
+                zIndex: 10
+            },
+            bind: {
+                html: '{entry.description}'
+            }
+        },
+        // {
+        //     xtype: 'toolbar',
+        //     docked: 'top',
+        //     shadow: false,
+        //     padding: 16,
+        //     style: {
+        //         // background: '#F5F5F5',
+        //         fontSize: '14px',
+        //         fontWeight: 400,
+        //         zIndex: 10
+        //     },
+        //     bind: {
+        //         html: '{entry.type === "EVENT_LIST" ? entry.description : ""}'
+        //     }
+        // }
+        items: [{
+            xtype: 'graphreport',
+            reference: 'graphreport',
+            flex: 1,
+            padding: 5,
+            border: true
+        }, {
+            xtype: 'eventreport',
+            reference: 'eventreport',
+            flex: 1,
+            border: true
+        }, {
+            title: 'Text Report',
+            reference: 'textreport',
+            flex: 1,
+            padding: 5,
+            border: true
+        }]
     }]
 
 

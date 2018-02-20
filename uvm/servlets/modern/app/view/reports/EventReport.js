@@ -3,9 +3,6 @@ Ext.define('Ung.view.reports.EventReport', {
     alias: 'widget.eventreport',
     itemId: 'eventreport',
     cls: 'x-grid-events',
-    bind: {
-        title: '{entry.title}'
-    },
     // viewModel: {
     //     data: { eventsData: [], propsData: [] },
     //     stores: {
@@ -42,20 +39,6 @@ Ext.define('Ung.view.reports.EventReport', {
     items: [{
         xtype: 'toolbar',
         docked: 'top',
-        shadow: false,
-        padding: 16,
-        style: {
-            // background: '#F5F5F5',
-            fontSize: '14px',
-            fontWeight: 400,
-            zIndex: 10
-        },
-        bind: {
-            html: '{entry.description}'
-        }
-    }, {
-        xtype: 'toolbar',
-        docked: 'top',
         items: [{
             text: 'Columns'.t(),
             iconCls: 'x-fa fa-bars',
@@ -84,6 +67,8 @@ Ext.define('Ung.view.reports.EventReport', {
                 console.log('bind change');
                 // vm.set('eventsData', []);
                 view.getStore().loadData([]);
+                view.setColumns([]);
+                me.getView().down('#columnsMenu').getMenu().removeAll();
                 if (!entry || entry.get('type') !== 'EVENT_LIST') { return; }
                 me.setup(entry);
             });
