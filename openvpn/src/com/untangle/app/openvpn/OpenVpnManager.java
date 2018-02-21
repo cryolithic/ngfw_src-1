@@ -42,7 +42,7 @@ public class OpenVpnManager
     private static final String GENERATE_EXE_SCRIPT = System.getProperty( "uvm.bin.dir" ) + "/openvpn-generate-client-exec";
     private static final String GENERATE_OVPN_SCRIPT = System.getProperty( "uvm.bin.dir" ) + "/openvpn-generate-client-ovpn";
     private static final String GENERATE_ONC_SCRIPT = System.getProperty( "uvm.bin.dir" ) + "/openvpn-generate-client-onc";
-    private static final String IPTABLES_SCRIPT = System.getProperty( "prefix" ) + "/etc/untangle-netd/iptables-rules.d/720-openvpn";
+    private static final String IPTABLES_SCRIPT = System.getProperty( "prefix" ) + "/etc/untangle/iptables-rules.d/720-openvpn";
     private static final String AUTH_USER_PASS_SCRIPT  = "/usr/share/untangle/bin/openvpn-auth-user-pass";
 
     private static final String OPENVPN_CONF_DIR      = "/etc/openvpn";
@@ -224,7 +224,7 @@ public class OpenVpnManager
 
         if (settings.getAuthUserPass()) {
             sb.append( "script-security 3 execve" + "\n" );
-            sb.append( "auth-user-pass-verify " + "\"/usr/bin/sudo " + AUTH_USER_PASS_SCRIPT + "\" via-env" + "\n" );
+            sb.append( "auth-user-pass-verify " + "\"/usr/bin/sudo -E " + AUTH_USER_PASS_SCRIPT + "\" via-env" + "\n" );
         }
 
         sb.append( "proto" + " " + settings.getProtocol() + "\n" );
@@ -450,12 +450,17 @@ public class OpenVpnManager
          */
         try {
             File baseDirectory = new File( "/etc/openvpn" );
-            if ( baseDirectory.exists()) {
+            if ( baseDirectory.exists() ) {
                 for ( File f : baseDirectory.listFiles()) {
-                    if ( f.getName() == null || !f.getName().endsWith(".conf") )
-                        continue;
-                    logger.debug("Deleting remoteServer conf file: " + f.getName());
-                    f.delete();
+                    if ( f.getName() == null ) continue;
+                    if (f.getName().endsWith(".conf")) {
+                        logger.debug("Deleting remoteServer conf file: " + f.getName());
+                        f.delete();
+                    }
+                    if (f.getName().endsWith(".auth")) {
+                        logger.debug("Deleting remoteServer auth file: " + f.getName());
+                        f.delete();
+                    }
                 }
             } else {
                 baseDirectory.mkdir();
@@ -515,15 +520,38 @@ public class OpenVpnManager
                 String line;
 
                 while ((line = cfgReader.readLine()) != null) {
+                    // remove any existing auth-user-pass
+                    if (line.contains("auth-user-pass")) {
+                        continue;
+                    }
+
+                    // look for 'dev tun' and change to 'dev tunx'
                     if (line.startsWith("dev ")) {
                         cfgWriter.write("dev tun" + Integer.toString(count) + "\n");
-                    } else {
-                        cfgWriter.write(line + "\n");
+                        continue;
                     }
+
+                    // no special handling so write the line as-is
+                    cfgWriter.write(line + "\n");
+                }
+
+                // if user+pass auth is enabled add the auth-user-pass option
+                if (server.getAuthUserPass()) {
+                    cfgWriter.write("auth-user-pass " + name + ".auth" + "\n");
                 }
 
                 cfgReader.close();
                 cfgWriter.close();
+
+                // if user+pass auth is enabled create the auth file
+                if (server.getAuthUserPass()) {
+                    File authFile = new File("/etc/openvpn/" + name + ".auth");
+                    BufferedWriter authWriter = new BufferedWriter( new FileWriter(authFile) );
+                    authWriter.write(server.getAuthUsername() + "\n");
+                    authWriter.write(server.getAuthPassword() + "\n");
+                    authWriter.close();
+                }
+
                 count += 1;
             } catch (Exception exn) {
                 logger.warn("Exception adjusting remote server configuration.", exn);
@@ -779,8 +807,10 @@ public class OpenVpnManager
     private OpenVpnConfigItem findAnyConfigItem(LinkedList<OpenVpnConfigItem> argList, String findName)
     {
         if (argList == null) return(null);
+        if (findName == null) return(null);
 
         for ( OpenVpnConfigItem item : argList) {
+            if (item.getOptionName() == null) continue;
             if (item.getOptionName().trim().toLowerCase().equals(findName.trim().toLowerCase()))
             return(item);
         }
@@ -795,9 +825,11 @@ public class OpenVpnManager
     private OpenVpnConfigItem findCustomConfigItem(LinkedList<OpenVpnConfigItem> argList, String findName)
     {
         if (argList == null) return(null);
+        if (findName == null) return(null);
 
         for ( OpenVpnConfigItem item : argList) {
             if (item.getReadOnly() == true) continue;
+            if (item.getOptionName() == null) continue;
             if (item.getOptionName().trim().toLowerCase().equals(findName.trim().toLowerCase()))
             return(item);
         }

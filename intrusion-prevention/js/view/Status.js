@@ -3,6 +3,7 @@ Ext.define('Ung.apps.intrusionprevention.view.Status', {
     alias: 'widget.app-intrusion-prevention-status',
     itemId: 'status',
     title: 'Status'.t(),
+    scrollable: true,
 
     layout: 'border',
 
@@ -60,20 +61,20 @@ Ext.define('Ung.apps.intrusionprevention.view.Status', {
                     xtype: 'displayfield',
                     fieldLabel: "Classtypes".t(),
                     bind: {
-                        value: '{getWizardClasstypes}',
+                        value: '{classtypesProfile.value}',
                     },
                     listeners:{
                         change: 'bindChange'
-                    },
+                    }
                 }, {
                     xtype: 'displayfield',
                     fieldLabel: "Categories".t(),
                     bind: {
-                        value: '{getWizardCategories}'
+                        value: '{categoriesProfile.value}',
                     },
                     listeners:{
                         change: 'bindChange'
-                    },
+                    }
                 }]
             }, {
                 xtype: 'button',
@@ -106,7 +107,9 @@ Ext.define('Ung.apps.intrusionprevention.view.Status', {
                 bind: '{lastUpdate}'
             }, {
                 xtype: 'component',
-                html: Ext.String.format("{0}Note:{1} {2} continues to maintain the default signature settings through automatic updates. You are free to modify and add signatures, however it is not required.".t(), '<b>', '</b>', rpc.companyName)
+                bind:{
+                    html: Ext.String.format("{0}Note:{1} {2} continues to maintain the default signature settings through automatic updates. You are free to modify and add signatures, however it is not required.".t(), '<b>', '</b>', '{companyName}')
+                }
             }]
         }, {
             xtype: 'appreports'
@@ -114,8 +117,7 @@ Ext.define('Ung.apps.intrusionprevention.view.Status', {
     }, {
         region: 'west',
         border: false,
-        width: 350,
-        minWidth: 300,
+        width: Math.ceil(Ext.getBody().getViewSize().width / 4),
         split: true,
         layout: 'fit',
         items: [{

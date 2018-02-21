@@ -3,11 +3,9 @@
  */
 package com.untangle.app.intrusion_prevention;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.InputStreamReader;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.InputStream;
@@ -30,21 +28,15 @@ import com.untangle.uvm.UvmContext;
 import com.untangle.uvm.UvmContextFactory;
 import com.untangle.uvm.SettingsManager;
 import com.untangle.uvm.HookCallback;
-import com.untangle.uvm.ExecManager;
 import com.untangle.uvm.ExecManagerResult;
-import com.untangle.uvm.ExecManagerResultReader;
 import com.untangle.uvm.util.I18nUtil;
-import com.untangle.uvm.util.IOUtil;
 import com.untangle.uvm.network.NetworkSettings;
 import com.untangle.uvm.network.InterfaceSettings;
 import com.untangle.uvm.network.InterfaceStatus;
 import com.untangle.uvm.app.IPMaskedAddress;
 import com.untangle.uvm.app.AppMetric;
 import com.untangle.uvm.app.AppManager;
-import com.untangle.uvm.app.AppSettings;
 import com.untangle.uvm.app.AppBase;
-import com.untangle.uvm.vnet.Affinity;
-import com.untangle.uvm.vnet.Fitting;
 import com.untangle.uvm.vnet.PipelineConnector;
 import com.untangle.uvm.servlet.DownloadHandler;
 
@@ -70,14 +62,13 @@ public class IntrusionPreventionApp extends AppBase
     private final PipelineConnector [] connectors = new PipelineConnector[0];
     private final IntrusionPreventionEventMonitor ipsEventMonitor;    
 
-    private static final String IPTABLES_SCRIPT = "/etc/untangle-netd/iptables-rules.d/740-snort";
+    private static final String IPTABLES_SCRIPT = "/etc/untangle/iptables-rules.d/740-snort";
     private static final String GET_LAST_UPDATE = System.getProperty( "uvm.bin.dir" ) + "/intrusion-prevention-get-last-update-check";
     private static final String DEFAULTS_SETTINGS = "/usr/share/untangle-snort-config/current/templates/defaults.js";
     private static final String SNORT_DEBIAN_CONF = "/etc/snort/snort.debian.conf";
     private static final String SNORT_CONF = "/etc/snort/snort.conf";
     private static final String DATE_FORMAT_NOW = "yyyy-MM-dd_HH-mm-ss";
 
-    private float memoryThreshold = .25f;
     private boolean updatedSettingsFlag = false;
 
     private final HookCallback networkSettingsChangeHook;
@@ -95,7 +86,7 @@ public class IntrusionPreventionApp extends AppBase
     {
         super( appSettings, appProperties );
 
-        handler = new EventHandler(this);
+        this.handler = new EventHandler(this);
         this.homeNetworks = this.calculateHomeNetworks( UvmContextFactory.context().networkManager().getNetworkSettings(), true );
         this.interfaceIds = this.calculateInterfaces( UvmContextFactory.context().networkManager().getNetworkSettings() );
         this.networkSettingsChangeHook = new IntrusionPreventionNetworkSettingsHook();
@@ -184,7 +175,7 @@ public class IntrusionPreventionApp extends AppBase
 
         Map<String,String> i18nMap = UvmContextFactory.context().languageManager().getTranslations("untangle");
         I18nUtil i18nUtil = new I18nUtil(i18nMap);
-        if(wizardCompleted() == false){
+        if(!wizardCompleted()){
             throw new RuntimeException(i18nUtil.tr("The configuration wizard must be completed before enabling Intrusion Prevention"));
         }
         UvmContextFactory.context().daemonManager().incrementUsageCount( "snort" );
@@ -293,7 +284,6 @@ public class IntrusionPreventionApp extends AppBase
      */
     private void readAppSettings()
     {
-        SettingsManager settingsManager = UvmContextFactory.context().settingsManager();
         String settingsFile = System.getProperty("uvm.settings.dir") + "/intrusion-prevention/settings_" + this.getAppSettings().getId().toString() + ".js";
 
         logger.info("Loading settings from " + settingsFile);
@@ -342,7 +332,7 @@ public class IntrusionPreventionApp extends AppBase
 
         ExecManagerResult result = UvmContextFactory.context().execManager().exec( IPTABLES_SCRIPT );
         try {
-            String lines[] = result.getOutput().split("\\r?\\n");
+            String[] lines = result.getOutput().split("\\r?\\n");
             logger.info( IPTABLES_SCRIPT + ": ");
             for ( String line : lines )
                 logger.info( IPTABLES_SCRIPT + ": " + line);
@@ -381,7 +371,6 @@ public class IntrusionPreventionApp extends AppBase
      */
     public String getSettingsFileName()
     {
-        SettingsManager settingsManager = UvmContextFactory.context().settingsManager();
         return System.getProperty("uvm.settings.dir") + "/intrusion-prevention/settings_" + this.getAppSettings().getId().toString() + ".js";
     }
 
@@ -412,7 +401,7 @@ public class IntrusionPreventionApp extends AppBase
         );
         String result = UvmContextFactory.context().execManager().execOutput(configCmd );
         try{
-            String lines[] = result.split("\\r?\\n");
+            String[] lines = result.split("\\r?\\n");
             for ( String line : lines ){
                 if( line.trim().length() > 1 ){
                     logger.warn("initializeSettings: intrusion-prevention-sync-settings: " + line);
@@ -578,7 +567,6 @@ public class IntrusionPreventionApp extends AppBase
                  * without compression.  To get around this, we receive a JSON "patch"
                  * which we pass to the configuration management scripts to integrate into settings.
                  */
-                SettingsManager settingsManager = UvmContextFactory.context().settingsManager();
                 String tempPatchName = "/tmp/changedDataSet_intrusion-prevention_settings_" + appId + ".js";
                 String tempSettingsName = "/tmp/intrusion-prevention_settings_" + appId + ".js";
                 int verifyResult = 1;
@@ -612,7 +600,7 @@ public class IntrusionPreventionApp extends AppBase
                     );
                     String result = UvmContextFactory.context().execManager().execOutput(configCmd );
                     try{
-                        String lines[] = result.split("\\r?\\n");
+                        String[] lines = result.split("\\r?\\n");
                         for ( String line : lines ){
                             if( line.trim().length() > 1 ){
                                 logger.warn("DownloadHandler: intrusion-prevention-sync-settings: " + line);
@@ -648,10 +636,8 @@ public class IntrusionPreventionApp extends AppBase
                     logger.warn("Failed to send IPS save response");
                 }
             }else if(action.equals("export")){
-                SettingsManager settingsManager = UvmContextFactory.context().settingsManager();
                 String tempPatchName = "/tmp/changedDataSet_intrusion-prevention_settings_" + appId + ".js";
                 String tempSettingsName = "/tmp/intrusion-prevention_settings_" + appId + ".js";
-                int verifyResult = 1;
 
                 String changedSet = req.getParameter("arg4");
                 BufferedWriter writer = null;
@@ -667,7 +653,7 @@ public class IntrusionPreventionApp extends AppBase
                      * If client takes too long to upload, we'll get an incomplete settings file and all will be bad.
                      */
                     String verifyCommand = new String( "python -m simplejson.tool " + tempPatchName + "> /dev/null 2>&1" );
-                    verifyResult = UvmContextFactory.context().execManager().execResult(verifyCommand);
+                    UvmContextFactory.context().execManager().execResult(verifyCommand);
 
                     String configCmd = new String(
                         System.getProperty("uvm.bin.dir") + 
@@ -747,7 +733,7 @@ public class IntrusionPreventionApp extends AppBase
     {
         boolean match;
         IPMaskedAddress maskedAddress;
-        List<IPMaskedAddress> addresses = new LinkedList<IPMaskedAddress>();
+        List<IPMaskedAddress> addresses = new LinkedList<>();
         /*
          * Pull static addresses
          */
@@ -818,7 +804,7 @@ public class IntrusionPreventionApp extends AppBase
                 }
             }
         }
-        if( addresses.size() == 0 && !getWan ) {
+        if( addresses.isEmpty() && !getWan ) {
             /*
              * No LAN interfaces were found.  This means the system
              * is in bridged-to-WAN networking mode and we should
@@ -837,7 +823,7 @@ public class IntrusionPreventionApp extends AppBase
      */
     private List<String> calculateInterfaces( NetworkSettings networkSettings )
     {
-        List<String> interfaces = new LinkedList<String>();
+        List<String> interfaces = new LinkedList<>();
         for( InterfaceSettings interfaceSettings : networkSettings.getInterfaces() ){
             if (interfaceSettings.getConfigType() == InterfaceSettings.ConfigType.DISABLED) {
                 continue;

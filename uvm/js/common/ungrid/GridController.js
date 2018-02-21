@@ -48,7 +48,7 @@ Ext.define('Ung.cmp.GridController', {
 
     /** used for Port Forward Rules */
     addSimpleRecord: function () {
-        this.simpleEditorWin(null);
+        this.simpleEditorWin(null, 'add');
     },
 
     /**
@@ -99,15 +99,16 @@ Ext.define('Ung.cmp.GridController', {
         if (!record.get('simple')) {
             this.editorWin(record);
         } else {
-            this.simpleEditorWin(record);
+            this.simpleEditorWin(record, 'edit'); // action to be passed to main editor on Switch
         }
     },
 
-    editorWin: function (record) {
+    editorWin: function (record, action) {
         this.dialog = this.getView().add({
             xtype: this.getView().editorXtype,
             renderTo: Ext.getBody(),
-            record: record
+            record: record,
+            action: action // add or edit
         });
 
         // look for window overrides in the parent grid
@@ -117,10 +118,11 @@ Ext.define('Ung.cmp.GridController', {
         this.dialog.show();
     },
 
-    simpleEditorWin: function (record) {
+    simpleEditorWin: function (record, action) {
         this.simpledialog = this.getView().add({
             xtype: this.getView().simpleEditorAlias,
-            record: record
+            record: record,
+            action: action
         });
 
         // look for window overrides in the parent grid
@@ -560,33 +562,6 @@ Ext.define('Ung.cmp.GridController', {
         view.reconfigure(null, view.initialConfig.columns);
     },
 
-    columnRenderer: function(value, metaData, record, rowIndex, columnIndex, store, view){
-        var rtype = view.grid.getColumns()[columnIndex].rtype;
-        if(rtype != null){
-            if( !Renderer[rtype] ){
-                var parentController = null;
-                var methodName = rtype + 'Renderer';
-                while( view != null){
-                    parentController = view.getController();
-
-                    if( parentController && parentController[methodName]){
-                        break;
-                    }
-                    view = view.up();
-                }
-
-                if(parentController[methodName]){
-                    return parentController[methodName].apply(this, arguments);
-                }else{
-                    console.log('Missing renderer for rtype=' + rtype);
-                }
-            }else{
-                return Renderer[rtype].apply(this, arguments);
-            }
-        }
-        return value;
-    },
-
     /**
      * Used for extra column actions which can be added to the grid but are very specific to that context
      * The grid requires to have defined a parentView tied to the controller on which action method is implemented
@@ -617,6 +592,20 @@ Ext.define('Ung.cmp.GridController', {
             parentController[action].apply(parentController, arguments);
         } else {
             console.log('External action not defined!');
+        }
+    },
+
+    /**
+     * updates the grid status each time filters are changed
+     */
+    updateFilterStatus: function (store, filters) {
+        var me = this, gridStatus = null;
+        try {
+            gridStatus = me.getView().up('panel').down('ungridstatus') || me.getView().up('entry').down('ungridstatus');
+        } catch (ex) {}
+
+        if (gridStatus) {
+            gridStatus.fireEvent('update');
         }
     }
 

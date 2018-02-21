@@ -21,6 +21,7 @@ Ext.define('Ung.config.network.view.Interfaces', {
         region: 'center',
         border: false,
         split: true,
+        selModel: 'rowmodel',
         tbar: [{
             text: 'Refresh'.t(),
             iconCls: 'fa fa-refresh',
@@ -181,6 +182,7 @@ Ext.define('Ung.config.network.view.Interfaces', {
             itemId: 'interfaceStatus',
             xtype: 'unpropertygrid',
             collapsible: false,
+            emptyText: 'Status not available'.t(),
             bind: {
                 source: '{siStatus}',
             },
@@ -188,31 +190,38 @@ Ext.define('Ung.config.network.view.Interfaces', {
                 device: { displayName: 'Device'.t() },
                 macAddress: { displayName: 'MAC Address'.t() },
                 address: { displayName: 'IPv4 Address'.t() },
-                mask: { displayName: 'Mask'.t() },
                 v6Addr: { displayName: 'IPv6 Address'.t() },
-                rxpkts: { 
+                rxbytes: {
+                    displayName: 'Rx Bytes'.t(),
+                    renderer: Renderer.datasize
+                },
+                rxpkts: {
                     displayName: 'Rx Packets'.t(),
-                    renderer: Renderer.datasize
+                    renderer: Renderer.count
                 },
-                rxerr: { 
+                rxerr: {
                     displayName: 'Rx Errors'.t(),
-                    renderer: Renderer.datasize
+                    renderer: Renderer.count
                 },
-                rxdrop: { 
+                rxdrop: {
                     displayName: 'Rx Drop'.t(),
+                    renderer: Renderer.count
+                },
+                txbytes: {
+                    displayName: 'Tx Bytes'.t(),
                     renderer: Renderer.datasize
                 },
-                txpkts: { 
+                txpkts: {
                     displayName: 'Tx Packets'.t(),
-                    renderer: Renderer.datasize
+                    renderer: Renderer.count
                 },
-                txerr: { 
+                txerr: {
                     displayName: 'Tx Errors'.t(),
-                    renderer: Renderer.datasize
+                    renderer: Renderer.count
                 },
-                txdrop: { 
+                txdrop: {
                     displayName: 'Tx Drop'.t(),
-                    renderer: Renderer.datasize
+                    renderer: Renderer.count
                 }
             },
             tbar: [{
@@ -239,13 +248,8 @@ Ext.define('Ung.config.network.view.Interfaces', {
             }, {
                 header: 'IP Address'.t(),
                 dataIndex: 'address',
-                width: Renderer.ipWidth
-            }, {
-                header: 'Type'.t(),
-                dataIndex: 'type',
-                width: Renderer.messageWidth,
-                flex: 1,
-                renderer: Ung.config.network.MainController.arpTypeRenderer
+                width: Renderer.ipWidth,
+                flex: 1
             }],
             tbar: [{
                 xtype: 'button',

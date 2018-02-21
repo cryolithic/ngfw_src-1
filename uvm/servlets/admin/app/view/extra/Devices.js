@@ -270,15 +270,17 @@ Ext.define('Ung.view.extra.Devices', {
     {
         xtype: 'ungridfilter'
     },{
-        xtype: 'ungridstatus',
-        tplFiltered: '{0} filtered, {1} total devices'.t(),
-        tplUnfiltered: '{0} devices'.t(),
+        xtype: 'ungridstatus'
     }, '->', {
         xtype: 'button',
         text: 'View Reports'.t(),
         iconCls: 'fa fa-line-chart',
         href: '#reports/devices',
-        hrefTarget: '_self'
+        hrefTarget: '_self',
+        hidden: true,
+        bind: {
+            hidden: '{!reportsEnabled}'
+        }
     }],
     bbar: ['->', {
         text: '<strong>' + 'Save'.t() + '</strong>',

@@ -89,21 +89,16 @@ Ext.define('Ung.view.reports.GraphReport', {
                     text: null
                 },
 
-                lang: { noData: '' },
                 noData: {
                     position: {
-                        verticalAlign: 'top',
-                        y: 20
+                        y: -20
                     },
                     style: {
-                        // fontFamily: 'Source Sans Pro',
-                        padding: 0,
-                        fontSize: '14px',
+                        fontSize: '16px',
                         fontWeight: 'normal',
-                        color: '#999',
+                        color: '#555',
                         textAlign: 'center'
-                    },
-                    useHTML: true
+                    }
                 },
 
                 // colors: (me.entry.get('colors') !== null && me.entry.get('colors') > 0) ? me.entry.get('colors') : me.defaultColors,
@@ -134,12 +129,6 @@ Ext.define('Ung.view.reports.GraphReport', {
                         //         me.getView().up('entry').getController().filterData(this.getExtremes().min, this.getExtremes().max);
                         //     }
                         // }
-                    },
-                    dateTimeLabelFormats: {
-                        second: '%l:%M:%S %p',
-                        minute: '%l:%M %p',
-                        hour: '%l:%M %p',
-                        day: '%Y-%m-%d'
                     }
                 },
                 yAxis: {
@@ -197,13 +186,7 @@ Ext.define('Ung.view.reports.GraphReport', {
                     style: {
                         fontSize: isWidget ? '12px' : '14px'
                     },
-                    headerFormat: '<p style="margin: 0 0 5px 0; color: #555;">{point.key}</p>',
-                    dateTimeLabelFormats: {
-                        second: '%Y-%m-%d, %l:%M:%S %p, %l:%M:%S %p',
-                        minute: '%Y-%m-%d, %l:%M %p',
-                        hour: '%Y-%m-%d, %l:%M %p',
-                        day: '%Y-%m-%d'
-                    }
+                    headerFormat: '<p style="margin: 0 0 5px 0; color: #555;">{point.key}</p>'
                 },
                 plotOptions: {
                     column: {
@@ -258,15 +241,6 @@ Ext.define('Ung.view.reports.GraphReport', {
                         },
                         marker: {
                             radius: 2,
-                        },
-                        dataGrouping: {
-                            dateTimeLabelFormats: {
-                                millisecond: ['%Y-%m-%d, %l:%M:%S %p', '%Y-%m-%d, %l:%M:%S %p', '-%l:%M:%S %p'],
-                                second: ['%Y-%m-%d, %l:%M:%S %p', '%Y-%m-%d, %l:%M:%S %p', '-%l:%M:%S %p'],
-                                minute: ['%Y-%m-%d, %l:%M %p', '%Y-%m-%d, %l:%M %p', '-%l:%M %p'],
-                                hour: ['%Y-%m-%d, %l:%M %p', '%Y-%m-%d, %l:%M %p', '%Y-%m-%d, %l:%M %p'],
-                                day: ['%Y-%m-%d']
-                            }
                         }
                     }
                 },
@@ -364,6 +338,7 @@ Ext.define('Ung.view.reports.GraphReport', {
             }
 
             // if (reset) { me.reset(); }
+            me.chart.hideNoData();
             me.chart.showLoading('<i class="fa fa-spinner fa-spin fa-fw fa-lg"></i>');
 
             Rpc.asyncData('rpc.reportsManager.getDataForReportEntry',
@@ -421,11 +396,14 @@ Ext.define('Ung.view.reports.GraphReport', {
                 seriesData,
                 seriesName;
 
-            if (!me.data) { return; }
-
             // remove any existing series
             while (me.chart.series.length > 0) {
                 me.chart.series[0].remove(false);
+            }
+
+            if (!me.data || (Ext.isArray(me.data) && me.data.length === 0)) {
+                me.chart.showNoData('No Data!');
+                return;
             }
 
             if (entry.get('type') === 'TIME_GRAPH' || entry.get('type') === 'TIME_GRAPH_DYNAMIC') {
@@ -550,6 +528,56 @@ Ext.define('Ung.view.reports.GraphReport', {
 
             if (!entry) { return; }
 
+            // NGFW-11448 - apply 12/24 time format on graphs
+            var timeLabelFormats;
+            if (rpc.translations.timestamp_fmt && rpc.translations.timestamp_fmt.indexOf('h:i:s a') >= 0 ) {
+                // 12 hours format
+                timeLabelFormats = {
+                    xAxis: {
+                        second: '%l:%M:%S %p',
+                        minute: '%l:%M %p',
+                        hour: '%l:%M %p',
+                        day: '%Y-%m-%d'
+                    },
+                    tooltip: {
+                        second: '%Y-%m-%d, %l:%M:%S %p, %l:%M:%S %p',
+                        minute: '%Y-%m-%d, %l:%M %p',
+                        hour: '%Y-%m-%d, %l:%M %p',
+                        day: '%Y-%m-%d'
+                    },
+                    dataGrouping: {
+                        millisecond: ['%Y-%m-%d, %l:%M:%S %p', '%Y-%m-%d, %l:%M:%S %p', '-%l:%M:%S %p'],
+                        second: ['%Y-%m-%d, %l:%M:%S %p', '%Y-%m-%d, %l:%M:%S %p', '-%l:%M:%S %p'],
+                        minute: ['%Y-%m-%d, %l:%M %p', '%Y-%m-%d, %l:%M %p', '-%l:%M %p'],
+                        hour: ['%Y-%m-%d, %l:%M %p', '%Y-%m-%d, %l:%M %p', '%Y-%m-%d, %l:%M %p'],
+                        day: ['%Y-%m-%d']
+                    }
+                };
+            } else {
+                // 24 hours format
+                timeLabelFormats = {
+                    xAxis: {
+                        second: '%H:%M:%S',
+                        minute: '%H:%M',
+                        hour: '%H:%M',
+                        day: '%Y-%m-%d'
+                    },
+                    tooltip: {
+                        second: '%Y-%m-%d, %H:%M:%S, %H:%M:%S',
+                        minute: '%Y-%m-%d, %H:%M',
+                        hour: '%Y-%m-%d, %H:%M',
+                        day: '%Y-%m-%d'
+                    },
+                    dataGrouping: {
+                        millisecond: ['%Y-%m-%d, %H:%M:%S', '%Y-%m-%d, %H:%M:%S', '-%H:%M:%S'],
+                        second: ['%Y-%m-%d, %H:%M:%S', '%Y-%m-%d, %H:%M:%S', '-%H:%M:%S'],
+                        minute: ['%Y-%m-%d, %H:%M', '%Y-%m-%d, %H:%M', '-%H:%M'],
+                        hour: ['%Y-%m-%d, %H:%M', '%Y-%m-%d, %H:%M', '%Y-%m-%d, %H:%M'],
+                        day: ['%Y-%m-%d']
+                    }
+                };
+            }
+
             var isPieGraph = entry.get('type') === 'PIE_GRAPH';
             var isTimeGraph = entry.get('type').indexOf('TIME_GRAPH') >= 0;
 
@@ -673,8 +701,7 @@ Ext.define('Ung.view.reports.GraphReport', {
                 // },
                 plotOptions: {
                     series: {
-                        stacking: isColumnStacked ? 'normal' : undefined,
-                        dataGrouping: isTimeGraph ? { approximation: entry.get('approximation') || 'sum' } : undefined
+                        stacking: isColumnStacked ? 'normal' : undefined
                     },
                     // pie graphs
                     pie: {
@@ -686,7 +713,9 @@ Ext.define('Ung.view.reports.GraphReport', {
                     spline: {
                         shadow: true,
                         dataGrouping: {
-                            groupPixelWidth: 8
+                            groupPixelWidth: 8,
+                            approximation: entry.get('approximation') || 'sum',
+                            dateTimeLabelFormats: timeLabelFormats.dataGrouping
                         },
                     },
                     // time graphs
@@ -694,7 +723,9 @@ Ext.define('Ung.view.reports.GraphReport', {
                         // shadow: true,
                         // fillOpacity: 0.3,
                         dataGrouping: {
-                            groupPixelWidth: 8
+                            groupPixelWidth: 8,
+                            approximation: entry.get('approximation') || 'sum',
+                            dateTimeLabelFormats: timeLabelFormats.dataGrouping
                         },
                     },
                     column: {
@@ -716,7 +747,8 @@ Ext.define('Ung.view.reports.GraphReport', {
                         width: 1,
                         dashStyle: 'ShortDot'
                     } : false,
-                    plotLines: plotLines
+                    plotLines: plotLines,
+                    dateTimeLabelFormats: timeLabelFormats.xAxis
                 },
                 yAxis: {
                     visible: !isPie,
@@ -758,7 +790,8 @@ Ext.define('Ung.view.reports.GraphReport', {
                     verticalAlign: (isPieGraph && isPie) ? 'top' : 'bottom'
                 },
                 tooltip: {
-                    split: ((isWidget && me.chart.series.length <= 3) || !isWidget) && isTimeGraph
+                    split: ((isWidget && me.chart.series.length <= 3) || !isWidget) && isTimeGraph,
+                    dateTimeLabelFormats: timeLabelFormats.tooltip
                 }
             };
 

@@ -13,12 +13,25 @@ Ext.define('Ung.apps.brandingmanager.MainController', {
 
     getSettings: function () {
         var me = this, v = this.getView(), vm = this.getViewModel();
+
         v.setLoading(true);
-        v.appManager.getSettings(function (result, ex) {
-            v.setLoading(false);
-            if (ex) { Util.handleException(ex); return; }
+        Rpc.asyncData(v.appManager, 'getSettings')
+        .then( function(result){
+            if(Util.isDestroyed(me, v, vm)){
+                return;
+            }
+
             vm.set('settings', result);
             me.originalDefaultLogo = vm.get('settings').defaultLogo;
+
+            vm.set('panel.saveDisabled', false);
+            v.setLoading(false);
+        },function(ex){
+            if(!Util.isDestroyed(v, vm)){
+                vm.set('panel.saveDisabled', true);
+                v.setLoading(false);
+            }
+            Util.handleException(ex);
         });
     },
 
@@ -29,23 +42,33 @@ Ext.define('Ung.apps.brandingmanager.MainController', {
             return;
         }
 
-        v.setLoading(true);
-
         if(me.originalDefaultLogo !== vm.get('settings').defaultLogo){
             me.needRackReload = true;
         }
 
-        v.appManager.setSettings(function (result, ex) {
-            v.setLoading(false);
-            if (ex) { Util.handleException(ex); return; }
+        v.setLoading(true);
+        Rpc.asyncData(v.appManager, 'setSettings', vm.get('settings'))
+        .then(function(result){
+            if(Util.isDestroyed(v, vm)){
+                return;
+            }
             Util.successToast('Settings saved');
+            vm.set('panel.saveDisabled', false);
+            v.setLoading(false);
+
             me.getSettings();
             Ext.fireEvent('resetfields', v);
-        }, vm.get('settings'));
 
-        if(me.needRackReload){
-            window.location.reload();
-        }
+            if(me.needRackReload){
+                window.location.reload();
+            }
+        }, function(ex) {
+            if(!Util.isDestroyed(v, vm)){
+                vm.set('panel.saveDisabled', true);
+                v.setLoading(false);
+            }
+            Util.handleException(ex);
+        });
 
     },
 
@@ -55,7 +78,7 @@ Ext.define('Ung.apps.brandingmanager.MainController', {
 
         if (fileField.getValue().length === 0) {
             Ext.MessageBox.alert('Failed'.t(), 'Please select an image to upload.'.t() );
-            return;
+            return false;
         }
 
         formPanel.getForm().submit({

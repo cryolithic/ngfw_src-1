@@ -74,6 +74,9 @@ Ext.define('Bootstrap', {
             Highcharts.setOptions({
                 global: {
                     timezoneOffset: -(rpc.timeZoneOffset / 60000)
+                },
+                lang: {
+                    noData: 'Please wait ...'.t()
                 }
             });
         }
@@ -84,10 +87,8 @@ Ext.define('Bootstrap', {
 
         me.servletContext = servletContext;
 
-        console.log();
-
         if (servletContext === 'ADMIN' || servletContext === 'REPORTS') {
-            me.initRpc(); me.initHighcharts(); me.initTranslations();
+            me.initRpc(); me.initTranslations(); me.initHighcharts();
         }
 
         // check local storage
@@ -107,7 +108,6 @@ Ext.define('Bootstrap', {
         // IMPORTANT! override the default models ext idProperty so it does not interfere with backend 'id'
         Ext.data.Model.prototype.idProperty = '_id';
 
-        // add default onRejected handler to then function of promises
         Ext.promise.Promise.prototype.then = function (onFulfilled, onRejected, onProgress, scope) {
             var ref;
 
@@ -133,10 +133,9 @@ Ext.define('Bootstrap', {
                 }
             }
 
-            return this.owner.then(onFulfilled, onRejected, onProgress).otherwise(function(ex) {
-                console.log(ex);
+            return this.owner.then(onFulfilled, onRejected, onProgress).otherwise(function(ex){
                 Util.handleException(ex);
-                throw ex;
+                throw(ex);
             });
         };
 

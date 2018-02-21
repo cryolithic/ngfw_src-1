@@ -15,28 +15,46 @@ Ext.define('Ung.config.upgrade.MainController', {
     },
     loadSettings: function () {
         var me = this,
-            view = me.getView(),
+            v = me.getView(),
             vm = me.getViewModel();
 
-        view.down('progressbar').wait({
+        me.getView().setLoading(true);
+        Rpc.asyncData('rpc.systemManager.getSettings')
+        .then(function(result){
+            if(Util.isDestroyed(me, v, vm)){
+                return;
+            }
+
+            vm.set('settings', result);
+
+            for( var key in this.settingsValueMap){
+                for( var settingsKey in this.settingsValueMap[key]){
+                    if( vm.get(key) == settingsKey){
+                        vm.set(key, this.settingsValueMap[key][settingsKey]);
+                    }
+                }
+            }
+            vm.set('panel.saveDisabled', false);
+            v.setLoading(false);
+        }, function(ex) {
+            if(!Util.isDestroyed(v, vm)){
+                vm.set('panel.saveDisabled', true);
+                v.setLoading(false);
+            }
+        });
+
+        v.down('progressbar').wait({
             interval: 500,
             text: 'Checking for upgrades...'.t()
         });
         this.checkUpgrades();
-
-        for( var key in this.settingsValueMap){
-            for( var settingsKey in this.settingsValueMap[key]){
-                if( vm.get(key) == settingsKey){
-                    vm.set(key, this.settingsValueMap[key][settingsKey]);
-                }
-            }
-        }
     },
 
     saveSettings: function () {
-        var me = this, view = me.getView(),
+        var me = this, v = me.getView(),
             vm = me.getViewModel();
-        view.setLoading('Saving ...');
+
+        v.setLoading(true);
 
         for( var key in this.settingsValueMap){
             for( var settingsKey in this.settingsValueMap[key]){
@@ -45,39 +63,48 @@ Ext.define('Ung.config.upgrade.MainController', {
                 }
             }
         }
-        rpc.systemManager.setSettings(function (result, ex) {
-            view.setLoading(false);
-            if (ex) { Util.handleException(ex); return; }
-            Util.successToast('Upgrade Settings'.t() + ' saved!');
-            me.loadSettings();
-            Ext.fireEvent('resetfields', view);
-        }, me.getViewModel().get('settings'));
 
+        Rpc.asyncData('rpc.systemManager.setSettings', vm.get('settings'))
+        .then(function () {
+            if(Util.isDestroyed(me, v, vm)){
+                return;
+            }
+            me.loadSettings();
+            Util.successToast('Upgrade Settings'.t() + ' saved!');
+            Ext.fireEvent('resetfields', v);
+        }, function(ex) {
+            if(!Util.isDestroyed(v, vm)){
+                vm.set('panel.saveDisabled', true);
+                v.setLoading(false);
+            }
+        });
     },
 
     checkUpgrades: function () {
-        var v = this.getView();
-        Rpc.asyncData('rpc.systemManager.upgradesAvailable').then(function (result) {
-            try {
+        var view = this.getView();
+
+        setTimeout( function(){
+            Rpc.asyncData('rpc.systemManager.upgradesAvailable')
+            .then(function (result) {
+                if(Util.isDestroyed(view)){
+                    return;
+                }
                 if(result) {
-                    var upgradeButton = v.down('[name="upgradeButton"]');
+                    var upgradeButton = view.down('[name="upgradeButton"]');
                     if (upgradeButton)
                         upgradeButton.show();
                 } else {
-                    var upgradeText = v.down('[name="upgradeText"]');
+                    var upgradeText = view.down('[name="upgradeText"]');
                     if (upgradeText)
                         upgradeText.show();
                 }
-                var progressbar = v.down('progressbar');
+                var progressbar = view.down('progressbar');
                 if (progressbar) {
                     progressbar.reset();
                     progressbar.hide();
                 }
-            } catch (err) {
-                //if down() throws an exception because the items are no longer visible
-                //ignore it
-            }
-        });
+            });
+        }, 100);
     },
 
     downloadUpgrades: function() {
@@ -85,7 +112,11 @@ Ext.define('Ung.config.upgrade.MainController', {
         Ext.MessageBox.progress("Downloading Upgrade...".t(), ".");
         this.checkDownloadStatus=true;
 
-        Rpc.asyncData('rpc.systemManager.downloadUpgrades').then(function(result) {
+        Rpc.asyncData('rpc.systemManager.downloadUpgrades')
+        .then(function(result) {
+            if(Util.isDestroyed(me)){
+                return;
+            }
             me.checkDownloadStatus=false;
 
             Ext.MessageBox.hide();
@@ -104,7 +135,11 @@ Ext.define('Ung.config.upgrade.MainController', {
             return;
         }
 
-        Rpc.asyncData('rpc.systemManager.getDownloadStatus').then(function(result) {
+        Rpc.asyncData('rpc.systemManager.getDownloadStatus')
+        .then(function(result) {
+            if(Util.isDestroyed(me)){
+                return;
+            }
             if(!me.checkDownloadStatus) {
                 return;
             }
@@ -144,7 +179,8 @@ Ext.define('Ung.config.upgrade.MainController', {
             duration: 180000
         });
 
-        rpc.systemManager.upgrade(Ext.bind(function (result, exception) {
+        Rpc.asyncData('rpc.systemManager.upgrade')
+        .then(function(result){
             // the upgrade will shut down the untangle-vm so often this returns an exception
             // either way show a wait dialog...
             Ext.MessageBox.hide();
@@ -169,7 +205,8 @@ Ext.define('Ung.config.upgrade.MainController', {
                     );
                 }
             });
-        }, this));
+
+        });
     },
 
     onUpgradeTimeChange: function (field, value) {

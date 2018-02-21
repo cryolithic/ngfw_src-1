@@ -204,7 +204,6 @@ Ext.define('Ung.cmp.TagPicker', {
 
     publishValue: function () {
         var me = this;
-        // console.log(Ext.Array.pluck(me.grid.getStore().getRange(), 'data'));
         if (me.rendered) {
             me.publishState('tags', {
                 javaClass: 'java.util.LinkedList',

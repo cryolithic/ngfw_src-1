@@ -7,52 +7,84 @@ Ext.define('Ung.config.system.MainController', {
     },
 
     loadSettings: function () {
-        var me = this, vm = this.getViewModel(),
-            timeZones = [];
+        var me = this, v= me.getView(), vm = me.getViewModel();
 
-        vm.set('isExpertMode', rpc.isExpertMode);
-
-        me.getView().setLoading(true);
-        Ext.Deferred.sequence([
-            Rpc.directPromise('rpc.languageManager.getLanguageSettings'),
-            Rpc.directPromise('rpc.languageManager.getLanguagesList'),
-            Rpc.directPromise('rpc.systemManager.getSettings'),
+        var rpcSequence = [
+            Rpc.asyncPromise('rpc.languageManager.getLanguageSettings'),
+            Rpc.asyncPromise('rpc.systemManager.getSettings'),
             Rpc.asyncPromise('rpc.systemManager.getDate'),
-            Rpc.directPromise('rpc.systemManager.getTimeZone'),
-            Rpc.directPromise('rpc.systemManager.getTimeZones'),
-        ], this).then(function (result) {
-            me.getView().setLoading(false);
+            Rpc.asyncPromise('rpc.systemManager.getTimeZone'),
+            Rpc.asyncPromise('rpc.systemManager.getTimeZones'),
+            Rpc.directPromise('rpc.isExpertMode')
+        ];
 
+        var dataNames = [
+            'languageSettings',
+            'systemSettings',
+            'time',
+            'timeZone',
+            'timeZonesList',
+            'isExpertMode'
+        ];
+        if(Rpc.directData('rpc.appManager.app', 'http')){
+            rpcSequence.push(Rpc.asyncPromise('rpc.appManager.app("http").getHttpSettings'));
+            dataNames.push('httpSettings');
+        }
+        if(Rpc.directData('rpc.appManager.app', 'ftp')){
+            rpcSequence.push(Rpc.asyncPromise('rpc.appManager.app("ftp").getFtpSettings'));
+            dataNames.push('ftpSettings');
+        }
+        if(Rpc.directData('rpc.appManager.app', 'smtp')){
+            rpcSequence.push(Rpc.asyncPromise('rpc.appManager.app("smtp").getSmtpSettings'));
+            dataNames.push('smtpSettings');
+        }
+        if(Rpc.directData('rpc.appManager.app', 'shield')){
+            rpcSequence.push(Rpc.asyncPromise('rpc.appManager.app("shield").getSettings'));
+            dataNames.push('shieldSettings');
+        }
+
+        v.setLoading(true);
+        Ext.Deferred.sequence(rpcSequence, this)
+        .then(function(result){
+            if(Util.isDestroyed(vm, dataNames)){
+                return;
+            }
+
+            var timeZones = [];
+            if (result[4]) {
+                eval(result[4]).forEach(function (tz) {
+                    timeZones.push({name: '(' + tz[1] + ') ' + tz[0], value: tz[0]});
+                });
+            }
+
+            // Massage language to include the appropriate source.
             var languageSettings = result[0];
             languageSettings['language'] = languageSettings['source'] + '-' + languageSettings['language'];
 
-            vm.set({
-                languageSettings: result[0],
-                languagesList: result[1],
-                systemSettings: result[2],
-                time: result[3],
-                timeZone: result[4],
+            dataNames.forEach(function(name, index){
+                vm.set(name, result[index]);
             });
 
-            if (result[5]) {
-                eval(result[5]).forEach(function (tz) {
-                    timeZones.push({name: '(' + tz[1] + ') ' + tz[0], value: tz[0]});
+            vm.set('panel.saveDisabled', false);
+
+            // Load language list.
+            if(!vm.get('languagesList')){
+                Rpc.asyncData('rpc.languageManager.getLanguagesList')
+                .then( function(result){
+                    if(!Util.isDestroyed(v,vm)){
+                        v.setLoading(false);
+                        vm.set('languagesList', result);
+                    }
                 });
-                vm.set('timeZonesList', timeZones);
+            }else{
+                v.setLoading(false);
+            }
+        }, function(ex) {
+            if(!Util.isDestroyed(v, vm)){
+                vm.set('panel.saveDisabled', true);
+                v.setLoading(false);
             }
         });
-
-        // get shield settings
-        try {
-            rpc.shieldSettings = rpc.appManager.app('shield').getSettings();
-            vm.set('shieldSettings', rpc.shieldSettings);
-        } catch (ex) {
-            Util.handleException(ex);
-        }
-
-        // get protocols
-        me.initProtocols();
-
     },
 
     syncTime: function () {
@@ -63,10 +95,10 @@ Ext.define('Ung.config.system.MainController', {
             'Continue?'.t(),
             function(btn) {
                 if (btn === 'yes') {
-                    Ext.MessageBox.wait('Syncing time with the internet...'.t(), 'Please wait'.t());
-                    rpc.UvmContext.forceTimeSync(function (result, ex) {
+                    Ext.MessageBox.wait('Synchronizing time with the internet...'.t(), 'Please wait'.t());
+                    Rpc.asyncData('rpc.UvmContext.forceTimeSync')
+                    .then(function(result){
                         Ext.MessageBox.hide();
-                        if (ex) { console.error(ex); Util.handleException(ex); return; }
                         if (result !== 0) {
                             Util.handleException('Time synchronization failed. Return code:'.t() + ' ' + result);
                         } else {
@@ -78,17 +110,16 @@ Ext.define('Ung.config.system.MainController', {
     },
 
     syncLanguage: function () {
-        Ext.MessageBox.wait('Syncing time with the internet...'.t(), 'Please wait'.t());
-        rpc.languageManager.synchronizeLanguage(function (result, ex) {
-            document.location.reload();
+        Ext.MessageBox.wait('Synchronizing languages with the internet...'.t(), 'Please wait'.t());
+        Rpc.asyncData('rpc.languageManager.synchronizeLanguage')
+        .then(function(result, ex){
+           document.location.reload();
         });
     },
 
-
-
     saveSettings: function () {
-        var me = this, v = this.getView(),
-            vm = this.getViewModel();
+        var me = this, v = me.getView(),
+            vm = me.getViewModel();
 
         v.setLoading(true);
         if (vm.get('languageSettings.regionalFormats') === 'default') {
@@ -98,8 +129,6 @@ Ext.define('Ung.config.system.MainController', {
             vm.set('languageSettings.overrideThousandSep', '');
             vm.set('languageSettings.overrideTimestampFmt', '');
         }
-
-        rpc.shieldManager = rpc.appManager.app('shield');
 
         v.query('ungrid').forEach(function (grid) {
             var store = grid.getStore();
@@ -119,35 +148,50 @@ Ext.define('Ung.config.system.MainController', {
 
         var languageSettings = vm.get('languageSettings');
         var languageSplit = languageSettings['language'].split('-');
+        if(languageSplit[0] != 'official' && languageSplit[0] != "community"){
+            // Something bad has happened; referve to known good language.
+            languageSplit[0] = "official";
+            languageSplit[1] = "en";
+        }
         languageSettings['source'] = languageSplit[0];
         languageSettings['language'] = languageSplit[1];
-        vm.set('languageSettings', languageSettings);
 
-        var sequence = [];
-        sequence.push(Rpc.asyncPromise('rpc.languageManager.setLanguageSettings', vm.get('languageSettings')));
-        sequence.push(Rpc.asyncPromise('rpc.systemManager.setSettings', vm.get('systemSettings')));
-        sequence.push(Rpc.asyncPromise('rpc.systemManager.setTimeZone', vm.get('timeZone')));
-        sequence.push(Rpc.asyncPromise('rpc.shieldManager.setSettings', vm.get('shieldSettings')));
+        var rpcSequence = [
+            Rpc.asyncPromise('rpc.languageManager.setLanguageSettings', languageSettings),
+            Rpc.asyncPromise('rpc.systemManager.setSettings', vm.get('systemSettings')),
+            Rpc.asyncPromise('rpc.systemManager.setTimeZone', vm.get('timeZone')),
+        ];
 
-        if (!rpc.smtpApp) rpc.smtpApp = rpc.appManager.app("smtp");
-        if (rpc.smtpApp) sequence.push(Rpc.asyncPromise('rpc.smtpApp.setSettings', vm.get('smtpSettings')));
-        if (!rpc.httpApp) rpc.httpApp = rpc.appManager.app("http");
-        if (rpc.httpApp) sequence.push(Rpc.asyncPromise('rpc.httpApp.setSettings', vm.get('httpSettings')));
-        if (!rpc.ftpApp) rpc.ftpApp = rpc.appManager.app("ftp");
-        if (rpc.ftpApp) sequence.push(Rpc.asyncPromise('rpc.ftpApp.setSettings', vm.get('ftpSettings')));
+        if(Rpc.directData('rpc.appManager.app', 'http')){
+            rpcSequence.push(Rpc.asyncPromise('rpc.appManager.app("http").setSettings', vm.get('httpSettings')));
+        }
+        if(Rpc.directData('rpc.appManager.app', 'ftp')){
+            rpcSequence.push(Rpc.asyncPromise('rpc.appManager.app("ftp").setSettings', vm.get('ftpSettings')));
+        }
+        if(Rpc.directData('rpc.appManager.app', 'smtp')){
+            rpcSequence.push(Rpc.asyncPromise('rpc.appManager.app("smtp").setSettings', vm.get('smtpSettings')));
+        }
+        if(Rpc.directData('rpc.appManager.app', 'shield')){
+            rpcSequence.push(Rpc.asyncPromise('rpc.appManager.app("shield").setSettings', vm.get('shieldSettings')));
+        }
 
-        Ext.Deferred.sequence(sequence, this).then(function () {
-            v.setLoading(false);
-            me.loadSettings();
+        Ext.Deferred.sequence(rpcSequence, this)
+        .then(function () {
+            if(Util.isDestroyed(me, v, vm)){
+                return;
+            }
             Util.successToast('System settings saved!');
-            Ext.fireEvent('resetfields', v);
             if(vm.get('localizationChanged') == true){
                 window.location.reload();
             }
-        }, function (ex) {
+            Ext.fireEvent('resetfields', v);
             v.setLoading(false);
-            console.error(ex);
-            Util.handleException(ex);
+            me.loadSettings();
+        }, function (ex) {
+            if(!Util.isDestroyed(v, vm)){
+                v.setLoading(false);
+                vm.set('panel.saveDisabled', true);
+            }
         });
     },
 
@@ -159,14 +203,16 @@ Ext.define('Ung.config.system.MainController', {
     },
 
     manualReboot: function () {
+        var companyName = Rpc.directData('rpc.companyName');
+
         Ext.MessageBox.confirm('Manual Reboot Warning'.t(),
-            Ext.String.format('The server is about to manually reboot.  This will interrupt normal network operations until the {0} Server is finished automatically restarting. This may take up to several minutes to complete.'.t(), rpc.companyName),
+            Ext.String.format('The server is about to manually reboot.  This will interrupt normal network operations until the {0} Server is finished automatically restarting. This may take up to several minutes to complete.'.t(), companyName),
             function (btn) {
                 if (btn === 'yes') {
                     rpc.UvmContext.rebootBox(function (result, ex) {
-                        if (ex) { console.error(ex); Util.handleException(Ext.String.format('Error: Unable to reboot {0} Server', rpc.companyName)); return; }
+                        if (ex) { console.error(ex); Util.handleException(Ext.String.format('Error: Unable to reboot {0} Server', companyName)); return; }
                         Ext.MessageBox.wait(
-                            Ext.String.format('The {0} Server is rebooting.'.t(), rpc.companyName),
+                            Ext.String.format('The {0} Server is rebooting.'.t(), companyName),
                             'Please wait'.t(), {
                                 interval: 20, //bar will move fast!
                                 increment: 500,
@@ -179,14 +225,16 @@ Ext.define('Ung.config.system.MainController', {
     },
 
     manualShutdown: function () {
+        var companyName = Rpc.directData('rpc.companyName');
+
         Ext.MessageBox.confirm('Manual Shutdown Warning'.t(),
-            Ext.String.format('The {0} Server is about to shutdown.  This will stop all network operations.'.t(), rpc.companyName),
+            Ext.String.format('The {0} Server is about to shutdown.  This will stop all network operations.'.t(), companyName),
             function (btn) {
                 if (btn === 'yes') {
                     rpc.UvmContext.shutdownBox(function (result, ex) {
-                        if (ex) { console.error(ex); Util.handleException(Ext.String.format('Error: Unable to shutdown {0} Server', rpc.companyName)); return; }
+                        if (ex) { console.error(ex); Util.handleException(Ext.String.format('Error: Unable to shutdown {0} Server', companyName)); return; }
                         Ext.MessageBox.wait(
-                            Ext.String.format('The {0} Server is shutting down.'.t(), rpc.companyName),
+                            Ext.String.format('The {0} Server is shutting down.'.t(), companyName),
                             'Please wait'.t(), {
                                 interval: 20,
                                 increment: 500,
@@ -248,45 +296,6 @@ Ext.define('Ung.config.system.MainController', {
                 Ext.MessageBox.alert('Failed', errorMsg);
             }
         });
-    },
-
-    getHttpSettings: function () {
-        var vm = this.getViewModel();
-        try {
-            if (rpc.appManager.app('http')) {
-                vm.set('httpSettings', rpc.appManager.app('http').getHttpSettings());
-            }
-        } catch (ex) {
-            if (ex) { console.error(ex); Util.handleException(ex); return; }
-        }
-    },
-    getFtpSettings: function () {
-        var vm = this.getViewModel();
-        try {
-            if (rpc.appManager.app('ftp')) {
-                vm.set('ftpSettings', rpc.appManager.app('ftp').getFtpSettings());
-            }
-        } catch (ex) {
-            if (ex) { console.error(ex); Util.handleException(ex); return; }
-        }
-    },
-
-    getSmtpSettings: function () {
-        var vm = this.getViewModel();
-        try {
-            if (rpc.appManager.app('smtp')) {
-                vm.set('smtpSettings', rpc.appManager.app('smtp').getSmtpSettings());
-            }
-        } catch (ex) {
-            if (ex) { console.error(ex); Util.handleException(ex); return; }
-        }
-    },
-
-    // Protocols methods
-    initProtocols: function () {
-        this.getHttpSettings();
-        this.getFtpSettings();
-        this.getSmtpSettings();
     },
 
     languageChange: function(combo, newValue, oldValue){

@@ -1,10 +1,8 @@
 Ext.define('Ung.config.network.Interface', {
     extend: 'Ext.window.Window',
     alias: 'widget.config.interface',
-    width: 900,
+    width: Math.min(Renderer.calculateWith(1), 900),
     height: 600,
-    // minHeight: 400,
-    // maxHeight: Ext.getBody().getViewSize().height - 20,
     onEsc: Ext.emptyFn,
     closable: false,
     layout: 'border',
@@ -548,7 +546,7 @@ Ext.define('Ung.config.network.Interface', {
                 recordActions: ['delete'],
                 bind: '{v4Aliases}',
                 listProperty: 'v4Aliases',
-                //maxHeight: 140,
+                maxHeight: 140,
                 emptyRow: {
                     staticAddress: '1.2.3.4',
                     staticPrefix: '24',
@@ -711,7 +709,7 @@ Ext.define('Ung.config.network.Interface', {
                 tbar: ['@addInline'],
                 recordActions: ['delete'],
                 disabled: true,
-                //maxHeight: 160,
+                maxHeight: 140,
                 bind: {
                     store: '{v6Aliases}',
                     disabled: '{intf.v6ConfigType === "DISABLED"}'

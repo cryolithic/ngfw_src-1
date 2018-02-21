@@ -5,7 +5,7 @@ Ext.define('Ung.cmp.PropertyGrid', {
     controller: 'unpropertygrid',
 
     editable: false,
-    width: 400,
+    width: Renderer.calculateWith(4),
     split: true,
     collapsible: true,
     resizable: true,
@@ -16,13 +16,16 @@ Ext.define('Ung.cmp.PropertyGrid', {
 
     cls: 'prop-grid',
 
+    disableSelection: true,
+
     viewConfig: {
         enableTextSelection: true,
         getRowClass: function(record) {
+            var cls = 'x-selectable'; // NGFW-11399 force selectable text
             if (record.get('value') === null || record.get('value') === '') {
-                return 'empty';
+                cls += ' empty';
             }
-            return;
+            return cls;
         }
     },
 
@@ -34,5 +37,13 @@ Ext.define('Ung.cmp.PropertyGrid', {
         },
         beforeexpand: 'onBeforeExpand',
         beforerender: 'onBeforeRender'
+    },
+
+    initComponent: function () {
+        var me = this;
+        if(me.emptyText){
+            me.emptyText = '<p style="text-align: center; margin: 0; line-height: 2;"><i class="fa fa-info-circle fa-2x"></i> <br/>' + this.emptyText + '</p>';
+        }
+        this.callParent(arguments);
     }
 });

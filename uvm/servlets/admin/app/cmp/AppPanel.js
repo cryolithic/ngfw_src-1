@@ -39,6 +39,9 @@ Ext.define('Ung.cmp.AppPanel', {
         dock: 'bottom',
         items: ['->', {
             text: '<strong>' + 'Save'.t() + '</strong>',
+            bind:{
+                disabled: '{panel.saveDisabled}'
+            },
             iconCls: 'fa fa-floppy-o fa-lg',
             handler: 'setSettings'
         }]
@@ -93,6 +96,10 @@ Ext.define('Ung.cmp.AppPanel', {
                 }
 
             }, 500);
+        },
+
+        removed: function(){
+            this.getViewModel().set('panel.saveDisabled', false);
         }
     }
 });

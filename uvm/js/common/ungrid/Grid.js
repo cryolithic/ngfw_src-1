@@ -158,14 +158,11 @@ Ext.define('Ung.cmp.Grid', {
                 this.tbarSeparatorIndex++;
             }
         }
-
-        if( column.rtype ){
-            column.renderer = 'columnRenderer';
-        }
     },
 
     listeners: {
-        beforeedit: 'beforeEdit'
+        beforeedit: 'beforeEdit',
+        filterchange: 'updateFilterStatus'
     },
 
     initComponent: function () {

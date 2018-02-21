@@ -5,7 +5,6 @@ Ext.define('Ung.config.about.MainController', {
 
     control: {
         '#': {
-            beforerender: 'onBeforeRender',
             afterrender: 'onAfterRender'
         },
         '#licenses': {
@@ -13,51 +12,73 @@ Ext.define('Ung.config.about.MainController', {
         }
     },
 
-    onBeforeRender: function (view) {
-        try {
-            view.getViewModel().set({
-                kernelVersion: rpc.adminManager.getKernelVersion(),
-                modificationState: rpc.adminManager.getModificationState(),
-                rebootCount: rpc.adminManager.getRebootCount(),
-                activeSize: rpc.hostTable.getCurrentActiveSize(),
-                maxActiveSize: rpc.hostTable.getMaxActiveSize()
-            });
-        } catch (ex) {
+    onAfterRender: function(){
+        var me = this, v = me.getView(), vm = me.getViewModel();
 
-        }
-    },
+        // There's nothing to save on this form.
+        vm.set('panel.saveDisabled', true);
 
-    onAfterRender: function(view){
-        var accountComponent = view.down('[itemId=account]');
-        if( accountComponent &&
-            accountComponent.isHidden() ){
-            var serverUID = rpc.serverUID;
-            if( serverUID &&
-                serverUID.length == 19 ) {
-                Ext.data.JsonP.request({
-                    url: Util.getStoreUrl() + '?action=find_account&uid=' + serverUID,
-                    type: 'GET',
-                    success: function(response, opts) {
-                        if( response!=null &&
-                            response.account) {
-                            accountComponent.setHtml('Account'.t() + ": " + response.account);
-                            accountComponent.setVisible(true);
-                        }
-                    },
-                    failure: function(response, opts) {
-                        console.log("Failed to get account info fro UID:", serverUID);
-                    }
-                });
+        v.setLoading(true);
+        Ext.Deferred.sequence([
+            Rpc.asyncPromise('rpc.adminManager.getKernelVersion'),
+            Rpc.asyncPromise('rpc.adminManager.getModificationState'),
+            Rpc.asyncPromise('rpc.adminManager.getRebootCount'),
+            Rpc.asyncPromise('rpc.hostTable.getCurrentActiveSize'),
+            Rpc.asyncPromise('rpc.hostTable.getMaxActiveSize'),
+            Rpc.directPromise('rpc.fullVersionAndRevision'),
+            Rpc.directPromise('rpc.serverUID')
+        ], this)
+        .then(function (result) {
+            if(Util.isDestroyed(v, vm)){
+                return;
             }
-        }
+            vm.set({
+                kernelVersion: result[0],
+                modificationState: result[1],
+                rebootCount: result[2],
+                activeSize: result[3],
+                maxActiveSize: result[4],
+                fullVersionAndRevision: result[5],
+                serverUID: result[6]
+            });
+
+            var accountComponent = v.down('[itemId=account]');
+            if( accountComponent &&
+                accountComponent.isHidden() ){
+                var serverUID = vm.get('serverUID');
+                if( serverUID &&
+                    serverUID.length == 19 ) {
+                    Ext.data.JsonP.request({
+                        url: Util.getStoreUrl() + '?action=find_account&uid=' + serverUID,
+                        type: 'GET',
+                        success: function(response, opts) {
+                            if( !Util.isDestroyed(accountComponent) &&
+                                response!=null &&
+                                response.account) {
+                                accountComponent.setHtml('Account'.t() + ": " + response.account);
+                                accountComponent.setVisible(true);
+                            }
+                        },
+                        failure: function(response, opts) {
+                            console.log("Failed to get account info fro UID:", serverUID);
+                        }
+                    });
+                }
+            }
+            v.setLoading(false);
+        });
     },
 
     reloadLicenses: function () {
         var vm = this.getViewModel();
 
-        rpc.licenseManager = rpc.UvmContext.licenseManager();
-        Rpc.asyncData('rpc.licenseManager.reloadLicenses', true).then(function(result) {
-            Rpc.asyncData('rpc.licenseManager.getLicenses').then(function(result) {
+        Rpc.asyncData('rpc.UvmContext.licenseManager.reloadLicenses', true)
+        .then(function(result) {
+            Rpc.asyncData('rpc.UvmContext.licenseManager.getLicenses').
+            then(function(result) {
+                if(Util.isDestroyed(vm)){
+                    return;
+                }
                 vm.set('licenses', result.list);
             });
         });

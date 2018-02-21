@@ -241,7 +241,7 @@ Ext.define('Ung.view.reports.Entry', {
                     ],
                     queryMode: 'local',
                     listeners: {
-                        change: 'reload'
+                        change: 'refresh'
                     }
                 }, {
                     xtype: 'component',
@@ -1044,7 +1044,6 @@ Ext.define('Ung.view.reports.Entry', {
                 fields: ['column', 'operator', 'value'],
                 disabled: true,
                 bind: {
-                    title: '{_sqlTitle}',
                     disabled: '{!f_tableColumns}',
                     store: {
                         data: '{_sqlConditions}'

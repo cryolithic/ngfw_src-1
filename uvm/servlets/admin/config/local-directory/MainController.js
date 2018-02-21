@@ -9,44 +9,50 @@ Ext.define('Ung.config.local-directory.MainController', {
         }
     },
 
-    localDirectory: rpc.UvmContext.localDirectory(),
-
     loadSettings: function () {
-        var me = this;
-        rpc.localDirectory = rpc.UvmContext.localDirectory();
-        Rpc.asyncData('rpc.localDirectory.getUsers')
-            .then(function (result) {
+        var me = this, v = me.getView(), vm = me.getViewModel();
 
+        v.setLoading(true);
+        Rpc.asyncData('rpc.UvmContext.localDirectory.getUsers')
+        .then(function (result) {
+                if(Util.isDestroyed(v, vm)){
+                    return;
+                }
                 // set the local record fields we use to deal with the expiration time and add vs edit logic
-                for(var i = 0 ; i < result.list.length ; i++) {
-                    result.list[i].localEmpty = false;
+                var users = result;
+                for(var i = 0 ; i < users.list.length ; i++) {
+                    users.list[i].localEmpty = false;
 
-                    if (result.list[i].expirationTime == 0) {
-                        result.list[i].localExpires = new Date();
-                        result.list[i].localForever = true;
-                    }
-                    else {
-                        result.list[i].localExpires = new Date(result.list[i].expirationTime);
-                        result.list[i].localForever = false;
+                    if (users.list[i].expirationTime == 0) {
+                        users.list[i].localExpires = new Date();
+                        users.list[i].localForever = true;
+                    }else {
+                        users.list[i].localExpires = new Date(users.list[i].expirationTime);
+                        users.list[i].localForever = false;
                     }
                 }
 
-                me.getViewModel().set('usersData', result);
-            });
+                vm.set('usersData', users);
+
+                v.setLoading(false);
+                vm.set('panel.saveDisabled', false);
+        }, function(ex) {
+            if(!Util.isDestroyed(v, vm)){
+                vm.set('panel.saveDisabled', true);
+                v.setLoading(false);
+            }
+        });
     },
 
     saveSettings: function () {
-        var view = this.getView();
-        var vm = this.getViewModel();
-        var me = this;
+        var me = this, v = me.getView(), vm = me.getViewModel();
 
-        if (!Util.validateForms(view)) {
+        if (!Util.validateForms(v)) {
             return;
         }
 
-        view.setLoading('Saving ...');
-        // used to update all tabs data
-        view.query('ungrid').forEach(function (grid) {
+        v.setLoading(true);
+        v.query('ungrid').forEach(function (grid) {
             var store = grid.getStore();
 
             /**
@@ -61,11 +67,10 @@ Ext.define('Ung.config.local-directory.MainController', {
                 });
                 store.isReordered = undefined;
                 vm.set(grid.listProperty, Ext.Array.pluck(store.getRange(), 'data'));
-                // store.commitChanges();
             }
         });
 
-        var userlist = me.getViewModel().get('usersData');
+        var userlist = vm.get('usersData');
         var user;
 
         for(var i = 0 ; i < userlist.list.length ; i++) {
@@ -87,14 +92,21 @@ Ext.define('Ung.config.local-directory.MainController', {
             }
         }
 
-        Rpc.asyncData('rpc.localDirectory.setUsers', userlist)
-            .then(function (result) {
-                Util.successToast('Local Directory'.t() + ' settings saved!');
-            }).always(function () {
-                me.loadSettings();
-                view.setLoading(false);
-                Ext.fireEvent('resetfields', view);
-            });
+        Rpc.asyncData('rpc.UvmContext.localDirectory.setUsers', userlist)
+        .then(function (result) {
+            if(Util.isDestroyed(v, me)){
+                return;
+            }
+            v.setLoading(false);
+            Ext.fireEvent('resetfields', v);
+            me.loadSettings();
+            v.setLoading(false);
+        }, function (ex) {
+            if(!Util.isDestroyed(v, vm)){
+                vm.set('panel.saveDisabled', true);
+                v.setLoading(false);
+            }
+        });
     },
 
     statics:{

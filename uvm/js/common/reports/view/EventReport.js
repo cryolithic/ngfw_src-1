@@ -128,9 +128,6 @@ Ext.define('Ung.view.reports.EventReport', {
                 }
                 // TO REVISIT THIS BECASE OF STATEFUL
                 // grid.initComponentColumn(column);
-                if (column.rtype) {
-                    column.renderer = 'columnRenderer';
-                }
             });
 
             grid.reconfigure(me.tableConfig.columns);
@@ -218,6 +215,11 @@ Ext.define('Ung.view.reports.EventReport', {
                     me.loadResultSet(result);
 
                     if (cb) { cb(); }
+                })
+                .always(function () { // NGFW-11467
+                    if (!me.getView()) { return; }
+                    me.getView().setLoading(false);
+                    if (reps) { reps.getViewModel().set('fetching', false); }
                 });
         },
 
@@ -271,8 +273,8 @@ Ext.define('Ung.view.reports.EventReport', {
                 v.down('grid').getSelectionModel().select(0);
             }
 
-            if( v.up().down('ungridstatus') ){
-                v.up().down('ungridstatus').fireEvent('update');
+            if( v.up('entry') && v.up('entry').down('ungridstatus') ){
+                v.up('entry').down('ungridstatus').fireEvent('update');
             }
         }
     }

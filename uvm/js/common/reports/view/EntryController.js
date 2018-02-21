@@ -421,6 +421,13 @@ Ext.define('Ung.view.reports.EntryController', {
 
                 var modFields = entry.copyFrom(eEntry);
 
+                // NGFW-11362 - update report icon on graph style change
+                if (Ext.Array.contains(modFields, 'icon')) {
+                    var node = Ext.getStore('reportstree').findNode('uniqueId', entry.get('uniqueId'));
+                    if (!node) { return; }
+                    node.set('iconCls', 'fa ' + entry.get('icon'));
+                }
+
                 // if title or category changed, update route
                 if (Ext.Array.contains(modFields, 'category') || Ext.Array.contains(modFields, 'title')) {
                     Ext.getStore('reportstree').build();
@@ -429,6 +436,8 @@ Ext.define('Ung.view.reports.EntryController', {
 
                 vm.set('eEntry', null);
                 vm.notify();
+
+                me.reload(true);
 
                 Util.successToast('<span style="color: yellow; font-weight: 600;">' + vm.get('entry.title') + '</span> report updated!');
             });
@@ -561,14 +570,14 @@ Ext.define('Ung.view.reports.EntryController', {
         });
 
         // startDate converted from UI to server date
-        startDate = Util.clientToServerDate(vm.get('startDate'));
+        startDate = Util.clientToServerDate(vm.get('f_startdate'));
         // endDate converted from UI to server date
-        endDate = Util.clientToServerDate(vm.get('endDate'));
+        endDate = Util.clientToServerDate(vm.get('f_enddate'));
 
         Ext.MessageBox.wait('Exporting Events...'.t(), 'Please wait'.t());
         var downloadForm = document.getElementById('downloadForm');
         downloadForm['type'].value = 'eventLogExport';
-        downloadForm['arg1'].value = (entry.category + '-' + entry.title + '-' + Ext.Date.format(vm.get('startDate'), 'd.m.Y-H:i') + '-' + Ext.Date.format(vm.get('endDate'), 'd.m.Y-H:i')).replace(/ /g, '_');
+        downloadForm['arg1'].value = (entry.category + '-' + entry.title + '-' + Ext.Date.format(vm.get('f_startdate'), 'd.m.Y-H:i') + '-' + Ext.Date.format(vm.get('f_enddate'), 'd.m.Y-H:i')).replace(/ /g, '_');
         downloadForm['arg2'].value = Ext.encode(entry);
         downloadForm['arg3'].value = conditions.length > 0 ? Ext.encode(conditions) : '';
         downloadForm['arg4'].value = columns.join(',');
@@ -579,8 +588,18 @@ Ext.define('Ung.view.reports.EntryController', {
     },
 
     editEntry: function () {
-        var me = this, vm = me.getViewModel();
-        vm.set('eEntry', vm.get('entry').copy(null));
+        var me = this, vm = me.getViewModel(),
+            eEntry = vm.get('entry').copy(null),
+            conditions = eEntry.get('conditions'), newConditions = [];
+
+        // NGFW-11484 - clone conditions objects to avoid issues when creating new reports
+        if (Ext.isArray(conditions)) {
+            Ext.Array.each(conditions, function (cond) {
+                newConditions.push(Ext.clone(cond));
+            });
+        }
+        eEntry.set('conditions', newConditions.length > 0 ? newConditions : null);
+        vm.set('eEntry', eEntry);
         vm.notify();
     },
 

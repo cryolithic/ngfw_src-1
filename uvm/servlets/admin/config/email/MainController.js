@@ -4,80 +4,73 @@ Ext.define('Ung.config.email.MainController', {
     alias: 'controller.config.email',
 
     control: {
-        '#': { afterrender: 'loadSettings', activate: 'loadSettings' }
+        '#': { afterrender: 'loadSettings'}
     },
 
-    // mailSender: rpc.UvmContext.mailSender(),
     originalMailSender: null,
 
-    // smtpApp: rpc.appManager.app('smtp'),
-    // safelistAdminView: null,
-
     loadSettings: function () {
-        var vm = this.getViewModel(), me = this;
-        rpc.mailSender = rpc.UvmContext.mailSender();
-        rpc.smtpApp = rpc.appManager.app('smtp');
+        var me = this, v = me.getView(), vm = me.getViewModel();
 
-        if (!rpc.smtpApp) {
-            me.getView().setLoading(true);
-            Rpc.asyncData('rpc.mailSender.getSettings')
-                .then(function (result) {
-                    me.getView().setLoading(false);
-                    vm.set({
-                        mailSender: result,
-                        smtp: false
-                    });
-                    me.originalMailSender = Ext.clone(result);
-                }, function (ex) {
-                    console.error(ex);
-                    Util.handleException(ex);
-                }).always(function() {
-                    me.getView().setLoading(false);
-                });
-            return;
+        var sequence = [
+            Rpc.asyncPromise('rpc.UvmContext.mailSender.getSettings')
+        ];
+        var dataNames = [
+            'mailSender'
+        ];
+
+        if(Rpc.directData('rpc.appManager.app', 'smtp')){
+            vm.set('smtp', true);
+            sequence.push(
+                Rpc.asyncPromise('rpc.appManager.app("smtp").getSmtpSettings'),
+                Rpc.asyncPromise('rpc.appManager.app("smtp").getSafelistAdminView.getSafelistContents', 'GLOBAL'),
+                Rpc.asyncPromise('rpc.appManager.app("smtp").getSafelistAdminView.getUserSafelistCounts'),
+                Rpc.asyncPromise('rpc.appManager.app("smtp").getQuarantineMaintenenceView.listInboxes'),
+                Rpc.asyncPromise('rpc.appManager.app("smtp").getQuarantineMaintenenceView.getInboxesTotalSize'),
+                Rpc.directPromise('rpc.companyName')
+            );
+
+            dataNames.push(
+                'smtpSettings',
+                'globalSafeList',
+                'userSafeList',
+                'inboxesList',
+                'inboxesTotalSize',
+                'companyName'
+            );
+        }else{
+            vm.set('smtp', false);
         }
 
-        rpc.safelistAdminView = rpc.smtpApp.getSafelistAdminView();
-        rpc.quarantineMaintenenceView = rpc.smtpApp.getQuarantineMaintenenceView();
-
-        me.getView().setLoading(true);
-        Ext.Deferred.sequence([
-            Rpc.asyncPromise ('rpc.mailSender.getSettings'),
-            Rpc.asyncPromise ('rpc.smtpApp.getSmtpSettings'),
-            Rpc.asyncPromise ('rpc.safelistAdminView.getSafelistContents', 'GLOBAL'),
-            Rpc.directPromise('rpc.safelistAdminView.getUserSafelistCounts'),
-            Rpc.asyncPromise ('rpc.quarantineMaintenenceView.listInboxes'),
-            Rpc.directPromise('rpc.quarantineMaintenenceView.getInboxesTotalSize')
-        ], this).then(function(result) {
-            vm.set({
-                mailSender: result[0],
-                smtpSettings: result[1],
-                globalSafeList: result[2],
-                userSafeList: result[3],
-                inboxesList: result[4],
-                inboxesTotalSize: result[5],
-                smtp: true
+        v.setLoading(true);
+        Ext.Deferred.sequence(sequence, this).then(function(result) {
+            if(Util.isDestroyed(me, v, vm)){
+                return;
+            }
+            dataNames.forEach(function(name, index){
+                vm.set(name, result[index]);
             });
+
             me.originalMailSender = Ext.clone(result[0]);
+            vm.set('panel.saveDisabled', false);
+            v.setLoading(false);
         }, function(ex) {
-            console.error(ex);
-            Util.handleException(ex);
-        }).always(function() {
-            me.getView().setLoading(false);
+            if(!Util.isDestroyed(v, vm)){
+                vm.set('panel.saveDisabled', true);
+                v.setLoading(false);
+            }
         });
     },
 
 
-    // using promise because of the testEmail need
     saveSettings: function () {
-        var deferred = new Ext.Deferred();
-        var me = this, view = this.getView(), vm = this.getViewModel();
+        var me = this, v = this.getView(), vm = this.getViewModel();
 
         if (!Util.validateForms(this.getView())) {
             return null;
          }
 
-        var fromAddressCmp = view.down('textfield[name="FromAddress"]');
+        var fromAddressCmp = v.down('textfield[name="FromAddress"]');
         if (fromAddressCmp.rendered && !fromAddressCmp.isValid()) {
             Ung.app.redirectTo('#config/email/outgoing-server');
             Ext.MessageBox.alert('Warning'.t(), 'A From Address must be specified.'.t());
@@ -85,9 +78,9 @@ Ext.define('Ung.config.email.MainController', {
             return null;
         }
 
-        view.setLoading('Saving ...');
+        v.setLoading(true);
 
-        view.query('ungrid').forEach(function (grid) {
+        v.query('ungrid').forEach(function (grid) {
             var store = grid.getStore();
 
             /**
@@ -116,26 +109,30 @@ Ext.define('Ung.config.email.MainController', {
             }
         });
 
-        var promises =  [
-            Rpc.asyncPromise('rpc.mailSender.setSettings', me.getViewModel().get('mailSender')),
+        var sequence = [
+            Rpc.asyncPromise('rpc.UvmContext.mailSender.setSettings', vm.get('mailSender'))
         ];
-        if (rpc.smtpApp) {
-            promises.push(Rpc.asyncPromise('rpc.smtpApp.setSmtpSettingsWithoutSafelists', vm.get('smtpSettings')));
-            promises.push(Rpc.asyncPromise('rpc.safelistAdminView.replaceSafelist', 'GLOBAL', vm.get('globalSafeList')));
+
+        if(Rpc.directData('rpc.appManager.app', 'smtp')){
+            sequence.push(Rpc.asyncPromise('rpc.appManager.app("smtp").setSmtpSettingsWithoutSafelists', vm.get('smtpSettings')));
+            sequence.push(Rpc.asyncPromise('rpc.appManager.app("smtp").getSafelistAdminView.replaceSafelist', 'GLOBAL', vm.get('globalSafeList')));
         }
-        Ext.Deferred.sequence(promises, this)
-        .then(function() {
-            Util.successToast('Email'.t() + ' settings saved!');
-            Ext.fireEvent('resetfields', view);
-            // me.loadSettings();
-            deferred.resolve();
-        }, function(ex) {
-            console.log(ex);
-            Util.handleException(ex);
-        }).always(function () {
-            view.setLoading(false);
+        Ext.Deferred.sequence(sequence, this).then(function(result) {
+            if(Util.isDestroyed(me, v, vm)){
+                return;
+            }
+            me.loadSettings();
+            Util.successToast('Email settings saved!');
+            Ext.fireEvent('resetfields', v);
+        }, function (ex) {
+            if(!Util.isDestroyed(v, vm)){
+                vm.set('panel.saveDisabled', true);
+                v.setLoading(false);
+            }
         });
-        return deferred.promise;
+
+        // testEmail needs to handle this as a promise.
+        return Ext.Deferred.resolved();
     },
 
     testEmail: function () {
@@ -149,6 +146,9 @@ Ext.define('Ung.config.email.MainController', {
                 msg: Ext.String.format('Your current settings have not been saved yet.{0}Would you like to save your settings before executing the test?'.t(), '<br />'),
                 buttons: Ext.Msg.YESNOCANCEL,
                 fn: function(btnId) {
+                    if(Util.isDestroyed(me)){
+                        return;
+                    }
                     if (btnId === 'yes') {
                         me.saveSettings().then(function () {
                             Ext.create('Ung.config.email.EmailTest');
@@ -181,12 +181,15 @@ Ext.define('Ung.config.email.MainController', {
         });
 
         Ext.MessageBox.wait('Purging...'.t(), 'Please wait'.t());
-        Rpc.asyncData('rpc.safelistAdminView.deleteSafelists', accounts)
-            .then(function() {
-                me.loadSettings();
-            }).always(function () {
-                Ext.MessageBox.hide();
-            });
+        Rpc.asyncData('rpc.appManager.app("smtp").getSafelistAdminView.deleteSafelists', accounts)
+        .then(function() {
+            if(Util.isDestroyed(me)){
+                return;
+            }
+            me.loadSettings();
+        }).always(function () {
+            Ext.MessageBox.hide();
+        });
     },
 
     purgeInboxes: function (btn) {
@@ -204,12 +207,15 @@ Ext.define('Ung.config.email.MainController', {
         });
 
         Ext.MessageBox.wait('Purging...'.t(), 'Please wait'.t());
-        Rpc.asyncData('rpc.quarantineMaintenenceView.deleteInboxes', accounts)
-            .then(function() {
-                me.refreshUserQuarantines();
-            }).always(function () {
-                Ext.MessageBox.hide();
-            });
+        Rpc.asyncData('rpc.appManager.app("smtp").getQuarantineMaintenenceView.deleteInboxes', accounts)
+        .then(function() {
+            if(Util.isDestroyed(me)){
+                return;
+            }
+            me.refreshUserQuarantines();
+        }).always(function () {
+            Ext.MessageBox.hide();
+        });
     },
 
     releaseInboxes: function (btn) {
@@ -227,12 +233,15 @@ Ext.define('Ung.config.email.MainController', {
         });
 
         Ext.MessageBox.wait('Releasing...'.t(), 'Please wait'.t());
-        Rpc.asyncData('rpc.quarantineMaintenenceView.rescueInboxes', accounts)
-            .then(function() {
-                me.refreshUserQuarantines();
-            }).always(function () {
-                Ext.MessageBox.hide();
-            });
+        Rpc.asyncData('rpc.appManager.app("smtp").getQuarantineMaintenenceView.rescueInboxes', accounts)
+        .then(function() {
+            if(Util.isDestroyed(me)){
+                return;
+            }
+            me.refreshUserQuarantines();
+        }).always(function () {
+            Ext.MessageBox.hide();
+        });
     },
 
     showQuarantineDetails: function (view, rowIndex, colIndex, item, e, record) {
@@ -359,9 +368,12 @@ Ext.define('Ung.config.email.MainController', {
         var me = this, vm = me.getViewModel();
         me.lookup('inboxesGrid').setLoading(true);
         Ext.Deferred.sequence([
-            Rpc.asyncPromise ('rpc.quarantineMaintenenceView.listInboxes'),
-            Rpc.directPromise('rpc.quarantineMaintenenceView.getInboxesTotalSize')
+            Rpc.asyncPromise ('rpc.appManager.app("smtp").getQuarantineMaintenenceView.listInboxes'),
+            Rpc.asyncPromise('rpc.appManager.app("smtp").getQuarantineMaintenenceView.getInboxesTotalSize')
         ], this).then(function(result) {
+            if(Util.isDestroyed(vm)){
+                return;
+            }
             vm.set({
                 inboxesList: result[0],
                 inboxesTotalSize: result[1]
@@ -383,22 +395,29 @@ Ext.define('Ung.config.email.MainController', {
 
         var grid = me.dialog.down('grid');
         me.dialog.setLoading(true);
-        Rpc.asyncData('rpc.quarantineMaintenenceView.getInboxRecords', grid.account)
-            .then(function (result) {
-                if (result && result.list) {
-                    for (var i=0; i< result.list.length; i++) {
-                        /* copy values from mailSummary to object */
-                        result.list[i].subject = result.list[i].mailSummary.subject;
-                        result.list[i].sender = result.list[i].mailSummary.sender;
-                        result.list[i].quarantinedDate = result.list[i].internDate;
-                        result.list[i].quarantineCategory = result.list[i].mailSummary.quarantineCategory;
-                        result.list[i].quarantineDetail = result.list[i].mailSummary.quarantineDetail;
-                        result.list[i].size = result.list[i].mailSummary.quarantineSize;
-                    }
+        Rpc.asyncData('rpc.appManager.app("smtp").getQuarantineMaintenenceView.getInboxRecords', grid.account)
+        .then(function (result) {
+            if(Util.isDestroyed(grid)){
+                return;
+            }
+            if (result && result.list) {
+                for (var i=0; i< result.list.length; i++) {
+                    /* copy values from mailSummary to object */
+                    result.list[i].subject = result.list[i].mailSummary.subject;
+                    result.list[i].sender = result.list[i].mailSummary.sender;
+                    result.list[i].quarantinedDate = result.list[i].internDate;
+                    result.list[i].quarantineCategory = result.list[i].mailSummary.quarantineCategory;
+                    result.list[i].quarantineDetail = result.list[i].mailSummary.quarantineDetail;
+                    result.list[i].size = result.list[i].mailSummary.quarantineSize;
                 }
-                grid.getStore().loadData(result.list);
-            }, function (ex) { console.log(ex); })
-            .always(function () { me.dialog.setLoading(false); });
+            }
+            grid.getStore().loadData(result.list);
+        }).always(function () {
+            if(Util.isDestroyed(me)){
+                return;
+            }
+            me.dialog.setLoading(false);
+        });
     },
 
     purgeMails: function (btn) {
@@ -416,12 +435,15 @@ Ext.define('Ung.config.email.MainController', {
         });
 
         Ext.MessageBox.wait('Purging...'.t(), 'Please wait'.t());
-        Rpc.asyncData('rpc.quarantineMaintenenceView.purge', grid.account, emails)
-            .then(function() {
-                me.getAccountEmails();
-            }).always(function () {
-                Ext.MessageBox.hide();
-            });
+        Rpc.asyncData('rpc.appManager.app("smtp").getQuarantineMaintenenceView.purge', grid.account, emails)
+        .then(function() {
+            if(Util.isDestroyed(me)){
+                return;
+            }
+            me.getAccountEmails();
+        }).always(function () {
+            Ext.MessageBox.hide();
+        });
     },
 
     releaseMails: function (btn) {
@@ -439,11 +461,14 @@ Ext.define('Ung.config.email.MainController', {
         });
 
         Ext.MessageBox.wait('Releasing...'.t(), 'Please wait'.t());
-        Rpc.asyncData('rpc.quarantineMaintenenceView.rescue', grid.account, emails)
-            .then(function() {
-                me.getAccountEmails();
-            }).always(function () {
-                Ext.MessageBox.hide();
-            });
+        Rpc.asyncData('rpc.appManager.app("smtp").getQuarantineMaintenenceView.rescue', grid.account, emails)
+        .then(function() {
+            if(Util.isDestroyed(me)){
+                return;
+            }
+            me.getAccountEmails();
+        }).always(function () {
+            Ext.MessageBox.hide();
+        });
     }
 });
