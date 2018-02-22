@@ -3,8 +3,9 @@ Ext.define('Ung.view.reports.ReportsController', {
 
     alias: 'controller.reports',
 
-    onInitialize: function () {
+    onInitialize: function (view) {
         // Ext.getStore('reportstree').build();
+        var me = this, vm = view.getViewModel();
     },
 
     // onActivate: function () {
@@ -18,11 +19,23 @@ Ext.define('Ung.view.reports.ReportsController', {
 
         if (node.isLeaf()) {
             record = Ext.getStore('reports').findRecord('url', node.get('url'), 0, false, true, true);
-            if (record) {
-                console.log('here');
-                vm.set('entry', record);
-                vm.notify();
+            if (!record) {
+                console.log('No record found!');
+                return;
             }
+
+            // switch(record.get('type')) {
+            // case 'TEXT': view.down('#reports').setActiveItem('textreport'); break;
+            // case 'EVENT_LIST': view.down('#reports').setActiveItem('eventreport'); break;
+            // default: view.down('#reports').setActiveItem('graphreport');
+            // }
+            switch(record.get('type')) {
+            case 'TEXT': vm.set('activeItem', 'textreport'); break;
+            case 'EVENT_LIST': vm.set('activeItem', 'eventreport'); break;
+            default: vm.set('activeItem', 'graphreport');
+            }
+            vm.set('entry', record);
+            vm.notify();
         }
 
         // me.lookup('eventreport').setHtml('event report deselected');

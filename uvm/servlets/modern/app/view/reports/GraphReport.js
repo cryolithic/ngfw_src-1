@@ -1,23 +1,113 @@
 Ext.define('Ung.view.reports.GraphReport', {
-    extend: 'Ext.Component',
+    extend: 'Ext.Container',
     alias: 'widget.graphreport',
     itemId: 'graphreport',
 
     listeners: {
         initialize: 'onInitialize',
+        resize: 'onResize',
         painted: 'initGraph'
     },
 
+    theme: {
+        colors: ['#00b000', '#3030ff', '#009090', '#00ffff', '#707070', '#b000b0', '#fff000', '#b00000', '#ff0000', '#ff6347', '#c0c0c0'],
+        chart: {
+            backgroundColor: 'transparent'
+        },
+        xAxis: {
+            lineColor: '#C0D0E0',
+            tickColor: '#C0D0E0',
+            labels: {
+                style: {
+                    color: '#777'
+                }
+            },
+            crosshair: {
+                color: 'rgba(192, 208, 224, 0.5)'
+            }
+        },
+        yAxis: {
+            lineColor: '#C0D0E0',
+            tickColor: '#C0D0E0',
+            gridLineColor: '#EEE',
+            labels: {
+                style: {
+                    color: '#777'
+                }
+            },
+            title: {
+                style: {
+                    color: '#777'
+                }
+            }
+        },
+        plotOptions: {
+            series: {
+                tooltip: {
+                    headerFormat: '<span style="font-size: 14px; color: #333;">{point.key}</span><br/>'
+                },
+                dataLabels: {
+                    color: '#555555'
+                }
+            },
+            pie: {
+                borderColor: '#FFF',
+                edgeColor: '#FFF'
+            },
+            column: {
+                borderColor: '#EEE'
+            }
+        },
+        tooltip: {
+            backgroundColor: 'rgba(247, 247, 247, 0.95)',
+            style: {
+                color: '#333'
+            }
+        },
+        legend: {
+            title: {
+                style: {
+                    color: '#000'
+                }
+            },
+            itemStyle: {
+                color: '#333'
+            },
+            itemHoverStyle: {
+                color: '#000'
+            }
+        },
+        loading: {
+            labelStyle: {
+                color: '#777'
+            },
+            style: {
+                backgroundColor: 'rgba(255, 255, 255, 0.3)'
+            }
+        }
+    },
+
     controller: {
-        onInitialize: function () {
+        onInitialize: function (view) {
+            var me = this, vm = view.getViewModel();
             console.log('init');
             // this.initGraph();
         },
 
+        onResize: function (el, info) {
+            var me = this;
+            console.log(info);
+            // explicitly set size of the chart to avoid cutoffs
+            if (me.chart) {
+                me.chart.reflow();
+                // me.chart.setSize(width, height, false);
+            }
+        },
 
         initGraph: function (view) {
             var me = this, isWidget = false, vm = me.getViewModel();
-            me.chart = new Highcharts.stockChart(view.getElementConfig().dom, {
+
+            me.chart = new Highcharts.stockChart(view.getElementConfig().dom.firstChild, {
                 chart: {
                     // type: 'spline',
                     // animation: false,
@@ -246,12 +336,17 @@ Ext.define('Ung.view.reports.GraphReport', {
 
 
             vm.bind('{entry}', function (entry) {
+                me.reset();
                 if (!entry ||
                     ( entry.get('type') !== 'PIE_GRAPH' &&
                       entry.get('type') !== 'TIME_GRAPH' &&
                       entry.get('type') !== 'TIME_GRAPH_DYNAMIC') ) {
                     return;
                 }
+                me.fetchData();
+            });
+
+            vm.bind('{menuGroups.since}', function () {
                 me.fetchData();
             });
 
@@ -306,35 +401,43 @@ Ext.define('Ung.view.reports.GraphReport', {
                 startDate, endDate;
 
             if (!entry) { return; }
+            var graphdatagrid = me.getView().up('ung-reports').down('graphdata');
+            // console.log(vm.get('menuGroups.since'));
 
             // disable this reset because it fires second time and may cause browser freeze NGFW-11306
             // if (reset) { me.reset(); }
 
-            vm.set('eError', false);
+            // vm.set('eError', false);
 
             // if (reps) { reps.getViewModel().set('fetching', true); }
 
             // date range setup
-            if (!me.getView().renderInReports) {
-                // if not rendered in reports than treat as widget so from server startDate is extracted the timeframe
-                startDate = new Date(Util.getMilliseconds() - (Ung.dashboardSettings.timeframe * 3600 || 3600) * 1000);
-                endDate = null;
-            } else {
-                // if it's a report, convert UI client start date to server date
-                startDate = Util.clientToServerDate(vm.get('f_startdate'));
-                endDate = Util.clientToServerDate(vm.get('f_enddate'));
-            }
+            // if (!me.getView().renderInReports) {
+            //     // if not rendered in reports than treat as widget so from server startDate is extracted the timeframe
+            //     startDate = new Date(Util.getMilliseconds() - (Ung.dashboardSettings.timeframe * 3600 || 3600) * 1000);
+            //     endDate = null;
+            // } else {
+            //     // if it's a report, convert UI client start date to server date
+            //     startDate = Util.clientToServerDate(vm.get('f_startdate'));
+            //     endDate = Util.clientToServerDate(vm.get('f_enddate'));
+            // }
+
+            startDate = new Date();
+            startDate = Ext.Date.subtract(new Date(), Ext.Date.HOUR, vm.get('menuGroups.since'));
+            endDate = null;
+
 
             // if (reset) { me.reset(); }
             me.chart.showLoading('<i class="fa fa-spinner fa-spin fa-fw fa-lg"></i>');
-
+            graphdatagrid.mask();
             Rpc.asyncData('rpc.reportsManager.getDataForReportEntry',
                 entry.getData(), // entry
-                startDate,
+                Util.clientToServerDate(startDate),
                 endDate,
                 vm.get('globalConditions'), -1) // sql filters
                 .then(function (result) {
                     me.data = result.list;
+                    me.setGridData();
                     me.setSeries();
                     if (cb) { cb(me.data); }
                 }, function () {
@@ -343,7 +446,15 @@ Ext.define('Ung.view.reports.GraphReport', {
                 .always(function () {
                     // if (reps) { reps.getViewModel().set('fetching', false); }
                     me.chart.hideLoading();
+                    graphdatagrid.unmask();
                 });
+        },
+
+        setGridData: function () {
+            var me = this, graphdatagrid = me.getView().up('ung-reports').down('graphdata');
+            // var ctrl = graphdatagrid.getController();
+            graphdatagrid.getViewModel().set('reportData', me.data);
+
         },
 
         /**
@@ -516,8 +627,8 @@ Ext.define('Ung.view.reports.GraphReport', {
                             r: 0.7
                         },
                         stops: [
-                            [0, Highcharts.Color(color).setOpacity((isWidget && Ung.dashboardSettings.theme === 'DARK') ? 0.9 : 0.4).get('rgba')],
-                            [1, Highcharts.Color(color).setOpacity((isWidget && Ung.dashboardSettings.theme === 'DARK') ? 0.3 : 0.8).get('rgba')]
+                            [0, Highcharts.Color(color).setOpacity(0.4).get('rgba')],
+                            [1, Highcharts.Color(color).setOpacity(0.8).get('rgba')]
                         ]
                     };
                 });
@@ -561,7 +672,7 @@ Ext.define('Ung.view.reports.GraphReport', {
                             value: d,
                             width: 1,
                             dashStyle: 'Dash',
-                            color: isWidget ? (Ung.dashboardSettings.theme !== 'DARK' ? '#EEE' : '#444') : '#EEE',
+                            color: '#EEE',
                             label: {
                                 text: Ext.Date.format(d, 'Y-m-d'),
                                 rotation: 0,
@@ -612,7 +723,8 @@ Ext.define('Ung.view.reports.GraphReport', {
                     spline: {
                         shadow: true,
                         dataGrouping: {
-                            groupPixelWidth: 8
+                            groupPixelWidth: 8,
+                            // approximation: entry.get('approximation') || 'sum'
                         },
                     },
                     // time graphs
@@ -620,7 +732,8 @@ Ext.define('Ung.view.reports.GraphReport', {
                         // shadow: true,
                         // fillOpacity: 0.3,
                         dataGrouping: {
-                            groupPixelWidth: 8
+                            groupPixelWidth: 8,
+                            // approximation: entry.get('approximation') || 'sum'
                         },
                     },
                     column: {
@@ -688,11 +801,28 @@ Ext.define('Ung.view.reports.GraphReport', {
                 }
             };
 
-            // Highcharts.merge(true, settings, isWidget ? Theme[Ung.dashboardSettings.theme] : Theme.DEFAULT);
+            Highcharts.merge(true, settings, me.getView().theme);
             me.chart.update(settings, true);
 
             // force redraw for column charts, NGFW-11349
             if (isPieColumn) { me.chart.redraw(); }
+        },
+
+        reset: function () {
+            var me = this;
+            if (!me.chart) { return; }
+            while(me.chart.series.length > 0) {
+                me.chart.series[0].remove(true);
+            }
+            me.chart.update({
+                xAxis: { visible: false },
+                yAxis: { visible: false },
+                legend: {
+                    enabled: false
+                }
+            });
+            me.chart.redraw();
+            me.chart.zoomOut();
         }
     }
 });

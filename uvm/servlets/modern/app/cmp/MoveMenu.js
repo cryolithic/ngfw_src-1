@@ -39,7 +39,7 @@ Ext.define('Ung.cmp.MoveMenu', {
             position: 'last',
             handler: 'moveRecord',
             scope: this
-        }])       
+        }]);
     },
 
     showMenu: function (grid, context) {
@@ -102,5 +102,5 @@ Ext.define('Ung.cmp.MoveMenu', {
         default:      store.insert(item.position + 1, record);
         }
 
-    }    
+    }
 });

@@ -34,6 +34,7 @@ Ext.define('Ung.view.reports.EventReport', {
 
     listeners: {
         initialize: 'onInitialize',
+        resize: 'onResize'
     },
 
     items: [{
@@ -48,9 +49,32 @@ Ext.define('Ung.view.reports.EventReport', {
                 indented: false,
                 mouseLeaveDelay: 0
             }
+        }, {
+            xtype: 'button',
+            bind: {
+                text: '{menuGroups.eventslimit} Events',
+            },
+            menu: {
+                anchor: true,
+                defaultType: 'menuradioitem',
+                bind: {
+                    groups: '{menuGroups}'
+                },
+                defaults: {
+                    group: 'eventslimit'
+                },
+                items: [
+                    { text: '100'.t(), value: 100 },
+                    { text: '500'.t(), value: 500 },
+                    { text: '1000'.t(), value: 1000 },
+                    { text: '5000'.t(), value: 5000 },
+                    { text: '10000'.t(), value: 10000 },
+                    { text: '50000'.t(), value: 50000 }
+                ]
+            }
         }, '->', {
             xtype: 'searchfield',
-            ui: 'faded',
+            ui: 'solo',
             width: 300,
             placeholder: 'Filter data ...'.t(),
             listeners: {
@@ -73,6 +97,10 @@ Ext.define('Ung.view.reports.EventReport', {
                 me.setup(entry);
             });
 
+        },
+
+        onResize: function () {
+            console.log('resize');
         },
 
         setup: function (entry) {
