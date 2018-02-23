@@ -6,6 +6,12 @@ Ext.define('Ung.view.reports.ReportsController', {
     onInitialize: function (view) {
         // Ext.getStore('reportstree').build();
         var me = this, vm = view.getViewModel();
+        vm.bind('{entry}', function (entry) {
+            // console.log(entry);
+            if (entry.get('type') === 'EVENT_LIST') {
+                me.setupColumns(entry);
+            }
+        });
     },
 
     // onActivate: function () {
@@ -50,6 +56,36 @@ Ext.define('Ung.view.reports.ReportsController', {
         // case 'TEXT': me.lookup('textreport').setHtml('text report selected'); break;
         // }
 
+    },
+
+    setupColumns: function (entry) {
+        var me = this,
+            columnsMenu = me.getView().down('#columnsMenu').getMenu(),
+            tableConfig = TableConfig2.getColumns(entry.get('table'), entry.get('defaultColumns'));
+        columnsMenu.removeAll();
+        columnsMenu.add(tableConfig.menuItems);
+    },
+
+    showHideColumn: function (item, checked) {
+        var me = this, grid = me.getView().down('eventreport'),
+            columnsMenu = me.getView().down('#columnsMenu').getMenu(),
+            cols = [];
+
+        // var columns = grid.getColumns();
+        // Ext.Array.remove(columns, Ext.Array.findBy(columns, function (column) {
+        //     return column.getDataIndex() === item.dataIndex;
+        // }));
+        // grid.setColumns(columns);
+        Ext.Array.each(columnsMenu.getItems().items, function (smenu) {
+            Ext.Array.each(smenu.getMenu().getItems().items, function (col) {
+                if (col.getChecked()) {
+                    cols.push(col.dataIndex);
+                }
+            });
+        });
+        var c = TableConfig2.getColumns(me.getViewModel().get('entry.table'), cols);
+        grid.setColumns(c.columns);
+        grid.refresh();
     }
 
 

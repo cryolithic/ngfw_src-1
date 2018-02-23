@@ -3,7 +3,6 @@ Ext.define('TableConfig2', {
     singleton: true,
 
     getColumns: function (tableName, defaultColumns) {
-        console.log(defaultColumns);
         var columnIds = this[tableName], columns = [], menuItems = [];
         if (!columnIds) {
             console.error('No such table: ' + tableName);
@@ -70,19 +69,29 @@ Ext.define('TableConfig2', {
         session_id: {
             text: 'Session Id'.t(),
             width: 120,
-            resizable: false
+            resizable: false,
+            groupable: false
         },
         time_stamp: {
             text: 'Timestamp'.t(),
-            width: 120
+            width: 150,
+            resizable: false,
+            groupable: false,
+            renderer: Renderer.timestamp
         },
         start_time: {
             text: 'Start Timestamp'.t(),
-            width: 120
+            width: 150,
+            resizable: false,
+            groupable: false,
+            renderer: Renderer.timestamp
         },
         end_time: {
             text: 'End Timestamp'.t(),
-            width: 120
+            width: 150,
+            resizable: false,
+            groupable: false,
+            renderer: Renderer.timestamp
         },
         bypassed: {
             text: 'Bypassed'.t(),
@@ -261,21 +270,42 @@ Ext.define('TableConfig2', {
         // Bytes
         p2s_bytes: {
             text: 'To-Server Bytes'.t(),
+            align: 'right',
+            width: 90,
+            resizable: false,
+            groupable: false,
+            renderer: Renderer.datasize
         },
         s2p_bytes: {
-            text: 'From-Server Bytes'.t()
+            text: 'From-Server Bytes'.t(),
+            align: 'right',
+            width: 90,
+            resizable: false,
+            groupable: false,
+            renderer: Renderer.datasize
         },
         p2c_bytes: {
             text: 'To-Client Bytes'.t(),
+            align: 'right',
+            width: 90,
+            resizable: false,
+            groupable: false,
+            renderer: Renderer.datasize
         },
         c2p_bytes: {
             text: 'From-Client Bytes'.t(),
+            align: 'right',
+            width: 90,
+            resizable: false,
+            groupable: false,
+            renderer: Renderer.datasize
         },
         s2c_bytes: {
             text: 'From-Server Bytes'.t(),
             align: 'right',
             width: 90,
             resizable: false,
+            groupable: false,
             renderer: Renderer.datasize
         },
         c2s_bytes: {
@@ -283,6 +313,7 @@ Ext.define('TableConfig2', {
             align: 'right',
             width: 90,
             resizable: false,
+            groupable: false,
             renderer: Renderer.datasize
         }
     },

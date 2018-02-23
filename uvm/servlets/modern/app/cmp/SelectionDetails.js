@@ -5,7 +5,7 @@ Ext.define('Ung.cmp.SelectionDetails', {
     viewModel: {
         formulas: {
             data: function (get) {
-                return get('grid.selection');
+                return get('eventreport.selection');
             }
         }
     },
@@ -48,7 +48,7 @@ Ext.define('Ung.cmp.SelectionDetails', {
             align: 'right',
             cell: {
                 bodyStyle: {
-                    padding: '2px 10px',
+                    padding: '5px 10px',
                     fontSize: '11px',
                     color: '#777'
                 }
@@ -59,7 +59,7 @@ Ext.define('Ung.cmp.SelectionDetails', {
             flex: 1,
             cell: {
                 bodyStyle: {
-                    padding: '2px 10px',
+                    padding: '5px 10px',
                     fontSize: '11px'
                 },
                 userSelectable: {
@@ -83,6 +83,7 @@ Ext.define('Ung.cmp.SelectionDetails', {
                 arr = [];
 
             vm.bind('{data}', function (data) {
+                console.log(data);
                 if (!data) { return; }
                 arr = [];
                 // grid.getStore().loadData(data.getData);

@@ -116,7 +116,16 @@ Ext.define('Ung.view.reports.Reports', {
             xtype: 'toolbar',
             docked: 'top',
             items: [{
-                xtype: 'button',
+                text: 'Columns'.t(),
+                iconCls: 'x-fa fa-bars',
+                itemId: 'columnsMenu',
+                menu: {
+                    defaultType: 'menucheckitem',
+                    indented: false,
+                    mouseLeaveDelay: 0
+                }
+            }, {
+                // xtype: 'button',
                 bind: {
                     text: '{eventsGroups.eventslimit} Events',
                     hidden: '{entry.type !== "EVENT_LIST"}'

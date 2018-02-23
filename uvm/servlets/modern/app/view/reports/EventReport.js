@@ -1,8 +1,11 @@
 Ext.define('Ung.view.reports.EventReport', {
     extend: 'Ext.grid.Grid',
     alias: 'widget.eventreport',
+    reference: 'eventreport',
     itemId: 'eventreport',
     cls: 'x-grid-events',
+
+    viewModel: true,
     // viewModel: {
     //     data: { eventsData: [], propsData: [] },
     //     stores: {
@@ -26,7 +29,9 @@ Ext.define('Ung.view.reports.EventReport', {
         hidden: true
     },
     // grouped: true,
+    rowLines: false,
     rowNumbers: {
+        text: '#',
         width: 50,
         resizable: false
     },
@@ -40,42 +45,48 @@ Ext.define('Ung.view.reports.EventReport', {
 
     listeners: {
         initialize: 'onInitialize',
-        resize: 'onResize'
+        resize: 'onResize',
+        select: function (el, rec) {
+            console.log(rec);
+        }
     },
 
-    items: [{
-        xtype: 'toolbar',
-        docked: 'top',
-        items: [{
-            text: 'Columns'.t(),
-            iconCls: 'x-fa fa-bars',
-            itemId: 'columnsMenu',
-            menu: {
-                defaultType: 'menucheckitem',
-                indented: false,
-                mouseLeaveDelay: 0
-            }
-        }, '->', {
-            xtype: 'searchfield',
-            ui: 'solo',
-            width: 300,
-            placeholder: 'Filter data ...'.t(),
-            listeners: {
-                change: 'onFilterChange'
-            }
-        }]
-    }],
+    items: {
+        xtype: 'selectiondetails',
+        docked: 'right',
+        width: 350,
+        hidden: true,
+        // title: 'Session details'.t(),
+        collapsible: false,
+        bind: {
+            // title: '{eventreport.selection.session_id}',
+            hidden: '{!eventreport.selection}',
+        }
+    },
+
+    // items: [{
+    //     xtype: 'toolbar',
+    //     docked: 'top',
+    //     items: ['->', {
+    //         xtype: 'searchfield',
+    //         ui: 'solo',
+    //         width: 300,
+    //         placeholder: 'Filter data ...'.t(),
+    //         listeners: {
+    //             change: 'onFilterChange'
+    //         }
+    //     }]
+    // }],
 
 
     controller: {
         onInitialize: function (view) {
             var me = this, vm = me.getViewModel();
             vm.bind('{entry}', function (entry) {
-                console.log('bind change');
                 // vm.set('eventsData', []);
                 view.getStore().loadData([]);
                 view.setColumns([]);
-                me.getView().down('#columnsMenu').getMenu().removeAll();
+                // me.getView().down('#columnsMenu').getMenu().removeAll();
                 if (!entry || entry.get('type') !== 'EVENT_LIST') { return; }
                 me.setup(entry);
             });
@@ -85,7 +96,7 @@ Ext.define('Ung.view.reports.EventReport', {
         },
 
         onResize: function () {
-            console.log('resize');
+            // console.log('resize');
         },
 
         setup: function (entry) {
@@ -93,60 +104,11 @@ Ext.define('Ung.view.reports.EventReport', {
             me.getView().setColumns([]);
             me.tableConfig = Ext.clone(TableConfig.getConfig(entry.get('table')));
             me.tc = TableConfig2.getColumns(entry.get('table'), defaultColumns);
-            console.log(entry.get('table'));
             me.defaultColumns = entry.get('defaultColumns');
 
-            var cm = me.getView().down('#columnsMenu').getMenu(), menuItems = [];
-            cm.removeAll();
-            // cm.add(me.tc);
-            // columns.push({
-            //     xtype: 'datecolumn',
-            //     text: 'Time',
-            //     dataIndex: 'time',
-            //     format: 'Y:m:d H:i:s'
-            // });
-
-            // Ext.Array.each(me.tc.columns, function (column) {
-            //     if (me.defaultColumns && !Ext.Array.contains(me.defaultColumns, column.dataIndex)) {
-            //         column.hidden = true;
-            //         // return;
-            //     }
-            //     columns.push(column);
-            //     // menuItems.push({
-            //     //     text: column.menuText,
-            //     //     checked: !column.hidden,
-            //     //     dataIndex: column.dataIndex
-            //     // });
-            //     // // TO REVISIT THIS BECASE OF STATEFUL
-            //     // // grid.initComponentColumn(column);
-            //     // if (column.rtype) {
-            //     //     column.renderer = 'columnRenderer';
-            //     // }
-            // });
-            cm.add(me.tc.menuItems);
-            // columns.push({
-            //     xtype: 'datecolumn',
-            //     text: 'Date',
-            //     groupable: true,
-            //     dataIndex: 'date',
-            //     format: 'Y-m-d h:00 a',
-            //     hidden: true
-            // });
+            var cm = me.getView().up('ung-reports').down('#columnsMenu').getMenu(), menuItems = [];
             me.getView().setColumns(me.tc.columns);
 
-            // me.getView().setColumnsMenuItem({
-            //     xtype: 'menuitem',
-            //     weight: -80,
-            //     text: 'aaaa',
-            //     menu: {
-            //         defaultType: 'menucheckitem',
-            //         indented: false,
-            //         mouseLeaveDelay: 0,
-            //         items: me.tc.menuItems
-            //     }
-            // });
-
-            console.log('columns setup');
             me.fetchData();
         },
 
@@ -199,47 +161,6 @@ Ext.define('Ung.view.reports.EventReport', {
                 }
                 return filtered;
             });
-        },
-
-        showHideColumn: function (item, checked) {
-            var me = this, grid = me.getView();
-            var menu = grid.down('#columnsMenu').getMenu(), cols = [];
-
-            // var columns = grid.getColumns();
-            // Ext.Array.remove(columns, Ext.Array.findBy(columns, function (column) {
-            //     return column.getDataIndex() === item.dataIndex;
-            // }));
-            // grid.setColumns(columns);
-            Ext.Array.each(menu.getItems().items, function (smenu) {
-                Ext.Array.each(smenu.getMenu().getItems().items, function (col) {
-                    if (col.getChecked()) {
-                        cols.push(col.dataIndex);
-                    }
-                });
-            });
-            var c = TableConfig2.getColumns(me.getViewModel().get('entry.table'), cols);
-            grid.setColumns(c.columns);
-            // grid.setColumnsMenuItem({
-            //     xtype: 'menuitem',
-            //     // lazy: true,
-            //     weight: -80,
-            //     text: 'aaaa',
-            //     menu: {
-            //         defaultType: 'menucheckitem',
-            //         indented: false,
-            //         mouseLeaveDelay: 0,
-            //         items: c.menuItems
-            //     }
-            // });
-            grid.refresh();
-            // var columns = grid.getColumns();
-            // if (checked) {
-            //     Ext.Array.remove(columns, Ext.Array.findBy(columns, function (column) {
-            //         return column.getDataIndex() === item.dataIndex;
-            //     }));
-            // }
-            // console.log(columns);
-            // grid.setColumns(columns);
         }
     }
 });

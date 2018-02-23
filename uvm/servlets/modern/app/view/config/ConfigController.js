@@ -5,7 +5,6 @@ Ext.define('Ung.view.config.ConfigController', {
 
     filterSettings: function (field, value) {
         var me = this, tree = me.getView().up('panel').down('treelist');
-        console.log(value);
         if (!value) {
             tree.getStore().clearFilter();
 
@@ -16,7 +15,6 @@ Ext.define('Ung.view.config.ConfigController', {
             }, this, { filtered: true, collapsed: true });
 
             var node = tree.getStore().findNode('href', window.location.hash);
-            console.log(node);
             Ext.defer(function () {
                 tree.setSelection(node);
             }, 2000);
