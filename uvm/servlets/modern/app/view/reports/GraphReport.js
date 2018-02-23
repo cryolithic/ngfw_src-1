@@ -402,7 +402,6 @@ Ext.define('Ung.view.reports.GraphReport', {
 
             if (!entry) { return; }
             var graphdatagrid = me.getView().up('ung-reports').down('graphdata');
-            // console.log(vm.get('menuGroups.since'));
 
             // disable this reset because it fires second time and may cause browser freeze NGFW-11306
             // if (reset) { me.reset(); }

@@ -19,7 +19,8 @@ Ext.define('TableConfig2', {
                         // menuText: '<strong>' + this.columns[id].text + '</strong> <span style="color: #999;">[' + id + ']</span>',
                         dataIndex: id,
                         sortable: true,
-                        menuDisabled: true,
+                        hideable: false,
+                        // menuDisabled: true,
                         cell: {
                             encodeHtml: false
                         }

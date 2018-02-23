@@ -176,9 +176,9 @@ Ext.define('Ung.util.Renderer', {
         }
         if( ( value == 0 ) ||
             ( size[0] == 1 ) ){
-            return value + ' ' + '<span style="color: #999">' + size[1] + '</span>';
+            return value + '<span style="color: #CCC">' + size[1] + '</span>';
         }else{
-            return ( value / size[0] ).toFixed(2) + ' ' + '<span style="color: #999">' + size[1] + '</span>';
+            return ( value / size[0] ).toFixed(2) + '<span style="color: #CCC">' + size[1] + '</span>';
         }
     },
 

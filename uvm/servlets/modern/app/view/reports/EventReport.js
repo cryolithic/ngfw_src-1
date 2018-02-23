@@ -14,16 +14,22 @@ Ext.define('Ung.view.reports.EventReport', {
     // },
 
     // bind: '{events}',
-    // columnMenu: null,
     emptyText: 'No Events!'.t(),
 
     userSelectable: {
         element: true,
         bodyElement: true
     },
-    multiColumnSort: true,
+    // multiColumnSort: true,
     striped: true,
-    grouped: true,
+    columnsMenuItem: {
+        hidden: true
+    },
+    // grouped: true,
+    rowNumbers: {
+        width: 50,
+        resizable: false
+    },
     store: {
         type: 'events'
     },
@@ -49,29 +55,6 @@ Ext.define('Ung.view.reports.EventReport', {
                 indented: false,
                 mouseLeaveDelay: 0
             }
-        }, {
-            xtype: 'button',
-            bind: {
-                text: '{menuGroups.eventslimit} Events',
-            },
-            menu: {
-                anchor: true,
-                defaultType: 'menuradioitem',
-                bind: {
-                    groups: '{menuGroups}'
-                },
-                defaults: {
-                    group: 'eventslimit'
-                },
-                items: [
-                    { text: '100'.t(), value: 100 },
-                    { text: '500'.t(), value: 500 },
-                    { text: '1000'.t(), value: 1000 },
-                    { text: '5000'.t(), value: 5000 },
-                    { text: '10000'.t(), value: 10000 },
-                    { text: '50000'.t(), value: 50000 }
-                ]
-            }
         }, '->', {
             xtype: 'searchfield',
             ui: 'solo',
@@ -96,7 +79,9 @@ Ext.define('Ung.view.reports.EventReport', {
                 if (!entry || entry.get('type') !== 'EVENT_LIST') { return; }
                 me.setup(entry);
             });
-
+            vm.bind('{eventsGroups.eventslimit}', function () {
+                me.fetchData();
+            });
         },
 
         onResize: function () {
@@ -147,19 +132,32 @@ Ext.define('Ung.view.reports.EventReport', {
             //     format: 'Y-m-d h:00 a',
             //     hidden: true
             // });
-            console.log(columns);
             me.getView().setColumns(me.tc.columns);
+
+            // me.getView().setColumnsMenuItem({
+            //     xtype: 'menuitem',
+            //     weight: -80,
+            //     text: 'aaaa',
+            //     menu: {
+            //         defaultType: 'menucheckitem',
+            //         indented: false,
+            //         mouseLeaveDelay: 0,
+            //         items: me.tc.menuItems
+            //     }
+            // });
+
             console.log('columns setup');
             me.fetchData();
         },
 
         fetchData: function () {
             var vm = this.getViewModel(), entry = vm.get('entry'), view = this.getView();
+            if (!entry) { return; }
             view.mask();
             Rpc.asyncData('rpc.reportsManager.getEventsForDateRangeResultSet',
                 entry.getData(), // entry
                 null, // vm.get('globalConditions'), // etra conditions
-                1000,
+                vm.get('eventsGroups.eventslimit'),
                 null, // start date
                 null) // end date
                 .then(function(result) {
@@ -221,6 +219,18 @@ Ext.define('Ung.view.reports.EventReport', {
             });
             var c = TableConfig2.getColumns(me.getViewModel().get('entry.table'), cols);
             grid.setColumns(c.columns);
+            // grid.setColumnsMenuItem({
+            //     xtype: 'menuitem',
+            //     // lazy: true,
+            //     weight: -80,
+            //     text: 'aaaa',
+            //     menu: {
+            //         defaultType: 'menucheckitem',
+            //         indented: false,
+            //         mouseLeaveDelay: 0,
+            //         items: c.menuItems
+            //     }
+            // });
             grid.refresh();
             // var columns = grid.getColumns();
             // if (checked) {

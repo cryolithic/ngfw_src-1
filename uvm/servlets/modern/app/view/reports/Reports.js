@@ -9,7 +9,9 @@ Ext.define('Ung.view.reports.Reports', {
         data: {
             activeItem: 'graphreport',
             menuGroups: {
-                since: 24, // hours
+                since: 24 // hours
+            },
+            eventsGroups: {
                 eventslimit: 1000
             }
         }
@@ -111,18 +113,46 @@ Ext.define('Ung.view.reports.Reports', {
             border: true,
             html: 'text report'
         }, {
-            // xtype: 'toolbar',
-            // docked: 'top',
-            // items: [{
-            //     text: 'Columns'.t(),
-            //     iconCls: 'x-fa fa-bars',
-            //     itemId: 'columnsMenu',
-            //     menu: {
-            //         defaultType: 'menucheckitem',
-            //         indented: false,
-            //         mouseLeaveDelay: 0
-            //     }
-            // }]
+            xtype: 'toolbar',
+            docked: 'top',
+            items: [{
+                xtype: 'button',
+                bind: {
+                    text: '{eventsGroups.eventslimit} Events',
+                    hidden: '{entry.type !== "EVENT_LIST"}'
+                },
+                menu: {
+                    anchor: true,
+                    defaultType: 'menuradioitem',
+                    separator: true,
+                    indented: false,
+                    bind: {
+                        groups: '{eventsGroups}'
+                    },
+                    defaults: {
+                        group: 'eventslimit',
+                        listeners: {
+                            // checkchange: function (el) {
+                            //     // console.log(el, el.up('menu'));
+                            //     if (el && el.up('menu')) {
+                            //         el.up('menu').close();
+                            //     }
+                            //     // if (el.getMenu()) {
+                            //     //     el.getMenu().close();
+                            //     // }
+                            // }
+                        }
+                    },
+                    items: [
+                        { text: '100'.t(), value: 100 },
+                        { text: '500'.t(), value: 500 },
+                        { text: '1000'.t(), value: 1000 },
+                        { text: '5000'.t(), value: 5000 },
+                        { text: '10000'.t(), value: 10000 },
+                        { text: '50000'.t(), value: 50000 }
+                    ]
+                }
+            }]
         }]
     }, {
         xtype: 'toolbar',

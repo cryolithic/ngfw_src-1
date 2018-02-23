@@ -136,7 +136,7 @@ html, body {
     .x-treelist-item-expander {
         line-height: 28px;
         &::after {
-            line-height: 28px !important; 
+            line-height: 28px !important;
         }
     }
     .x-treelist-item-icon:before {
@@ -173,3 +173,10 @@ html, body {
         padding: 8px 12px;
     }
 }
+
+.x-rownumberercell {
+    background: rgba(200, 200, 200, 0.3);
+    border-right: 1px #CCC solid;
+    box-shadow: 3px 0 3px rgba(0, 0, 0, 0.1);
+}
+

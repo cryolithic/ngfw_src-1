@@ -22,10 +22,10 @@ Ext.define('Ung.store.Events', {
                 if ((typeof(ts) === 'object') && ts.time) { value = ts.time; }
                 return new Date(value);
             }
-        },                
-    ],    
+        },
+    ],
 
-    // groupField: 'date',
+    // groupField: 'username',
     // groupDir: 'DESC',
     sorters: [{
         property: 'time',
