@@ -32,7 +32,7 @@ Ext.define('Ung.view.reports.EventReport', {
     rowLines: false,
     rowNumbers: {
         text: '#',
-        width: 50,
+        width: 60,
         resizable: false
     },
     store: {
@@ -115,13 +115,17 @@ Ext.define('Ung.view.reports.EventReport', {
         fetchData: function () {
             var vm = this.getViewModel(), entry = vm.get('entry'), view = this.getView();
             if (!entry) { return; }
+
+            var startDate = new Date();
+            startDate = Ext.Date.subtract(new Date(), Ext.Date.HOUR, vm.get('menuGroups.since'));
+            var endDate = null;
             view.mask();
             Rpc.asyncData('rpc.reportsManager.getEventsForDateRangeResultSet',
                 entry.getData(), // entry
                 null, // vm.get('globalConditions'), // etra conditions
                 vm.get('eventsGroups.eventslimit'),
-                null, // start date
-                null) // end date
+                Util.clientToServerDate(startDate),
+                endDate) // end date
                 .then(function(result) {
                     // console.log(result);
                     // me.getView().setLoading(false);

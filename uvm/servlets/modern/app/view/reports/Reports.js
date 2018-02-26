@@ -27,7 +27,7 @@ Ext.define('Ung.view.reports.Reports', {
 
     items: [{
         docked: 'left',
-        width: 350,
+        width: 300,
         layout: 'fit',
 
         tbar: {
@@ -43,17 +43,20 @@ Ext.define('Ung.view.reports.Reports', {
             edges: 'east'
         },
         items: [{
-            xtype: 'treelist',
-            scrollable: true,
-            ui: 'nav',
+            xtype: 'tree',
+            userCls: 'x-nav',
+            // scrollable: true,
+            // ui: 'nav',
             singleExpand: true,
+            rootVisible: false,
             expanderFirst: false,
             expanderOnly: false,
-            selectOnExpander: true,
-            highlightPath: false,
+            // selectOnExpander: true,
+            // highlightPath: false,
             store: 'reportstree',
             listeners: {
-                selectionchange: 'onSelectionChange'
+                select: 'onSelectionChange'
+                // selectionchange: 'onSelectionChange'
             }
         }]
     }, {

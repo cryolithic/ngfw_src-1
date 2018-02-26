@@ -18,10 +18,12 @@ Ext.define('Ung.view.reports.ReportsController', {
     //     console.log('activate');
     // },
 
-    onSelectionChange: function (el, node) {
+    onSelectionChange: function (el, arr) {
         var me = this, record, view = me.getView(), vm = me.getViewModel();
+        var node = arr[0];
         if (!node || !node.get('url')) { return; }
         Ung.app.redirectTo('#reports/' + node.get('url'));
+
 
         if (node.isLeaf()) {
             record = Ext.getStore('reports').findRecord('url', node.get('url'), 0, false, true, true);
