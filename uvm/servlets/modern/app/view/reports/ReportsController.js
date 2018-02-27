@@ -6,12 +6,85 @@ Ext.define('Ung.view.reports.ReportsController', {
     onInitialize: function (view) {
         // Ext.getStore('reportstree').build();
         var me = this, vm = view.getViewModel();
+
+        // this.bottomMenu = Ext.Viewport.setMenu({
+        //     side: 'bottom',
+        //     cover: false,
+        //     height: 200
+        // });
+
         vm.bind('{entry}', function (entry) {
             // console.log(entry);
             if (entry.get('type') === 'EVENT_LIST') {
                 me.setupColumns(entry);
             }
         });
+
+        vm.bind('{entry.table}', function (table) {
+            console.log(table);
+            vm.set('tableComboStore', table ? TableConfig2.getComboItems(table) : []);
+        });
+
+        me.globalConditionsSheet = Ext.create({
+            xtype: 'actionsheet',
+            side: 'bottom',
+            reveal: false,
+            height: 400,
+            padding: 0,
+            layout: 'fit',
+            viewModel: true,
+            items: [{
+                xtype: 'globalconditions'
+            }],
+            listeners: {
+                beforeexpand: function () {
+                    console.log('exp');
+                },
+                beforehide: function () {
+                    console.log('hide');
+                },
+                // beforehiddenchange: function (el, value) {
+                //     if (value) {
+                //         return false;
+                //     }
+                //     // console.log('before', value);
+                // }
+            }
+            // standardButtons: {
+            //     cancel: {
+            //         text: 'Cancel'.t()
+            //     },
+            //     apply: {
+            //         text: 'Apply'.t()
+            //     }
+            // }
+        });
+
+        // Ext.Viewport.setMenu({
+        //     xtype: 'actionsheet',
+        //     side: 'bottom',
+        //     height: 400,
+        //     padding: 0,
+        //     layout: 'fit',
+        //     viewModel: true,
+        //     items: [{
+        //         xtype: 'globalconditions'
+        //     }],
+        //     listeners: {
+        //         expand: function () {
+        //             console.log('expand');
+        //         }
+        //     }
+        // });
+    },
+
+    toggleConditions: function () {
+        var me = this;
+        me.globalConditionsSheet.show();
+        // Ext.Viewport.toggleMenu('bottom');
+        // var gc = Ext.Viewport.getMenus().bottom.down('globalconditions');
+        var tcs = me.getViewModel().get('tableComboStore');
+        me.globalConditionsSheet.getViewModel().set('tableComboStore', tcs);
     },
 
     // onActivate: function () {

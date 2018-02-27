@@ -65,6 +65,20 @@ Ext.define('TableConfig2', {
         };
     },
 
+    getComboItems: function (tableName) {
+        var columnIds = this[tableName], comboItems = [];
+        if (!columnIds) {
+            console.error('No such table: ' + tableName);
+            return;
+        }
+        Ext.Array.each(this[tableName], function (group) {
+            Ext.Array.each(group.fields, function (id) {
+                comboItems.push({ value: id, display: this.columns[id].text});
+            }, this);
+        }, this);
+        return comboItems;
+    },
+
     columns: {
         session_id: {
             text: 'Session Id'.t(),

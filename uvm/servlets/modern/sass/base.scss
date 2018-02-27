@@ -172,18 +172,20 @@ html, body {
     .x-gridcell-body-el {
         padding: 8px 12px;
     }
+    .x-gridcolumn-title-wrap-el {
+        padding: 8px 12px;
+        line-height: 1;
+    }
+}
+
+.x-gridcolumn-title-wrap-el {
+    font-weight: 600;
 }
 
 .x-rownumberercell {
     background: rgba(200, 200, 200, 0.3);
     border-right: 1px #CCC solid;
     box-shadow: 3px 0 3px rgba(0, 0, 0, 0.1);
-}
-
-.x-gridcolumn-title-wrap-el {
-    padding: 8px 12px;
-    line-height: 1;
-    font-weight: 600;
 }
 
 

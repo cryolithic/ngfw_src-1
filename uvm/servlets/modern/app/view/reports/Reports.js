@@ -36,6 +36,36 @@ Ext.define('Ung.view.reports.Reports', {
                 ui: 'faded',
                 flex: 1,
                 placeholder: 'Find reports...'.t(),
+            }, {
+                xtype: 'button',
+                // ui: 'action',
+                margin: '0 0 0 10',
+                iconCls: 'x-fa fa-plus-circle',
+                arrow: false,
+                menu: {
+                    // anchor: true,
+                    items: [{
+                        text: 'Create New'.t(),
+                        iconCls: 'x-fa fa-file'
+                    }, {
+                        text: 'Import'.t(),
+                        iconCls: 'x-fa fa-download'
+                    }, {
+                        text: 'Export'.t(),
+                        iconCls: 'x-fa fa-upload'
+                    }]
+                }
+            }]
+        },
+        bbar: {
+            items: [{
+                xtype: 'button',
+                ui: 'raised action',
+                flex: 1,
+                text: 'Global Conditions'.t(),
+                iconCls: 'x-fa fa-filter',
+                badgeText: '2',
+                handler: 'toggleConditions'
             }]
         },
         resizable: {
@@ -120,7 +150,7 @@ Ext.define('Ung.view.reports.Reports', {
             docked: 'top',
             items: [{
                 text: 'Columns'.t(),
-                iconCls: 'x-fa fa-bars',
+                iconCls: 'x-fa fa-bars fa-rotate-90',
                 itemId: 'columnsMenu',
                 menu: {
                     defaultType: 'menucheckitem',
@@ -169,7 +199,13 @@ Ext.define('Ung.view.reports.Reports', {
     }, {
         xtype: 'toolbar',
         docked: 'bottom',
-        items: [{
+        ui: 'alt',
+        defaults: {
+            ui: 'raised action',
+            margin: '0 20 0 0'
+        },
+        items: [
+            // {
             // label: 'Since'.t(),
             // labelAlign: 'left',
             // xtype: 'combobox',
@@ -191,7 +227,8 @@ Ext.define('Ung.view.reports.Reports', {
             // ],
             // queryMode: 'local'
             // // disabled: true
-        }, {
+        // }, {}
+        {
             xtype: 'button',
             bind: {
                 text: 'Since {menuGroups.since}',

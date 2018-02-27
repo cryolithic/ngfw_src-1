@@ -12,6 +12,7 @@ Ext.define('Ung.cmp.MasterGrid', {
 
     plugins: {
         gridcellediting: true,
+        // grideditable: true,
         gridviewoptions: false
     },
 
@@ -34,7 +35,7 @@ Ext.define('Ung.cmp.MasterGrid', {
             text: 'Revert'.t(),
             iconCls: 'x-fa fa-refresh',
             handler: 'revertChanges'
-        }        
+        }
     },
 
     controller: {
@@ -84,14 +85,14 @@ Ext.define('Ung.cmp.MasterGrid', {
                     store.on({
                         datachanged: this.validate,
                         scope: this
-                    });                 
-                }, this);                
+                    });
+                }, this);
             } else {
                 this.validate(store);
                 grid.getStore().on({
                     datachanged: this.validate,
                     scope: this
-                });             
+                });
             }
 
             // setup conditions menu for the grid
@@ -205,8 +206,8 @@ Ext.define('Ung.cmp.MasterGrid', {
             //     Ext.Array.each(validations, function (validation) {
             //         console.log(validation);
             //     });
-            // });                
-           
+            // });
+
         }
 
     }
