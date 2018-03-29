@@ -973,3 +973,26 @@ a.view-reports {
         color: #999;
     }
 }
+
+
+
+.dashboard-info {
+    font-family: $custom-font-condensed;
+    font-size: 14px;
+    color: #CCC;
+    h1, p { margin: 0; }
+    .percent {
+        width: 70px;
+        height: 70px;
+        display: inline-block;
+        position: relative;
+        text-align: center;
+        margin: 0 3px;
+        p {
+            position: absolute;
+            left: 0; right: 0;
+            line-height: 70px;
+            font-size: 12px;
+        }
+    }
+}

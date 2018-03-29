@@ -32,6 +32,12 @@ Ext.define('Ung.view.dashboard.Dashboard', {
         border: false
     },
 
+    dockedItems: {
+        xtype: 'info',
+        dock: 'left',
+        width: 250
+    },
+
     items: [{
         region: 'west',
         dockedItems: [{
