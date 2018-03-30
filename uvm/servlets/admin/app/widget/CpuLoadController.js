@@ -21,6 +21,16 @@ Ext.define('Ung.widget.CpuLoadController', {
         setTimeout(function () {
             view.removeCls('adding');
         }, 100);
+        var vm = view.getViewModel();
+
+        vm.bind('{query.conditions}', function (conditions) {
+            if (conditions.length > 0) {
+                view.setUserCls('no-conditions');
+            } else {
+                view.setUserCls('');
+            }
+        });
+
 
         this.lineChart = new Highcharts.Chart({
             chart: {

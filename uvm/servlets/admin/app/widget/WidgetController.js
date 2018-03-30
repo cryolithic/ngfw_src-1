@@ -38,26 +38,29 @@ Ext.define('Ung.widget.WidgetController', {
         });
 
         // highlight only widgets for which conditions apply
-        if (widget.getXType() === 'reportwidget') {
+
+
+        vm.bind('{query.conditions}', function (conditions) {
             var conds = [];
-            vm.bind('{query.conditions}', function (conditions) {
-                conds = [];
-                if (conditions.length === 0) {
-                    widget.setUserCls('');
-                    return;
-                }
+            if (conditions.length === 0) {
+                widget.setUserCls('');
+                return;
+            }
 
-                Ext.Array.each(conditions, function (c) {
-                    conds.push(c.column);
-                });
+            Ext.Array.each(conditions, function (c) {
+                conds.push(c.column);
+            });
 
+            if (widget.getXType() === 'reportwidget') {
                 if (!TableConfig.containsColumns(vm.get('entry.table'), conds)) {
                     widget.setUserCls('no-conditions');
                 } else {
                     widget.setUserCls('');
                 }
-            });
-        }
+            } else {
+                widget.setUserCls('no-conditions');
+            }
+        });
 
         // for EVENT_LIST widgets save displayColumns setting on column hide/show
         if (eventGrid) {

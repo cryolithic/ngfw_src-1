@@ -16,6 +16,12 @@ Ext.define('Ung.view.dashboard.Info', {
         style: { background: 'transparent' },
     },
     bodyPadding: 10,
+
+    layout: {
+        type: 'vbox',
+        align: 'stretch'
+    },
+
     items: [{
         bind: {
             html: '<h1>{stats.hostname} ({stats.appliance})</h1><p>{stats.version}, {stats.architecture}</p><br/>' +
@@ -26,7 +32,7 @@ Ext.define('Ung.view.dashboard.Info', {
     }, {
         margin: '20 0',
         style: {
-            // textAlign: 'center'
+            textAlign: 'center'
         },
         bind: {
             html: '<div class="percent">' +
@@ -62,14 +68,17 @@ Ext.define('Ung.view.dashboard.Info', {
         }
     }, {
         xtype: 'container',
+        layout: {
+            type: 'vbox',
+            align: 'stretch'
+        },
         items: [{
             xtype: 'component',
             html: '<strong>' + 'CPU Load'.t() + '</strong>'
         }, {
             xtype: 'component',
             style: { borderRadius: '3px', overflow: 'hidden' },
-            margin: '5 0',
-            width: 230,
+            margin: '5 10',
             height: 60,
             reference: 'cpulinechart'
         }, {
@@ -78,25 +87,34 @@ Ext.define('Ung.view.dashboard.Info', {
             items: [{
                 xtype: 'component',
                 bind: {
-                    html: '<div class="cpubar">' +
+                    html: '<div class="cpubar" style="' +
+                        'background: #30f43a;' +
+                        'background: -moz-linear-gradient(left, #30f43a 0%, #e3ed2d {(stats.numCpus + 1)/(stats.numCpus + 6) * 100}%, #e87d7d 100%);' +
+                        'background: -webkit-linear-gradient(left, #30f43a 0%,#e3ed2d {(stats.numCpus + 1)/(stats.numCpus + 6) * 100}%,#e87d7d 100%);' +
+                        'background: linear-gradient(to right, #30f43a 0%,#e3ed2d {(stats.numCpus + 1)/(stats.numCpus + 6) * 100}%,#e87d7d 100%);' +
+                        'filter: progid:DXImageTransform.Microsoft.gradient( startColorstr=\'#30f43a\', endColorstr=\'#e87d7d\',GradientType=1 );">' +
                       '<div style="left: {stats.oneMinuteLoadAvg/(stats.numCpus + 6) * 100}%"><em></em><p><strong>{stats.oneMinuteLoadAvg}</strong></p></div>' +
-                      '<span class="low" style="width: {(stats.numCpus + 1)/(stats.numCpus + 6) * 100}%"></span>' +
-                      '<span class="medium" style="width: {(stats.numCpus + 4)/(stats.numCpus + 6) * 100}%"></span>' +
-                      '<span class="high" style="width: 100%;"></span>' +
+                    //   '<span class="low" style="width: {(stats.numCpus + 1)/(stats.numCpus + 6) * 100}%"></span>' +
+                    //   '<span class="medium" style="width: {(stats.numCpus + 4)/(stats.numCpus + 6) * 100}%"></span>' +
+                    //   '<span class="high" style="width: 100%;"></span>' +
                       '</div>'
                 }
             }]
         }]
     }, {
         xtype: 'component',
-        margin: '10 0',
+        margin: '10 0 0 0',
+        html: '<strong>' + 'Network'.t() + '</strong>'
+    }, {
+        xtype: 'component',
+        margin: '10',
         bind: {
             html: '<p>Active Hosts: <strong>{stats.activeHosts} (max. {stats.maxActiveHosts})</strong></p>' +
                   '<p>Known Devices: <strong>{stats.knownDevices}</strong></p>'
         }
     }, {
         xtype: 'component',
-        margin: '10 0',
+        margin: '10',
         bind: {
             html: '<p>Total Sessions: <strong>100</strong></p>' +
                   '<p>Scanned Sessions: <strong>50</strong></p>' +
@@ -121,7 +139,7 @@ Ext.define('Ung.view.dashboard.Info', {
         onAfterRender: function (view) {
             this.lineChart = new Highcharts.Chart({
                 chart: {
-                    type: 'areaspline',
+                    type: 'spline',
                     // width: '100%',
                     renderTo: view.lookup('cpulinechart').getEl().dom,
                     // marginBottom: 15,
@@ -129,7 +147,7 @@ Ext.define('Ung.view.dashboard.Info', {
                     // marginLeft: 0,
                     // marginRight: 0,
                     margin: [0, 0, 0, 0],
-                    backgroundColor: 'rgba(100, 200, 200, 0.2)',
+                    backgroundColor: 'rgba(100, 200, 200, 0.1)',
                     animation: true,
                     style: {
                         fontFamily: 'Source Sans Pro',
@@ -202,6 +220,18 @@ Ext.define('Ung.view.dashboard.Info', {
                         y: -2
                     },
                     title: null
+                    // plotBands: [{
+                    //     from: 0,
+                    //     to: 3,
+                    //     color: 'green'
+                    // }, {
+                    //     from: 3,
+                    //     to: 6,
+                    //     color: 'yellow'
+                    // }, {
+                    //     from: 6,
+                    //     color: 'red'
+                    // }]
                 },
                 legend: {
                     enabled: false
@@ -231,9 +261,19 @@ Ext.define('Ung.view.dashboard.Info', {
                     }
                 },
                 plotOptions: {
-                    areaspline: {
-                        fillOpacity: 0.15,
-                        lineWidth: 2
+                    spline: {
+                        // fillOpacity: 0.15,
+                        color: 'green',
+                        lineWidth: 1,
+                        shadow: true,
+                        connectNulls: true,
+                        dataLabels: {
+                            enabled: false,
+                            style: {
+                                fontSize: '11px',
+                                // fontWeight: 100
+                            }
+                        }
                     },
                     series: {
                         marker: {
@@ -251,7 +291,7 @@ Ext.define('Ung.view.dashboard.Info', {
                         states: {
                             hover: {
                                 enabled: true,
-                                lineWidthPlus: 0,
+                                lineWidthPlus: 1,
                                 halo: {
                                     size: 2
                                 }
@@ -272,7 +312,7 @@ Ext.define('Ung.view.dashboard.Info', {
                         //     console.log('Unable to get current millis.');
                         // }
                         time = Math.round(time/1000) * 1000;
-                        for (i = -12; i <= 0; i += 1) {
+                        for (i = -8; i <= 0; i += 1) {
                             data.push({
                                 x: time + i * 10000,
                                 y: null
@@ -288,11 +328,8 @@ Ext.define('Ung.view.dashboard.Info', {
             if (!this.lineChart) {
                 return;
             }
-            var store = Ext.getStore('stats');
-            var vm = this.getViewModel(),
-                stats = store.first().getData(),
-                medLimit = stats.numCpus + 1,
-                highLimit = stats.numCpus + 4;
+            var store = Ext.getStore('stats'),
+                stats = store.first().getData();
 
             this.lineChart.yAxis[0].update({
                 minRange: stats.numCpus
@@ -302,6 +339,8 @@ Ext.define('Ung.view.dashboard.Info', {
                 x: x,
                 y: store.first().getData().oneMinuteLoadAvg
             }, true, true);
+
+            this.lineChart.reflow();
 
             // this.lineChart.redraw();
 
