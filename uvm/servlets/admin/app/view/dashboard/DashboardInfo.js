@@ -1,21 +1,24 @@
 Ext.define('Ung.view.dashboard.Info', {
-    extend: 'Ext.container.Container',
-    alias: 'widget.info',
+    extend: 'Ext.panel.Panel',
+    alias: 'widget.dashboardinfo',
 
-    cls: 'dashboard-info',
+    bodyCls: 'dashboard-info',
 
     viewModel: true,
 
-    style: { background: '#3b3e46' }, // 1b1e27
-    border: false,
+    scrollable: true,
+    reserveScrollbar: true,
+
+    style: { background: '#FFF' }, // 1b1e27 // 3b3e46 // d8d8d8
+    // border: true,
     defaults: {
         xtype: 'container',
         style: { background: 'transparent' },
     },
-    padding: 10,
+    bodyPadding: 10,
     items: [{
         bind: {
-            html: '<h1>{stats.hostname} ({stats.appliance})</h1><p>{stats.version}, {stats.architecture}</p>' +
+            html: '<h1>{stats.hostname} ({stats.appliance})</h1><p>{stats.version}, {stats.architecture}</p><br/>' +
                   '<p style="font-size: 12px; color: #999;">{stats.cpuModel}</p>' +
                   '<p style="font-size: 12px; color: #999;">{stats.numCpus} cpus</p>' +
                   '<p style="font-size: 12px; color: #999;">uptime: {stats.uptimeFormatted}</p>'
@@ -23,37 +26,37 @@ Ext.define('Ung.view.dashboard.Info', {
     }, {
         margin: '20 0',
         style: {
-            textAlign: 'center'
+            // textAlign: 'center'
         },
         bind: {
             html: '<div class="percent">' +
-                    '<span>Memory</span>' +
-                    '<p style="color: yellow;">{stats.usedMemoryPercent}%</p>' +
+                    '<span style="font-weight: 600;">Memory</span>' +
+                    '<p style="color: #005e84;">{stats.usedMemoryPercent}%</p>' +
                     '<svg viewBox="0 0 50 50" width="100%" height="100%">' +
-                        '<circle r="15.915" cx="50%" cy="50%" style="fill: none; stroke-width: 5; stroke: #4e525d;"></circle>' +
-                        '<circle r="15.915" cx="50%" cy="50%" style="fill: none; stroke-width: 5; stroke-dasharray: {stats.usedMemoryPercent} {stats.freeMemoryPercent}; stroke-dashoffset: 25; stroke: yellow;"></circle>' +
+                        '<circle r="15.915" cx="50%" cy="50%" style="fill: none; stroke-width: 5; stroke: #EFEFEF;"></circle>' +
+                        '<circle r="15.915" cx="50%" cy="50%" style="fill: none; stroke-width: 5; stroke-dasharray: {stats.usedMemoryPercent} {stats.freeMemoryPercent}; stroke-dashoffset: 25; stroke: #005e84;"></circle>' +
                     '</svg>' +
-                    '<span style="color: yellow;">{stats.usedMemory}</span><br/>' +
+                    '<span style="color: #005e84;">{stats.usedMemory}</span><br/>' +
                     '<span style="font-size: 11px;">{stats.totalMemory}</span>' +
                   '</div>' +
                   '<div class="percent">' +
-                  '<span>Swap</span>' +
-                    '<p style="color: skyblue;">{stats.usedSwapPercent}%</p>' +
+                  '<span style="font-weight: 600;">Swap</span>' +
+                    '<p style="color: #924f07;">{stats.usedSwapPercent}%</p>' +
                     '<svg viewBox="0 0 50 50" width="100%" height="100%">' +
-                        '<circle r="15.915" cx="50%" cy="50%" style="fill: none; stroke-width: 5; stroke: #4e525d;"></circle>' +
-                        '<circle r="15.915" cx="50%" cy="50%" style="fill: none; stroke-width: 5; stroke-dasharray: {stats.usedSwapPercent} {stats.freeSwapPercent}; stroke-dashoffset: 25; stroke: skyblue;"></circle>' +
+                        '<circle r="15.915" cx="50%" cy="50%" style="fill: none; stroke-width: 5; stroke: #EFEFEF;"></circle>' +
+                        '<circle r="15.915" cx="50%" cy="50%" style="fill: none; stroke-width: 5; stroke-dasharray: {stats.usedSwapPercent} {stats.freeSwapPercent}; stroke-dashoffset: 25; stroke: #924f07;"></circle>' +
                     '</svg>' +
-                    '<span style="color: skyblue;">{stats.usedSwap}</span><br/>' +
+                    '<span style="color: #924f07;">{stats.usedSwap}</span><br/>' +
                     '<span style="font-size: 11px;">{stats.totalSwap}</span>' +
                   '</div>' +
                   '<div class="percent">' +
-                    '<span>Disk</span>' +
-                    '<p style="color: lawngreen;">{stats.usedDiskPercent}%</p>' +
+                    '<span style="font-weight: 600;">Disk</span>' +
+                    '<p style="color: #9c0c0c;">{stats.usedDiskPercent}%</p>' +
                     '<svg viewBox="0 0 50 50" width="100%" height="100%">' +
-                        '<circle r="15.915" cx="50%" cy="50%" style="fill: none; stroke-width: 5; stroke: #4e525d;"></circle>' +
-                        '<circle r="15.915" cx="50%" cy="50%" style="fill: none; stroke-width: 5; stroke-dasharray: {stats.usedDiskPercent} {stats.freeDiskPercent}; stroke-dashoffset: 25; stroke: lawngreen;"></circle>' +
+                        '<circle r="15.915" cx="50%" cy="50%" style="fill: none; stroke-width: 5; stroke: #EFEFEF;"></circle>' +
+                        '<circle r="15.915" cx="50%" cy="50%" style="fill: none; stroke-width: 5; stroke-dasharray: {stats.usedDiskPercent} {stats.freeDiskPercent}; stroke-dashoffset: 25; stroke: #9c0c0c;"></circle>' +
                     '</svg>' +
-                    '<span style="color: lawngreen;">{stats.usedDisk}</span><br/>' +
+                    '<span style="color: #9c0c0c;">{stats.usedDisk}</span><br/>' +
                     '<span style="font-size: 11px;">{stats.totalDisk}</span>' +
                   '</div>'
         }
@@ -61,7 +64,7 @@ Ext.define('Ung.view.dashboard.Info', {
         xtype: 'container',
         items: [{
             xtype: 'component',
-            html: 'CPU Load'
+            html: '<strong>' + 'CPU Load'.t() + '</strong>'
         }, {
             xtype: 'component',
             style: { borderRadius: '3px', overflow: 'hidden' },
@@ -69,16 +72,35 @@ Ext.define('Ung.view.dashboard.Info', {
             width: 230,
             height: 60,
             reference: 'cpulinechart'
+        }, {
+            xtype: 'container',
+            margin: '10 0 30 0',
+            items: [{
+                xtype: 'component',
+                bind: {
+                    html: '<div class="cpubar">' +
+                      '<div style="left: {stats.oneMinuteLoadAvg/(stats.numCpus + 6) * 100}%"><em></em><p><strong>{stats.oneMinuteLoadAvg}</strong></p></div>' +
+                      '<span class="low" style="width: {(stats.numCpus + 1)/(stats.numCpus + 6) * 100}%"></span>' +
+                      '<span class="medium" style="width: {(stats.numCpus + 4)/(stats.numCpus + 6) * 100}%"></span>' +
+                      '<span class="high" style="width: 100%;"></span>' +
+                      '</div>'
+                }
+            }]
         }]
     }, {
         xtype: 'component',
         margin: '10 0',
         bind: {
-            html: '<p>Hosts: {stats.activeHosts} (max. {stats.maxActiveHosts})</p>' +
-                  '<p>Known Devices: {stats.knownDevices}</p>'
-                //   '<p>Total Sessions: {sessions.totalSessions}</p>' +
-                //   '<p>Scanned Sessions: {sessions.scannedSessions}</p>' +
-                //   '<p>Bypassed Sessions: {sessions.bypassedSessions}</p>'
+            html: '<p>Active Hosts: <strong>{stats.activeHosts} (max. {stats.maxActiveHosts})</strong></p>' +
+                  '<p>Known Devices: <strong>{stats.knownDevices}</strong></p>'
+        }
+    }, {
+        xtype: 'component',
+        margin: '10 0',
+        bind: {
+            html: '<p>Total Sessions: <strong>100</strong></p>' +
+                  '<p>Scanned Sessions: <strong>50</strong></p>' +
+                  '<p>Bypassed Sessions: <strong>50</strong></p>'
         }
     }],
 
@@ -107,7 +129,7 @@ Ext.define('Ung.view.dashboard.Info', {
                     // marginLeft: 0,
                     // marginRight: 0,
                     margin: [0, 0, 0, 0],
-                    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                    backgroundColor: 'rgba(100, 200, 200, 0.2)',
                     animation: true,
                     style: {
                         fontFamily: 'Source Sans Pro',
@@ -211,7 +233,7 @@ Ext.define('Ung.view.dashboard.Info', {
                 plotOptions: {
                     areaspline: {
                         fillOpacity: 0.15,
-                        lineWidth: 1
+                        lineWidth: 2
                     },
                     series: {
                         marker: {
@@ -258,48 +280,6 @@ Ext.define('Ung.view.dashboard.Info', {
                         }
                         return data;
                     }())
-                }, {
-                    name: 'load5',
-                    // fillColor: 'skyblue',
-                    // fillOpacity: 0.15,
-                    // data: []
-                    data: (function () {
-                        var data = [], time = Date.now(), i;
-                        // try {
-                        //     time = rpc.systemManager.getMilliseconds();
-                        // } catch (e) {
-                        //     console.log('Unable to get current millis.');
-                        // }
-                        time = Math.round(time/1000) * 1000;
-                        for (i = -12; i <= 0; i += 1) {
-                            data.push({
-                                x: time + i * 10000,
-                                y: null
-                            });
-                        }
-                        return data;
-                    }())
-                }, {
-                    name: 'load15',
-                    // fillColor: 'lawngreen',
-                    // fillOpacity: 0.15,
-                    // data: []
-                    data: (function () {
-                        var data = [], time = Date.now(), i;
-                        // try {
-                        //     time = rpc.systemManager.getMilliseconds();
-                        // } catch (e) {
-                        //     console.log('Unable to get current millis.');
-                        // }
-                        time = Math.round(time/1000) * 1000;
-                        for (i = -12; i <= 0; i += 1) {
-                            data.push({
-                                x: time + i * 10000,
-                                y: null
-                            });
-                        }
-                        return data;
-                    }())
                 }]
             });
         },
@@ -321,19 +301,9 @@ Ext.define('Ung.view.dashboard.Info', {
             this.lineChart.series[0].addPoint({
                 x: x,
                 y: store.first().getData().oneMinuteLoadAvg
-            }, false, true);
+            }, true, true);
 
-            this.lineChart.series[1].addPoint({
-                x: x,
-                y: store.first().getData().fiveMinuteLoadAvg
-            }, false, true);
-
-            this.lineChart.series[2].addPoint({
-                x: x,
-                y: store.first().getData().fifteenMinuteLoadAvg
-            }, false, true);
-
-            this.lineChart.redraw();
+            // this.lineChart.redraw();
 
             // if (stats.oneMinuteLoadAvg < medLimit) {
             //     vm.set('loadLabel', 'low'.t());

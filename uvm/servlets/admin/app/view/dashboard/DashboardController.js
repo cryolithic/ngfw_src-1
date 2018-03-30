@@ -219,10 +219,11 @@ Ext.define('Ung.view.dashboard.DashboardController', {
 
     toggleManager: function () {
         var me = this, vm = me.getViewModel(),
+            btn = me.getView().down('segmentedbutton'),
             columns = me.lookup('dashboardManager').getColumns();
 
-        vm.set('managerVisible', !vm.get('managerVisible'));
-        if (!vm.get('managerVisible')) {
+        btn.setValue(null);
+        if (!vm.get('sideSettings')) {
             columns[0].setHidden(true);
         }
     },

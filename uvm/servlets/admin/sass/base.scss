@@ -979,7 +979,7 @@ a.view-reports {
 .dashboard-info {
     font-family: $custom-font-condensed;
     font-size: 14px;
-    color: #CCC;
+    color: #333;
     h1, p { margin: 0; }
     .percent {
         width: 70px;
@@ -993,6 +993,39 @@ a.view-reports {
             left: 0; right: 0;
             line-height: 70px;
             font-size: 12px;
+        }
+    }
+}
+
+.cpubar {
+    width: 230px;
+    height: 5px;
+    position: relative;
+    span {
+        height: 5px;
+        position: absolute;
+        border-radius: 3px;
+        top: 0;
+        left: 0;
+        &.low { background-color: #70ad6f; z-index: 3; }
+        &.medium { background-color: #ffd463; z-index: 2; }
+        &.high { background-color: #ff6262; z-index: 1; }
+    }
+    div {
+        width: 30px;
+        margin-left: -15px;
+        text-align: center;
+        position: absolute;
+        top: -5px;
+        z-index: 4;
+        transition: left .25s cubic-bezier(0.23, 1, 0.32, 1);
+        -webkit-transition: left .25s cubic-bezier(0.23, 1, 0.32, 1);
+        em {
+            width: 3px;
+            height: 11px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 2px;
+            display: inline-block;
         }
     }
 }
