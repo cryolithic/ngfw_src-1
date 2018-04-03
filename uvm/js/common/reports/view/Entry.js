@@ -162,6 +162,10 @@ Ext.define('Ung.view.reports.Entry', {
                     disabled: '{fetching}'
                 },
                 handler: 'editEntry'
+            }, {
+                text: 'New Settings'.t(),
+                iconCls: 'fa fa-cog',
+                handler: 'editSettings'
             }]
         }, {
             xtype: 'toolbar',
@@ -254,11 +258,6 @@ Ext.define('Ung.view.reports.Entry', {
             },
             layout: 'anchor',
             bbar: [{
-                text: 'Preview/Refresh'.t(),
-                iconCls: 'fa fa-refresh',
-                handler: 'resetAndReload',
-                formBind: true
-            }, '->', {
                 text: 'Export Settings'.t(),
                 iconCls: 'fa fa-external-link-square',
                 handler: 'exportSettings',

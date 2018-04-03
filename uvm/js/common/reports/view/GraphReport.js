@@ -57,8 +57,22 @@ Ext.define('Ung.view.reports.GraphReport', {
                 me.setStyles();
             });
 
+            vm.bind('{eEntry.pieNumSlices}', function () {
+                me.setSeries();
+            });
+
             vm.bind('{eEntry.timeStyle}', function (timeStyle) {
                 if (!timeStyle) { return; }
+                me.setStyles();
+            });
+
+            vm.bind('{eEntry.timeDataInterval}', function (timeDataInterval) {
+                if (!timeDataInterval) { return; }
+                me.fetchData();
+            });
+
+            vm.bind('{eEntry.approximation}', function () {
+                // if (!timeDataInterval) { return; }
                 me.setStyles();
             });
         },

@@ -42,9 +42,9 @@ Ext.define('Ung.view.reports.EntryController', {
             }
         });
 
-        vm.bind('{entry.table}', function (table) {
-            vm.set('f_tableconfig', table ? TableConfig.generate(table) : []);
-        });
+        // vm.bind('{entry.table}', function (table) {
+        //     vm.set('f_tableconfig', table ? TableConfig.generate(table) : []);
+        // });
 
         // each time the eEntry changes by selecting 'Settings'
         vm.bind('{eEntry}', function (eEntry) {
@@ -633,41 +633,6 @@ Ext.define('Ung.view.reports.EntryController', {
         me.reload(true);
     },
 
-    onTextColumnsChanged: function (store) {
-        var vm = this.getViewModel(), tdc = [];
-        // update validation counter
-        vm.set('textColumnsCount', store.getCount());
-        // update the actual entry
-        store.each(function (col) { tdc.push(col.get('str')); });
-        vm.set('eEntry.textColumns', tdc);
-    },
-
-    onTimeDataColumnsChanged: function (store) {
-        var vm = this.getViewModel(), tdc = [];
-        // update validation counter
-        vm.set('timeDataColumnsCount', store.getCount());
-        // update the actual entry
-        store.each(function (col) { tdc.push(col.get('str')); });
-        vm.set('eEntry.timeDataColumns', tdc);
-    },
-
-    removeTextColumn: function (view, rowIndex, colIndex, item, e, record) {
-        var me = this, vm = me.getViewModel(), store = view.getStore(), tdc = [];
-        store.remove(record);
-        view.refresh();
-    },
-
-    removeTimeDataColumn: function (view, rowIndex, colIndex, item, e, record) {
-        var me = this, vm = me.getViewModel(), store = view.getStore(), tdc = [];
-        store.remove(record);
-        // vm.set('timeDataColumns', Ext.Array.removeAt(vm.get('timeDataColumns'), rowIndex));
-        // store.commitChanges();
-        // store.reload();
-        // record.drop();
-        // store.each(function (col) { tdc.push(col.get('str')); });
-        // vm.set('eEntry.timeDataColumns', tdc);
-    },
-
     exportSettings: function () {
         var me = this, vm = me.getViewModel(),
             rep = vm.get('entry').getData();
@@ -684,5 +649,31 @@ Ext.define('Ung.view.reports.EntryController', {
         exportForm.gridName.value = 'Report-' + rep.title.replace(/ /g, '_');
         exportForm.gridData.value = Ext.encode([rep]);
         exportForm.submit();
+    },
+
+    editSettings: function () {
+        var me = this, vm = me.getViewModel(),
+            eEntry = vm.get('entry').copy(null),
+            conditions = eEntry.get('conditions'), newConditions = [];
+
+        if (Ext.isArray(conditions)) {
+            Ext.Array.each(conditions, function (cond) {
+                newConditions.push(Ext.clone(cond));
+            });
+        }
+        eEntry.set('conditions', newConditions.length > 0 ? newConditions : null);
+
+        if (!me.settingsWin) {
+            me.settingsWin = me.getView().add({
+                xtype: 'entrysettings',
+                viewModel: {
+                    data: { eEntry: eEntry }
+                }
+            });
+        } else {
+            me.settingsWin.getViewModel().set('eEntry', eEntry);
+        }
+        me.settingsWin.show();
     }
+
 });
