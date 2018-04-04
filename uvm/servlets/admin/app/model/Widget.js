@@ -8,12 +8,12 @@ Ext.define ('Ung.model.Widget', {
         { name: 'refreshIntervalSec', type: 'auto', defaultValue: null },
         { name: 'timeframe', type: 'auto', defaultValue: null },
         { name: 'type', type: 'string' },
-        { name: 'xType', calculate: function(data) {
+        { name: 'xType', calculate: function (data) {
             return data.type.toLowerCase() + 'widget';
         } },
-        { name: 'itemId', calculate: function() {
-            return 'widget-' + Ext.Number.randomInt(100, 999);
-        } },
+        { name: 'itemId', calculate: function () {
+            return 'widget-' + Ext.Number.randomInt(100000, 999999);
+        } }
     ],
     proxy: {
         type: 'memory',

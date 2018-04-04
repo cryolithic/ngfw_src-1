@@ -10,6 +10,8 @@ Ext.define('Ung.view.dashboard.NewWidget', {
     height: 500,
     layout: 'border',
 
+    renderTo: Ext.getBody(),
+
     viewModel: {
         data: {
             widget: null,

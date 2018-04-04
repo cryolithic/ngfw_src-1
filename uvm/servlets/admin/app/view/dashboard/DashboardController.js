@@ -62,13 +62,6 @@ Ext.define('Ung.view.dashboard.DashboardController', {
             });
 
         /**
-         * (re)load widgets when Reports App installed/removed or enabled/disabled
-         */
-        vm.bind('{reportsAppStatus}', function () {
-            me.loadWidgets();
-        });
-
-        /**
          * On global conditions change refetch data based on new conditions
          * Using {query.string} because it fires only when the value changes, unlike {query} only
          */
@@ -114,91 +107,6 @@ Ext.define('Ung.view.dashboard.DashboardController', {
                 DashboardQueue.isVisible(widget);
             }
         });
-    },
-
-    /**
-     * Render widgets into the dashboard
-     */
-    loadWidgets: function() {
-        var me = this, vm = me.getViewModel(),
-            dashboard = me.lookup('dashboard'),
-            widgets = Ext.getStore('widgets').getRange(),
-            i, widget, entry;
-
-        // refresh the dashboard manager grid if the widgets were affected
-        me.lookup('dashboardManager').getView().refresh();
-
-        dashboard.removeAll(true);
-        var widgetsCmp = [];
-
-        for (i = 0; i < widgets.length; i += 1 ) {
-            widget = widgets[i];
-
-            if (widget.get('type') !== 'ReportEntry') {
-                if (widget.get('enabled')) {
-                    widgetsCmp.push({
-                        xtype: widget.get('type').toLowerCase() + 'widget',
-                        itemId: widget.get('itemId'),
-                        lastFetchTime: null,
-                        visible: true,
-                        viewModel: {
-                            data: {
-                                widget: widget
-                            }
-                        }
-                    });
-                } else {
-                    widgetsCmp.push({
-                        xtype: 'component',
-                        itemId: widget.get('itemId'),
-                        hidden: true
-                    });
-                }
-            }
-            else {
-                if (vm.get('reportsAppStatus.installed') && vm.get('reportsAppStatus.enabled')) {
-                    entry = Ext.getStore('reports').findRecord('uniqueId', widget.get('entryId'));
-
-                    if (entry && !Ext.getStore('unavailableApps').first().get(entry.get('category')) && widget.get('enabled')) {
-                        widgetsCmp.push({
-                            xtype: 'reportwidget',
-                            // itemId: widget.get('entryId'),
-                            itemId: widget.get('itemId'),
-                            lastFetchTime: null,
-                            visible: true,
-                            viewModel: {
-                                data: {
-                                    widget: widget,
-                                    entry: entry
-                                }
-                            }
-                        });
-                    } else {
-                        widgetsCmp.push({
-                            xtype: 'component',
-                            // itemId: widget.get('entryId'),
-                            itemId: widget.get('itemId'),
-                            hidden: true
-                        });
-                    }
-                } else {
-                    widgetsCmp.push({
-                        xtype: 'component',
-                        // itemId: widget.get('entryId'),
-                        itemId: widget.get('itemId'),
-                        hidden: true
-                    });
-                }
-            }
-        }
-        dashboard.add(widgetsCmp);
-
-        if (!me.widgetsRendered) {
-            me.widgetsRendered = true;
-            // add scroll/resize events
-            dashboard.body.on('scroll', me.debounce(me.updateWidgetsVisibility, 500));
-            dashboard.getEl().on('resize', me.debounce(me.updateWidgetsVisibility, 500));
-        }
     },
 
     updateSince: function (menu, item) {
@@ -391,28 +299,6 @@ Ext.define('Ung.view.dashboard.DashboardController', {
             }
             cb(wg2);
         });
-    },
-
-
-    resetDashboard: function () {
-        var me = this, vm = me.getViewModel();
-        Ext.MessageBox.confirm('Warning'.t(),
-            'This will overwrite the current dashboard settings with the defaults.'.t() + '<br/><br/>' +
-            'Do you want to continue?'.t(),
-            function (btn) {
-                if (btn === 'yes') {
-                    Rpc.asyncData('rpc.dashboardManager.resetSettingsToDefault').then(function () {
-                        Rpc.asyncData('rpc.dashboardManager.getSettings')
-                            .then(function (result) {
-                                Ung.dashboardSettings = result;
-                                Ext.getStore('widgets').loadData(result.widgets.list);
-                                me.loadWidgets();
-                                Util.successToast('Dashboard reset done!');
-                                vm.set('managerVisible', false);
-                            });
-                    });
-                }
-            });
     },
 
 
