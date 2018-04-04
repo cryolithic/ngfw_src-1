@@ -2,6 +2,8 @@ Ext.define('Ung.widget.Report', {
     extend: 'Ext.container.Container',
     alias: 'widget.reportwidget',
 
+    widgetCmp: true,
+
     controller: 'widget',
     viewModel: {
         formulas: {

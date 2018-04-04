@@ -2,6 +2,8 @@ Ext.define('Ung.widget.PolicyOverview', {
     extend: 'Ext.container.Container',
     alias: 'widget.policyoverviewwidget',
 
+    widgetCmp: true,
+
     controller: 'widget',
 
     border: false,

@@ -2,6 +2,8 @@ Ext.define('Ung.widget.MapDistribution', {
     extend: 'Ext.container.Container',
     alias: 'widget.mapdistributionwidget',
 
+    widgetCmp: true,
+
     controller: 'widget',
 
     border: false,

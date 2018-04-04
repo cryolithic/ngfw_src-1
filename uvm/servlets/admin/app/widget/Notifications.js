@@ -2,6 +2,8 @@ Ext.define('Ung.widget.Notifications', {
     extend: 'Ext.container.Container',
     alias: 'widget.notificationswidget',
 
+    widgetCmp: true,
+
     controller: 'widget',
     viewModel: {
         data: {

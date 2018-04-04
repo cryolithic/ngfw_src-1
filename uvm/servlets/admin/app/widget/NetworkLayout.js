@@ -2,6 +2,8 @@ Ext.define('Ung.widget.NetworkLayout', {
     extend: 'Ext.container.Container',
     alias: 'widget.networklayoutwidget',
 
+    widgetCmp: true,
+
     controller: 'widget',
     border: false,
     baseCls: 'widget',

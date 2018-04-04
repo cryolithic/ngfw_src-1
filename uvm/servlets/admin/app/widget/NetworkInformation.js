@@ -2,6 +2,8 @@ Ext.define('Ung.widget.NetworkInformation', {
     extend: 'Ext.container.Container',
     alias: 'widget.networkinformationwidget',
 
+    widgetCmp: true,
+
     controller: 'widget',
 
     border: false,

@@ -2,6 +2,8 @@ Ext.define('Ung.widget.Information', {
     extend: 'Ext.container.Container',
     alias: 'widget.informationwidget',
 
+    widgetCmp: true,
+
     controller: 'widget',
 
     border: false,

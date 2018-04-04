@@ -2,6 +2,8 @@ Ext.define('Ung.widget.Resources', {
     extend: 'Ext.container.Container',
     alias: 'widget.resourceswidget',
 
+    widgetCmp: true,
+
     controller: 'widget',
 
     border: false,

@@ -1,6 +1,9 @@
 Ext.define('Ung.widget.CpuLoad', {
     extend: 'Ext.container.Container',
     alias: 'widget.cpuloadwidget',
+
+    widgetCmp: true,
+
     controller: 'cpuload',
     viewModel: true,
 

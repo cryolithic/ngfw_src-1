@@ -25,7 +25,8 @@ Ext.define('Ung.view.dashboard.DashboardController', {
 
     listen: {
         global: {
-            widgetaction: 'onWidgetAction'
+            widgetaction: 'onWidgetAction',
+            // addwidget: 'onAddWidget'
         },
         store: {
             '#stats': {
@@ -137,7 +138,7 @@ Ext.define('Ung.view.dashboard.DashboardController', {
                 if (widget.get('enabled')) {
                     widgetsCmp.push({
                         xtype: widget.get('type').toLowerCase() + 'widget',
-                        itemId: widget.get('type'),
+                        itemId: widget.get('itemId'),
                         lastFetchTime: null,
                         visible: true,
                         viewModel: {
@@ -149,7 +150,7 @@ Ext.define('Ung.view.dashboard.DashboardController', {
                 } else {
                     widgetsCmp.push({
                         xtype: 'component',
-                        itemId: widget.get('type'),
+                        itemId: widget.get('itemId'),
                         hidden: true
                     });
                 }
@@ -161,7 +162,8 @@ Ext.define('Ung.view.dashboard.DashboardController', {
                     if (entry && !Ext.getStore('unavailableApps').first().get(entry.get('category')) && widget.get('enabled')) {
                         widgetsCmp.push({
                             xtype: 'reportwidget',
-                            itemId: widget.get('entryId'),
+                            // itemId: widget.get('entryId'),
+                            itemId: widget.get('itemId'),
                             lastFetchTime: null,
                             visible: true,
                             viewModel: {
@@ -174,14 +176,16 @@ Ext.define('Ung.view.dashboard.DashboardController', {
                     } else {
                         widgetsCmp.push({
                             xtype: 'component',
-                            itemId: widget.get('entryId'),
+                            // itemId: widget.get('entryId'),
+                            itemId: widget.get('itemId'),
                             hidden: true
                         });
                     }
                 } else {
                     widgetsCmp.push({
                         xtype: 'component',
-                        itemId: widget.get('entryId'),
+                        // itemId: widget.get('entryId'),
+                        itemId: widget.get('itemId'),
                         hidden: true
                     });
                 }
@@ -276,208 +280,6 @@ Ext.define('Ung.view.dashboard.DashboardController', {
                     });
                 }
             }
-        }
-    },
-
-    enableRenderer: function (value, meta, record) {
-        var vm = this.getViewModel();
-        meta.tdCls = 'enable';
-        if (record.get('type') !== 'ReportEntry') {
-            return '<i class="fa ' + (value ? 'fa-check-circle-o' : 'fa-circle-o') + '"></i>';
-        }
-        var entry = Ext.getStore('reports').findRecord('uniqueId', record.get('entryId'));
-
-        if (!entry || Ext.getStore('unavailableApps').first().get(entry.get('category')) || !vm.get('reportsAppStatus.enabled')) {
-            return '<i class="fa fa-info-circle"></i>';
-        }
-        return '<i class="fa ' + (value ? 'fa-check-circle-o' : 'fa-circle-o') + '"></i>';
-    },
-
-    /**
-     * renders the title of the widget in the dashboard manager grid, based on various conditions
-     */
-    widgetTitleRenderer: function (value, metaData, record) {
-        var vm = this.getViewModel(), entry, title, unavailApp, enabled;
-        enabled = record.get('enabled');
-
-        if (!value) {
-            return '<span style="' + (!enabled ? 'font-weight: 400; color: #777;' : 'font-weight: 600; color: #000;') + '">' + record.get('type') + '</span>'; // <br/><span style="font-size: 10px; color: #777;">Common</span>';
-        }
-        if (vm.get('reportsAppStatus.installed')) {
-            entry = Ext.getStore('reports').findRecord('uniqueId', value);
-            if (entry) {
-                unavailApp = Ext.getStore('unavailableApps').first().get(entry.get('category'));
-                title = '<span style="' + ((unavailApp || !enabled) ? 'font-weight: 400; color: #777;' : 'font-weight: 600; color: #000;') + '">' + (entry.get('readOnly') ? entry.get('title').t() : entry.get('title')) + '</span>';
-                return title;
-            } else {
-                return 'Unknown Widget'.t();
-            }
-        } else {
-            return '<span style="color: #999;">' + 'App Widget'.t() + '</span>';
-        }
-    },
-
-
-    /**
-     * Method which sends modified dashboard settings to backend to be saved
-     */
-    applyChanges: function () {
-        var me = this, dashboard = me.lookup('dashboard');
-
-        // drom record selected for removal
-        Ext.getStore('widgets').each(function (record) {
-            if (record.get('markedForDelete')) {
-                record.drop();
-            }
-        });
-
-        // because of the drag/drop reorder the settins widgets are updated to respect new ordering
-        Ung.dashboardSettings.widgets.list = Ext.Array.pluck(Ext.getStore('widgets').getRange(), 'data');
-
-        Rpc.asyncData('rpc.dashboardManager.setSettings', Ung.dashboardSettings)
-            .then(function() {
-                Util.successToast('<span style="color: yellow; font-weight: 600;">Dashboard Saved!</span>');
-                Ext.getStore('widgets').sync();
-                me.toggleManager();
-
-                // remove widgets from dashboard if removed from store (manager)
-                Ext.Array.each(dashboard.query('reportwidget'), function (widgetCmp) {
-                    if (Ext.getStore('widgets').find('entryId', widgetCmp.getItemId()) < 0) {
-                        dashboard.remove(widgetCmp);
-                    }
-                });
-
-            });
-
-    },
-
-    onItemClick: function (cell, td, cellIndex, record, tr, rowIndex) {
-        var me = this,
-            dashboard = me.lookup('dashboard'),
-            vm = this.getViewModel(),
-            entry, widgetCmp;
-
-        if (cellIndex === 1) {
-            // toggle visibility or show alerts
-
-            if (record.get('type') !== 'ReportEntry') {
-                widgetCmp = dashboard.down('#' + record.get('type'));
-                if (widgetCmp) {
-                    widgetCmp.destroy();
-
-                    if (!record.get('enabled')) {
-                        widgetCmp = dashboard.insert(rowIndex, {
-                            xtype: record.get('type').toLowerCase() + 'widget',
-                            itemId: record.get('type'),
-                            visible: true,
-                            lastFetchTime: null,
-                            viewModel: {
-                                data: {
-                                    widget: record
-                                }
-                            }
-                        });
-                        setTimeout(function () {
-                            dashboard.scrollTo(0, dashboard.getEl().getScrollTop() + widgetCmp.getEl().getY() - 121, {duration: 300 });
-                        }, 100);
-                    } else {
-                        dashboard.insert(rowIndex, {
-                            xtype: 'component',
-                            itemId: record.get('type'),
-                            hidden: true
-                        });
-                    }
-                    record.set('enabled', !record.get('enabled'));
-
-                }
-
-            } else {
-                if (!vm.get('reportsAppStatus.installed')) {
-                    Ext.Msg.alert('Info'.t(), 'To enable App Widgets please install Reports first!'.t());
-                    return;
-                }
-                if (!vm.get('reportsAppStatus.enabled')) {
-                    Ext.Msg.alert('Info'.t(), 'To view App Widgets enable the Reports App first!'.t());
-                    return;
-                }
-
-                entry = Ext.getStore('reports').findRecord('uniqueId', record.get('entryId'));
-                widgetCmp = dashboard.down('#' + record.get('entryId'));
-                if (entry && widgetCmp) {
-                    if (!Ext.getStore('unavailableApps').first().get(entry.get('category'))) {
-                        widgetCmp.destroy();
-                        if (!record.get('enabled')) {
-                            widgetCmp = dashboard.insert(rowIndex, {
-                                xtype: 'reportwidget',
-                                itemId: record.get('entryId'),
-                                visible: true,
-                                lastFetchTime: null,
-                                // bind: {
-                                //     userCls: 'theme-{theme}'
-                                // },
-                                // refreshIntervalSec: record.get('refreshIntervalSec'),
-                                viewModel: {
-                                    data: {
-                                        widget: record,
-                                        entry: entry
-                                    }
-                                }
-                            });
-                            // widgetCmp = dashboard.down('#' + record.get('entryId'));
-                            setTimeout(function () {
-                                dashboard.scrollTo(0, dashboard.getEl().getScrollTop() + widgetCmp.getEl().getY() - 121, {duration: 300 });
-                            }, 100);
-                            // DashboardQueue.addFirst(widgetCmp);
-                        } else {
-                            dashboard.insert(rowIndex, {
-                                xtype: 'component',
-                                itemId: record.get('entryId'),
-                                hidden: true
-                            });
-                        }
-                        record.set('enabled', !record.get('enabled'));
-                    } else {
-                        Ext.Msg.alert('Install required'.t(), Ext.String.format('To enable this Widget please install <strong>{0}</strong> app first!'.t(), entry.get('category')));
-                    }
-                } else {
-                    Util.handleException('This entry is not available and it should be removed!');
-                }
-
-            }
-        }
-
-        if (cellIndex === 2) {
-            // highlights in the dashboard the widget which receives click event in the manager grid
-            widgetCmp = dashboard.down('#' + record.get('entryId')) || dashboard.down('#' + record.get('type'));
-            if (widgetCmp && !widgetCmp.isHidden()) {
-                dashboard.addBodyCls('highlight');
-                widgetCmp.addCls('highlight-item');
-                dashboard.scrollTo(0, dashboard.body.getScrollTop() + widgetCmp.getEl().getY() - 107, {duration: 100});
-            }
-        }
-    },
-
-
-    removeWidget: function (btn) {
-        btn.lookupViewModel().get('record').set('markedForDelete', btn.pressed);
-    },
-
-    /**
-     * removes the above set highlight
-     */
-    onItemLeave: function (view, record) {
-        if (this.tout) {
-            window.clearTimeout(this.tout);
-        }
-        var dashboard = this.getView().lookupReference('dashboard'), widgetCmp;
-        if (record.get('type') !== 'ReportEntry') {
-            widgetCmp = dashboard.down('#' + record.get('type'));
-        } else {
-            widgetCmp = dashboard.down('#' + record.get('entryId'));
-        }
-        if (widgetCmp) {
-            dashboard.removeBodyCls('highlight');
-            widgetCmp.removeCls('highlight-item');
         }
     },
 
@@ -592,30 +394,6 @@ Ext.define('Ung.view.dashboard.DashboardController', {
     },
 
 
-    /**
-     * todo: after drag sort event
-     */
-    onDrop: function (app, data, overModel, dropPosition) {
-        var dashboard = this.lookupReference('dashboard');
-
-        var widgetMoved = dashboard.down('#' + data.records[0].get('entryId')) || this.getView().down('#' + data.records[0].get('type'));
-        var widgetDropped = dashboard.down('#' + overModel.get('entryId')) || this.getView().down('#' + overModel.get('type'));
-
-        /*
-        widgetMoved.addCls('moved');
-
-        window.setTimeout(function () {
-            widgetMoved.removeCls('moved');
-        }, 300);
-        */
-
-        if (dropPosition === 'before') {
-            dashboard.moveBefore(widgetMoved, widgetDropped);
-        } else {
-            dashboard.moveAfter(widgetMoved, widgetDropped);
-        }
-    },
-
     resetDashboard: function () {
         var me = this, vm = me.getViewModel();
         Ext.MessageBox.confirm('Warning'.t(),
@@ -726,29 +504,6 @@ Ext.define('Ung.view.dashboard.DashboardController', {
         if (vm.get('managerVisible')) {
             this.toggleManager();
         }
-    },
-
-    addWidget: function () {
-        this.showWidgetEditor(null, null);
-    },
-
-    showWidgetEditor: function (widget, entry) {
-        var me = this;
-        me.addWin = me.getView().add({
-            xtype: 'new-widget',
-            viewModel: {
-                data: {
-                    widget: widget,
-                    entry: entry
-                }
-            }
-        });
-        me.addWin.show();
-    },
-
-    reorderWidgets: function () {
-        var me = this, columns = me.lookup('dashboardManager').getColumns();
-        columns[0].setHidden(false);
     },
 
     exportWidgets: function () {
