@@ -5,6 +5,7 @@ Ext.define('Ung.view.reports.EntrySettingsController', {
     control: {
         '#': {
             afterrender: 'onAfterRender',
+            beforehide: 'onBeforeHide'
             // deactivate: 'onDeactivate'
         }
     },
@@ -13,7 +14,7 @@ Ext.define('Ung.view.reports.EntrySettingsController', {
         var me = this, vm = me.getViewModel(), ctrl;
 
         vm.bind('{eEntry}', function (eEntry) {
-            console.log('bind eEntry');
+            if (!eEntry) { return; } // reset graphs
             var activeDataColumnsCard;
 
             // vm.set('validForm', true); // te remove the valid warning
@@ -56,6 +57,10 @@ Ext.define('Ung.view.reports.EntrySettingsController', {
         //     ctrl.setStyles();
         // });
 
+    },
+
+    onBeforeHide: function (win) {
+        win.getViewModel().set('eEntry', null);
     },
 
     cancel: function (btn) {
