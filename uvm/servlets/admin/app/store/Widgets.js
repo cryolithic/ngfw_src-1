@@ -5,26 +5,25 @@ Ext.define('Ung.store.Widgets', {
     model: 'Ung.model.Widget',
     listeners: {
         load: function () {
-            console.log('widgets load');
+            // console.log('widgets load');
         },
         datachanged: function () {
-            console.log('widgets datachanged');
+            // console.log('widgets datachanged');
         },
         update: function (store, record, operation, modifiedFieldNames, details) {
-            if (operation === 'edit') {
+            if (operation === 'edit' && Ext.Array.contains(modifiedFieldNames, 'enabled')) {
                 Ext.fireEvent('updatewidget', store, record, operation, modifiedFieldNames, details);
             }
-            // console.log('widgets update', operation, modifiedFieldNames, details);
         },
         remove: function (store, records, index) {
             console.log('widgets remove', index);
+            Ext.fireEvent('removewidgets', store, records);
         },
-        add: function (store, records, index) {
-            Ext.fireEvent('addwidget', records);
-            console.log('widgets add', index);
+        add: function (store, records) {
+            Ext.fireEvent('addwidgets', store, records);
         },
         refresh: function (store, eOpts) {
-            console.log('widgets refresh', eOpts);
+            // console.log('widgets refresh', eOpts);
         }
 
     }

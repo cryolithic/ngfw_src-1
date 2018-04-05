@@ -87,28 +87,17 @@ Ext.define('Ung.view.dashboard.NewWidgetController', {
 
             vm.set('entry', entry);
 
-            if (me.widget) {
-                if (entry.get('type') === 'EVENT_LIST') {
-                    var tblCfg = TableConfig.getConfig(entry.get('table'));
-                    var str = [];
-                    Ext.Array.each(tblCfg.columns, function (col) {
-                        str.push({name: col.dataIndex, text: col.header});
-                    });
-                    me.getView().down('tagfield').getStore().setData(str);
-                }
-            } else {
-                newWidget = Ext.create('Ung.model.Widget', {
-                    displayColumns: entry.get('defaultColumns'),
-                    enabled: true,
-                    entryId: entry.get('uniqueId'),
-                    javaClass: 'com.untangle.uvm.DashboardWidgetSettings',
-                    refreshIntervalSec: 60,
-                    timeframe: '',
-                    type: 'ReportEntry'
-                });
-                onDashboard = false;
+            newWidget = Ext.create('Ung.model.Widget', {
+                displayColumns: entry.get('defaultColumns'),
+                enabled: true,
+                entryId: entry.get('uniqueId'),
+                javaClass: 'com.untangle.uvm.DashboardWidgetSettings',
+                refreshIntervalSec: 60,
+                timeframe: '',
+                type: 'ReportEntry'
+            });
 
-            }
+            onDashboard = me.widget ? true : false;
 
             vm.set({
                 widget: me.widget ? me.widget.copy(null) : newWidget.copy(null),
@@ -153,29 +142,11 @@ Ext.define('Ung.view.dashboard.NewWidgetController', {
 
     onAdd: function () {
         var me = this, vm = this.getViewModel();
-        // console.log(vm.get('widget').getData());
         Ext.getStore('widgets').add(vm.get('widget').getData());
-        // Ext.fireEvent('widgetaction', 'add', vm.get('widget'), vm.get('entry'), function () {
-        //     me.getView().close();
-        // });
+        me.getView().close();
     },
 
-    onSave: function () {
-        var me = this, vm = this.getViewModel();
-        Ext.fireEvent('widgetaction', 'save', vm.get('widget'), vm.get('entry'), function () {
-            me.getView().close();
-        });
-    },
-
-    onRemoveWidget: function () {
-        var me = this, vm = this.getViewModel();
-        Ext.fireEvent('widgetaction', 'remove', vm.get('widget'), null, function () {
-            me.getView().close();
-        });
-
-    },
-
-    updateColumns: function(cmp, val) {
+    updateColumns: function() {
         var vm = this.getViewModel(), columns = this.getView().down('grid').getColumns();
         // console.log(vm.get('widget.displayColumns'));
         Ext.Array.each(columns, function (col) {

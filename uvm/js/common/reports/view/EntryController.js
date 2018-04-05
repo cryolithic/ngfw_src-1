@@ -302,12 +302,9 @@ Ext.define('Ung.view.reports.EntryController', {
 
     // // DASHBOARD ACTION
     dashboardAddRemove: function () {
-        var me = this, vm = me.getViewModel(), widget = vm.get('widget'), entry = vm.get('entry'), action;
-
-        me.getView().setLoading(true);
+        var me = this, vm = me.getViewModel(), widget = vm.get('widget'), entry = vm.get('entry');
 
         if (!widget) {
-            action = 'add';
             widget = Ext.create('Ung.model.Widget', {
                 displayColumns: entry.get('defaultColumns'),
                 enabled: true,
@@ -317,15 +314,17 @@ Ext.define('Ung.view.reports.EntryController', {
                 timeframe: '',
                 type: 'ReportEntry'
             });
-        } else {
-            action = 'remove';
-        }
 
-        Ext.fireEvent('widgetaction', action, widget, entry, function (wg) {
-            vm.set('widget', wg);
-            Util.successToast('<span style="color: yellow; font-weight: 600;">' + vm.get('entry.title') + '</span> ' + (action === 'add' ? 'added to' : 'removed from') + ' Dashboard!');
-            me.getView().setLoading(false);
-        });
+            Ext.getStore('widgets').add(widget);
+            vm.set('widget', widget);
+        } else {
+            // Ext.getStore('widgets').findBy(function (wg) {
+            //     return wg.get('entryId') === entry.get('uniqueId');
+            // });
+            var records = Ext.getStore('widgets').queryRecords('entryId', entry.get('uniqueId'));
+            Ext.getStore('widgets').remove(records);
+            vm.set('widget', null);
+        }
     },
 
     // titleChange: function( control, newValue) {
@@ -509,19 +508,19 @@ Ext.define('Ung.view.reports.EntryController', {
         Ext.MessageBox.confirm('Warning'.t(),
             'Deleting this report will also remove Dashboard widgets containing this report!'.t() + '<br/><br/>' +
             'Do you want to continue?'.t(),
-        function (btn) {
-            if (btn === 'yes') {
-                if (vm.get('widget')) {
-                    // remove it from dashboard first
-                    Ext.fireEvent('widgetaction', 'remove', vm.get('widget'), entry, function (wg) {
-                        vm.set('widget', wg);
+            function (btn) {
+                if (btn === 'yes') {
+                    if (vm.get('widget')) {
+                        // remove it from dashboard first
+                        Ext.fireEvent('widgetaction', 'remove', vm.get('widget'), entry, function (wg) {
+                            vm.set('widget', wg);
+                            me.removeReportAction(entry.getData());
+                        });
+                    } else {
                         me.removeReportAction(entry.getData());
-                    });
-                } else {
-                    me.removeReportAction(entry.getData());
+                    }
                 }
-            }
-        });
+            });
 
     },
 

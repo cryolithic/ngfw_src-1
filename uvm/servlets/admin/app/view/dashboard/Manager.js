@@ -114,7 +114,7 @@ Ext.define('Ung.view.dashboard.Manager', {
                     '-',
                     {
                         text: 'Add Common Widgets'.t(),
-                        iconCls: 'fa fa-area-chart',
+                        iconCls: 'fa fa-plus-circle',
                         menu: {
                             plain: true,
                             showSeparator: false,

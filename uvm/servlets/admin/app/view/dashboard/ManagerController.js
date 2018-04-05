@@ -11,7 +11,8 @@ Ext.define('Ung.view.dashboard.ManagerController', {
 
     listen: {
         global: {
-            addwidget: 'onAddWidget',
+            addwidgets: 'onAddWidgets',
+            removewidgets: 'onRemoveWidgets',
             updatewidget: 'onUpdateWidget'
         }
     },
@@ -82,6 +83,13 @@ Ext.define('Ung.view.dashboard.ManagerController', {
                             }
                         }
                     });
+                } else {
+                    // report widget is enabled but App not installed
+                    widgetsCmps.push({
+                        xtype: 'component',
+                        itemId: record.get('itemId'),
+                        hidden: true
+                    });
                 }
             }
 
@@ -98,8 +106,9 @@ Ext.define('Ung.view.dashboard.ManagerController', {
     },
 
     // listens on widgets store add event and adds widget component to dashboard
-    onAddWidget: function (records) {
-        var me = this;
+    onAddWidgets: function (store, records) {
+        var me = this, entry;
+
         Ext.Array.each(records, function (record) {
             if (record.get('type') !== 'ReportEntry') {
                 me.dashboard.add({
@@ -114,13 +123,35 @@ Ext.define('Ung.view.dashboard.ManagerController', {
                     }
                 });
             } else {
-                console.log();
+                entry = Ext.getStore('reports').findRecord('uniqueId', record.get('entryId'));
+                me.dashboard.add({
+                    xtype: 'reportwidget',
+                    itemId: record.get('itemId'),
+                    visible: true,
+                    lastFetchTime: null,
+                    viewModel: {
+                        data: {
+                            widget: record,
+                            entry: entry
+                        }
+                    }
+                });
             }
         });
+        me.applyChanges();
+    },
+
+    onRemoveWidgets: function (store, records) {
+        var me = this, widgetCmp;
+        Ext.Array.each(records, function (rec) {
+            widgetCmp = me.dashboard.down('#' + rec.get('itemId'));
+            if (widgetCmp) { widgetCmp.destroy(); }
+        });
+        me.applyChanges();
     },
 
 
-    onUpdateWidget: function (store, record, operation) {
+    onUpdateWidget: function (store, record) {
         var me = this, vm = me.getViewModel(), entry,
             enabled = record.get('enabled'),
             widgetCmp = me.dashboard.down('#' + record.get('itemId')),
@@ -214,21 +245,15 @@ Ext.define('Ung.view.dashboard.ManagerController', {
      * Method which sends modified dashboard settings to backend to be saved
      */
     applyChanges: function () {
-        var me = this;
-
-        // drop record selected for removal
-        Ext.getStore('widgets').each(function (record) {
-            if (record.get('markedForDelete')) {
-                record.drop();
-            }
-        });
+        var me = this, removable = Ext.getStore('widgets').queryRecords('markedForDelete', true);
+        Ext.getStore('widgets').remove(removable);
 
         // because of the drag/drop reorder the settins widgets are updated to respect new ordering
         Ung.dashboardSettings.widgets.list = Ext.Array.pluck(Ext.getStore('widgets').getRange(), 'data');
 
         Rpc.asyncData('rpc.dashboardManager.setSettings', Ung.dashboardSettings)
             .then(function() {
-                Util.successToast('<span style="color: yellow; font-weight: 600;">Dashboard Saved!</span>');
+                // Util.successToast('<span style="color: yellow; font-weight: 600;">Dashboard Saved!</span>');
                 Ext.getStore('widgets').sync();
                 // me.toggleManager();
 
@@ -238,7 +263,6 @@ Ext.define('Ung.view.dashboard.ManagerController', {
                         me.dashboard.remove(widgetCmp);
                     }
                 });
-
             });
 
     },
@@ -368,4 +392,108 @@ Ext.define('Ung.view.dashboard.ManagerController', {
             return '<span style="color: #999;">' + 'App Widget'.t() + '</span>';
         }
     },
+
+    importWidgets: function () {
+        var me = this;
+        me.importDialog = me.getView().add({
+            xtype: 'window',
+            title: 'Import Widgets'.t(),
+            renderTo: Ext.getBody(),
+            modal: true,
+            layout: 'fit',
+            width: 450,
+            items: [{
+                xtype: 'form',
+                border: false,
+                url: 'gridSettings',
+                bodyPadding: 10,
+                layout: 'anchor',
+                items: [{
+                    xtype: 'radiogroup',
+                    name: 'importMode',
+                    simpleValue: true,
+                    value: 'replace',
+                    columns: 1,
+                    vertical: true,
+                    items: [
+                        { boxLabel: '<strong>' + 'Replace current widgets'.t() + '</strong>', inputValue: 'replace' },
+                        { boxLabel: '<strong>' + 'Prepend to current widgets'.t() + '</strong>', inputValue: 'prepend' },
+                        { boxLabel: '<strong>' + 'Append to current widgets'.t() + '</strong>', inputValue: 'append' }
+                    ]
+                }, {
+                    xtype: 'component',
+                    margin: 10,
+                    html: 'with widgets from'.t()
+                }, {
+                    xtype: 'filefield',
+                    anchor: '100%',
+                    fieldLabel: 'File'.t(),
+                    labelAlign: 'right',
+                    allowBlank: false,
+                    validateOnBlur: false
+                }, {
+                    xtype: 'hidden',
+                    name: 'type',
+                    value: 'import'
+                }],
+                buttons: [{
+                    text: 'Cancel'.t(),
+                    iconCls: 'fa fa-ban fa-red',
+                    handler: function () {
+                        me.importDialog.close();
+                    }
+                }, {
+                    text: 'Import'.t(),
+                    iconCls: 'fa fa-check',
+                    formBind: true,
+                    handler: function (btn) {
+                        btn.up('form').submit({
+                            waitMsg: 'Please wait while the widgets are imported...'.t(),
+                            success: function(form, action) {
+                                if (!action.result) {
+                                    Ext.MessageBox.alert('Warning'.t(), 'Import failed.'.t());
+                                    return;
+                                }
+                                if (!action.result.success) {
+                                    Ext.MessageBox.alert('Warning'.t(), action.result.msg);
+                                    return;
+                                }
+                                me.importHandler(form.getValues().importMode, action.result.msg);
+                                me.importDialog.close();
+                            },
+                            failure: function(form, action) {
+                                Ext.MessageBox.alert('Warning'.t(), action.result.msg);
+                            }
+                        });
+                    }
+                }]
+            }],
+        });
+        this.importDialog.show();
+    },
+
+    importHandler: function (importMode, newData) {
+        var me = this, existingData = Ext.Array.pluck(Ext.getStore('widgets').getRange(), 'data');
+
+        Ext.Array.forEach(existingData, function (rec) {
+            delete rec._id;
+        });
+
+        if (importMode === 'replace') {
+            Ext.getStore('widgets').removeAll();
+        }
+        if (importMode === 'append') {
+            Ext.Array.insert(existingData, existingData.length, newData);
+            newData = existingData;
+        }
+        if (importMode === 'prepend') {
+            Ext.Array.insert(existingData, 0, newData);
+            newData = existingData;
+        }
+
+        Ext.getStore('widgets').loadData(newData);
+        me.loadWidgets();
+    }
+
+
 });
