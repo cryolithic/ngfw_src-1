@@ -17,23 +17,25 @@ Ext.define('Ung.view.dashboard.Dashboard', {
         settings: null // the dashboard settings object / not used, need to check
     },
 
-    layout: 'border',
+    layout: 'fit',
 
-    defaults: {
-        border: false
-    },
+    dockedItems: [{
+        xtype: 'dashboardmanager',
+        dock: 'left',
+        width: 250,
+        hidden: true,
+        bind: {
+            hidden: '{!managerVisible}'
+        }
+    }],
 
     items: [{
-        region: 'west',
-        xtype: 'dashboardmanager'
-    }, {
-        region: 'center',
         reference: 'dashboard',
         itemId: 'dashboard',
         bodyCls: 'dashboard',
         bodyPadding: 8,
         border: false,
-        bodyBorder: false,
+        // bodyBorder: false,
         scrollable: true,
         dockedItems: [{
             xtype: 'toolbar',
@@ -44,6 +46,7 @@ Ext.define('Ung.view.dashboard.Dashboard', {
             items: [{
                 text: 'Settings'.t(),
                 iconCls: 'fa fa-cog',
+                focusable: false,
                 handler: 'toggleManager',
                 hidden: true,
                 bind: {

@@ -5,9 +5,9 @@ Ext.define('Ung.view.dashboard.Manager', {
 
     itemId: 'dashboardManager',
     reference: 'dashboardManager',
-    width: 250,
-    minWidth: 250,
-    maxWidth: 350,
+    // width: 250,
+    // minWidth: 250,
+    // maxWidth: 350,
     bodyBorder: false,
     animCollapse: false,
     floatable: false,
@@ -16,11 +16,8 @@ Ext.define('Ung.view.dashboard.Manager', {
     split: true,
     hideHeaders: true,
     rowLines: false,
-    // hidden: true,
-    // bind: {
-    //     hidden: '{!managerVisible}'
-    // },
     store: 'widgets',
+    border: false,
     viewConfig: {
         plugins: {
             ptype: 'gridviewdragdrop',
@@ -138,13 +135,21 @@ Ext.define('Ung.view.dashboard.Manager', {
                             }
                         }
                     },
+                    // { text: 'Add Report Widget'.t(), iconCls: 'fa fa-plus-circle', itemId: 'reportsMenu' },
                     { text: 'Create New Report Widget'.t(), iconCls: 'fa fa-area-chart', handler: 'newReportWidget' },
                     '-',
                     { text: 'Reorder'.t(), iconCls: 'fa fa-sort', handler: 'showOrderingColumn' },
                     '-',
                     { text: 'Reset to Defaults'.t(), iconCls: 'fa fa-rotate-left', handler: 'resetDashboard' }
                 ]
+                // listeners: {
+                //     beforeshow: 'populateReportsMenu'
+                // }
             }
+        }, '->', {
+            iconCls: 'fa fa-times',
+            focusable: false,
+            handler: 'onCancel'
         }]
     }],
 

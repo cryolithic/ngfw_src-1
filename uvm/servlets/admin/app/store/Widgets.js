@@ -16,7 +16,6 @@ Ext.define('Ung.store.Widgets', {
             }
         },
         remove: function (store, records, index) {
-            console.log('widgets remove', index);
             Ext.fireEvent('removewidgets', store, records);
         },
         add: function (store, records) {

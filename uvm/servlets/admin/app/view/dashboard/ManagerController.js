@@ -26,7 +26,6 @@ Ext.define('Ung.view.dashboard.ManagerController', {
          * (re)load widgets when Reports App installed/removed or enabled/disabled
          */
         me.getViewModel().bind('{reportsAppStatus}', function () {
-            console.log('load');
             me.loadWidgets();
         });
     },
@@ -267,6 +266,12 @@ Ext.define('Ung.view.dashboard.ManagerController', {
 
     },
 
+    onCancel: function () {
+        this.getViewModel().set('managerVisible', false);
+    },
+
+
+
     showOrderingColumn: function () {
         var me = this, columns = me.getView().getColumns();
         columns[0].setHidden(false);
@@ -493,7 +498,51 @@ Ext.define('Ung.view.dashboard.ManagerController', {
 
         Ext.getStore('widgets').loadData(newData);
         me.loadWidgets();
-    }
+    },
 
+    exportWidgets: function () {
+        var widgetsArr = [], w;
+        Ext.getStore('widgets').each(function (widget) {
+            w = widget.getData();
+            delete w._id;
+            widgetsArr.push(w);
+        });
+
+        Ext.MessageBox.wait('Exporting Widgets...'.t(), 'Please wait'.t());
+        var exportForm = document.getElementById('exportGridSettings');
+        exportForm.gridName.value = 'Widgets'.t(); // used in exported file name
+        exportForm.gridData.value = Ext.encode(widgetsArr);
+        exportForm.submit();
+        Ext.MessageBox.hide();
+    },
+
+    populateReportsMenu: function (menu) {
+        var menuItem = menu.down('#reportsMenu'),
+            root = Ext.getStore('reportstree').getRoot(), items = [], subItems = [];
+
+        root.eachChild(function (catNode) {
+            subItems = [];
+            catNode.eachChild(function (repNode) { // report node
+                subItems.push({
+                    text: repNode.get('text')
+                });
+            });
+            items.push({
+                text: catNode.get('text'),
+                menu: {
+                    plain: true,
+                    showSeparator: false,
+                    mouseLeaveDelay: 0,
+                    items: subItems
+                }
+            });
+        });
+        menuItem.setMenu({
+            plain: true,
+            showSeparator: false,
+            mouseLeaveDelay: 0,
+            items: items
+        });
+    }
 
 });
