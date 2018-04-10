@@ -300,17 +300,26 @@ Ext.define('Ung.view.dashboard.ManagerController', {
         }
     },
 
-    onItemClick: function (cell, td, cellIndex, record) {
-        var me = this, widgetCmp;
+    onItemClick: function (table, td, cellIndex, record, tr, rowIndex, e) {
+        var me = this, widgetCmp, entry;
 
         if (cellIndex === 1) {
+            if (Ext.Array.contains(e.target.classList, 'fa-info-circle')) {
+                entry = Ext.getStore('reports').findRecord('uniqueId', record.get('entryId'));
+                if (entry) {
+                    Ext.Msg.alert('Install required'.t(), Ext.String.format('To enable this Widget please install <strong>{0}</strong> app first!'.t(), entry.get('category')));
+                } else {
+                    Util.handleException('This entry is not available and it should be removed!');
+                }
+                return;
+            }
             // toggle visibility or show alerts
             record.set('enabled', !record.get('enabled'));
         }
 
         if (cellIndex === 2) {
             // highlights in the dashboard the widget which receives click event in the manager grid
-            widgetCmp = me.dashboard.down('#' + record.get('entryId')) || me.dashboard.down('#' + record.get('type'));
+            widgetCmp = me.dashboard.down('#' + record.get('itemId'));
             if (widgetCmp && !widgetCmp.isHidden()) {
                 me.dashboard.addBodyCls('highlight');
                 widgetCmp.addCls('highlight-item');
@@ -327,11 +336,7 @@ Ext.define('Ung.view.dashboard.ManagerController', {
         if (this.tout) {
             window.clearTimeout(this.tout);
         }
-        if (record.get('type') !== 'ReportEntry') {
-            widgetCmp = me.dashboard.down('#' + record.get('type'));
-        } else {
-            widgetCmp = me.dashboard.down('#' + record.get('entryId'));
-        }
+        widgetCmp = me.dashboard.down('#' + record.get('itemId'));
         if (widgetCmp) {
             me.dashboard.removeBodyCls('highlight');
             widgetCmp.removeCls('highlight-item');
