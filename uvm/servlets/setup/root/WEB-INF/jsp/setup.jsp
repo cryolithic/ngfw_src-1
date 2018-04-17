@@ -49,7 +49,7 @@
             window.document.title = 'Setup Wizard'.t();
 
             Ext.Loader.loadScript({
-                url: 'script/setup.js',
+                url: 'script/ung-setup-all.js',
                 onLoad: function () {
                     Ext.application({
                         name: 'Ung',
