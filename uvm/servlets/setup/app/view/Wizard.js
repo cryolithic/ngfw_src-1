@@ -66,7 +66,10 @@ Ext.define('Ung.Setup.Wizard', {
         { xtype: 'serversettings' },
         { xtype: 'networkcards' },
         { xtype: 'internetconnection' },
-        { xtype: 'internalnetwork' }
+        { xtype: 'internalnetwork' },
+        { xtype: 'wireless' },
+        { xtype: 'autoupgrades' },
+        { xtype: 'complete' }
     ],
 
     listeners: {

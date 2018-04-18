@@ -1,8 +1,8 @@
-Ext.define('Ung.Setup.InternalNetwork', {
+Ext.define('Ung.Setup.AutoUpgrades', {
     extend: 'Ext.panel.Panel',
-    alias: 'widget.internalnetwork',
+    alias: 'widget.autoupgrades',
 
-    title: 'Internal Network'.t(),
+    title: 'Auto Upgrades'.t(),
 
     dockedItems: [{
         xtype: 'component',
@@ -10,14 +10,14 @@ Ext.define('Ung.Setup.InternalNetwork', {
         padding: 10,
         dock: 'top',
         background: '#FFF',
-        html: 'Configure the Internal Network Interface'.t()
+        html: 'Auto Upgrades'.t()
     }],
 
     layout: 'fit',
 
     items: [{
         xtype: 'container',
-        html: 'Internal Network Interface'
+        html: 'Auto Upgrades'
     }],
 
     listeners: {

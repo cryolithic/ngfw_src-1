@@ -1,8 +1,8 @@
-Ext.define('Ung.Setup.InternalNetwork', {
+Ext.define('Ung.Setup.Complete', {
     extend: 'Ext.panel.Panel',
-    alias: 'widget.internalnetwork',
+    alias: 'widget.complete',
 
-    title: 'Internal Network'.t(),
+    title: 'Complete'.t(),
 
     dockedItems: [{
         xtype: 'component',
@@ -10,14 +10,14 @@ Ext.define('Ung.Setup.InternalNetwork', {
         padding: 10,
         dock: 'top',
         background: '#FFF',
-        html: 'Configure the Internal Network Interface'.t()
+        html: 'Complete'.t()
     }],
 
     layout: 'fit',
 
     items: [{
         xtype: 'container',
-        html: 'Internal Network Interface'
+        html: 'Complete'
     }],
 
     listeners: {
