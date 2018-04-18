@@ -20,6 +20,12 @@
     <!-- FontAwesome -->
     <link href="/ext6.2/fonts/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
 
+    <!-- Fonts -->
+    <link href="/ext6.2/fonts/source-sans-pro/css/fonts.css" rel="stylesheet" type="text/css" />
+    <link href="/ext6.2/fonts/roboto-condensed/css/fonts.css" rel="stylesheet" type="text/css" />
+
+    <link href="styles/setup-all.css" rel="stylesheet" />
+
     <script>
       var rpc = {};
       Ext.onReady(function () {

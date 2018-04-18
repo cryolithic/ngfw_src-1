@@ -6,5 +6,9 @@ Ext.define('Ung.Setup', {
     name: 'Ung',
     rpc: null,
     // controllers: ['Global'],
-    mainView: 'Ung.Setup.Main'
+    mainView: 'Ung.Setup.Main',
+
+    loading: function (msg) {
+        this.getMainView().down('window').setLoading(msg);
+    }
 });

@@ -1,0 +1,30 @@
+$custom-font: 'Source Sans Pro', sans-serif;
+$custom-font-condensed: 'Roboto Condensed', sans-serif;
+
+.intro {
+    opacity: 0;
+    -webkit-transition: opacity 5s cubic-bezier(0.23, 1, 0.32, 1);
+    &.fadein {
+        opacity: 1;
+    }
+}
+.step {
+    .x-panel-header {
+        background: transparent;
+    }
+}
+
+.step-title {
+    font-family: $custom-font-condensed;
+    font-weight: 100;
+    color: #999;
+    font-size: 36px;
+    text-align: center;
+}
+
+.sectionheader {
+    font-family: $custom-font-condensed;
+    font-size: 20px;
+    // font-weight: bold;
+    color: #555;
+}
