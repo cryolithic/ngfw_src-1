@@ -1,17 +1,9 @@
 Ext.define('Ung.Setup.AutoUpgrades', {
     extend: 'Ext.panel.Panel',
-    alias: 'widget.autoupgrades',
+    alias: 'widget.AutoUpgrades',
 
     title: 'Auto Upgrades'.t(),
-
-    dockedItems: [{
-        xtype: 'component',
-        cls: 'step-title',
-        padding: 10,
-        dock: 'top',
-        background: '#FFF',
-        html: 'Auto Upgrades'.t()
-    }],
+    description: 'Auto Upgrades'.t(),
 
     layout: 'fit',
 

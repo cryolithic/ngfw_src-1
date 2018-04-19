@@ -1,17 +1,9 @@
 Ext.define('Ung.Setup.Complete', {
     extend: 'Ext.panel.Panel',
-    alias: 'widget.complete',
+    alias: 'widget.Complete',
 
     title: 'Complete'.t(),
-
-    dockedItems: [{
-        xtype: 'component',
-        cls: 'step-title',
-        padding: 10,
-        dock: 'top',
-        background: '#FFF',
-        html: 'Complete'.t()
-    }],
+    description: 'Complete'.t(),
 
     layout: 'fit',
 

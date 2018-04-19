@@ -1,6 +1,15 @@
 Ext.define('Ung.Setup.Wizard', {
     extend: 'Ext.window.Window',
     alias: 'widget.setupwizard',
+
+    viewModel: {
+        data: {
+            activeStepDesc: '',
+            activeStep: null,
+            intfListLength: null, // used for next button disable/enable
+        }
+    },
+
     modal: true,
 
     resizable: false,
@@ -26,20 +35,31 @@ Ext.define('Ung.Setup.Wizard', {
         border: false,
         bodyBorder: false,
         bodyPadding: 0,
+        padding: 20,
         cls: 'step',
         header: false
     },
 
     dockedItems: [{
+        xtype: 'component',
+        cls: 'step-title',
+        padding: '20 20 0 20',
+        dock: 'top',
+        html: '&nbsp;',
+        bind: {
+            html: '{activeStepDesc}'
+        }
+    }, {
         xtype: 'toolbar',
         dock: 'top',
+        hidden: true,
         defaults: {
             xtype: 'component'
         },
         items: [{
-            html: 'Server Settings'.t()
-        }, {
-            html: 'Network Cards'.t()
+            bind: {
+                html: '{activeStep}'
+            }
         }]
     }, {
         xtype: 'toolbar',
@@ -58,18 +78,22 @@ Ext.define('Ung.Setup.Wizard', {
             itemId: 'nextBtn',
             iconCls: 'fa fa-chevron-circle-right fa-lg',
             iconAlign: 'right',
-            handler: 'onNext'
+            handler: 'onNext',
+            disabled: true,
+            bind: {
+                disabled: '{activeStep === "Interfaces" && intfListLength < 2 && !forcecontinue.checked}'
+            }
         }]
     }],
 
     items: [
-        { xtype: 'serversettings' },
-        { xtype: 'networkcards' },
-        { xtype: 'internetconnection' },
-        { xtype: 'internalnetwork' },
-        { xtype: 'wireless' },
-        { xtype: 'autoupgrades' },
-        { xtype: 'complete' }
+        { xtype: 'ServerSettings' },
+        { xtype: 'Interfaces' },
+        { xtype: 'Internet' },
+        { xtype: 'InternalNetwork' },
+        { xtype: 'Wireless' },
+        { xtype: 'AutoUpgrades' },
+        { xtype: 'Complete' }
     ],
 
     listeners: {
@@ -114,12 +138,19 @@ Ext.define('Ung.Setup.Wizard', {
         },
 
         updateNav: function () {
-            var me = this, view = me.getView(),
+            var me = this, view = me.getView(), vm = me.getViewModel(),
                 prevBtn = view.down('#prevBtn'),
                 nextBtn = view.down('#nextBtn'),
                 layout = me.getView().getLayout(),
                 prevStep = layout.getPrev(),
                 nextStep = layout.getNext();
+
+            vm.set({
+                'activeStep': layout.getActiveItem().getXType(),
+                'activeStepDesc': layout.getActiveItem().description
+            });
+
+            // console.log(vm.get('activeStep'));
 
             if (prevStep) {
                 prevBtn.show().setText(prevStep.getTitle());

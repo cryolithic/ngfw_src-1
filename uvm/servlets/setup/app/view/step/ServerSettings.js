@@ -1,8 +1,9 @@
 Ext.define('Ung.Setup.ServerSettings', {
     extend: 'Ext.form.Panel',
-    alias: 'widget.serversettings',
+    alias: 'widget.ServerSettings',
 
     title: 'Server Settings'.t(),
+    description: 'Configure the Server'.t(),
 
     layout: {
         type: 'hbox',
@@ -17,15 +18,6 @@ Ext.define('Ung.Setup.ServerSettings', {
         }
     },
 
-    dockedItems: [{
-        xtype: 'component',
-        cls: 'step-title',
-        padding: 10,
-        dock: 'top',
-        background: '#FFF',
-        html: 'Configure the Server'.t()
-    }],
-
     items: [{
         xtype: 'container',
         margin: '100 20 0 0',
@@ -33,7 +25,6 @@ Ext.define('Ung.Setup.ServerSettings', {
         defaults: {
             labelAlign: 'top'
         },
-        border: '0 1 0 0',
         items: [{
             xtype: 'component',
             cls: 'sectionheader',

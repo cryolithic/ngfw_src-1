@@ -19,7 +19,8 @@ $custom-font-condensed: 'Roboto Condensed', sans-serif;
     font-weight: 100;
     color: #999;
     font-size: 36px;
-    text-align: center;
+    background: #FFF;
+    // text-align: center;
 }
 
 .sectionheader {
@@ -27,4 +28,9 @@ $custom-font-condensed: 'Roboto Condensed', sans-serif;
     font-size: 20px;
     // font-weight: bold;
     color: #555;
+}
+
+.inline-warning {
+    background: #e2e2e2;
+    border-radius: 5px;
 }
