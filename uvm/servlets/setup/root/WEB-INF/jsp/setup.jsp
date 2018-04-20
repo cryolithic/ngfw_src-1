@@ -12,7 +12,7 @@
         @import "/ext6.2/classic/theme-${extjsTheme}/resources/theme-${extjsTheme}-all.css?s=${buildStamp}";
     </style>
 
-    <script type="text/javascript" src="/ext6.2/ext-all.js?s=${buildStamp}"></script>
+    <script type="text/javascript" src="/ext6.2/ext-all-debug.js?s=${buildStamp}"></script>
     <script type="text/javascript" src="/ext6.2/classic/theme-${extjsTheme}/theme-${extjsTheme}.js?s=${buildStamp}"></script>
 
     <script type="text/javascript" src="/jsonrpc/jsonrpc.js?s=${buildStamp}"></script>

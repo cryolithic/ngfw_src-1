@@ -30,7 +30,9 @@ Ext.define('Ung.Setup.NetworkCards', {
             ptype: 'cellediting',
             clicksToEdit: 1
         },
-
+        store: {
+            data: []
+        },
 
         viewConfig: {
             plugins: {
@@ -137,7 +139,7 @@ Ext.define('Ung.Setup.NetworkCards', {
         margin: '10 0 0 0',
         padding: '20 20 10 20',
 
-        publishes: 'hidden',
+        // publishes: 'hidden',
         hidden: true,
         bind: {
             hidden: '{networkSettings.interfaces.list.length > 1}'
@@ -176,7 +178,7 @@ Ext.define('Ung.Setup.NetworkCards', {
 
         onActivate: function () {
             var me = this;
-            me.getInterfaces();
+            me.getSettings();
             me.enableAutoRefresh = true;
             Ext.defer(me.autoRefreshInterfaces, 3000, me); // refreshes interfaces every 3 seconds
         },
@@ -186,24 +188,25 @@ Ext.define('Ung.Setup.NetworkCards', {
             me.enableAutoRefresh = false;
         },
 
-        getInterfaces: function () {
-
-            var me = this, grid = me.getView().down('grid'), vm = me.getViewModel();
+        getSettings: function () {
+            var me = this, vm = me.getViewModel(),
+                grid = me.getView().down('grid');
 
             me.physicalDevsStore = [];
             me.intfOrderArr = [];
 
-            Ung.app.loading('Fetch interfaces...'.t());
+            Ung.app.loading('Loading interfaces...'.t());
+
             rpc.networkManager.getNetworkSettings(function (result, ex) {
                 Ung.app.loading(false);
-                if (ex) { Util.handleException('Unable to refresh the interfaces.'.t()); return; }
+                if (ex) { Util.handleException('Unable to load interfaces.'.t()); return; }
 
-                vm.set('networkSettings', result);
+                vm.set({
+                    networkSettings: result,
+                    intfListLength: result.interfaces.list.length
+                });
+
                 var interfaces = [], devices = [];
-
-                vm.set('intfListLength', result.interfaces.list.length);
-
-                console.log(result.interfaces.list);
 
                 Ext.Array.each(result.interfaces.list, function (intf) {
                     if (!intf.isVlanInterface) {
@@ -213,9 +216,7 @@ Ext.define('Ung.Setup.NetworkCards', {
                 });
 
                 rpc.networkManager.getDeviceStatus(function (result2, ex2) {
-                    Ung.app.loading(false);
                     if (ex2) { Util.handleException(ex2); return; }
-
                     var deviceStatusMap = Ext.Array.toValueMap(result2.list, 'deviceName');
                     Ext.Array.forEach(interfaces, function (intf) {
                         Ext.applyIf(intf, deviceStatusMap[intf.physicalDev]);
@@ -227,7 +228,7 @@ Ext.define('Ung.Setup.NetworkCards', {
 
                     Ext.Array.each(interfaces, function (intf) {
                         me.physicalDevsStore.push([intf.physicalDev, intf.physicalDev]);
-                        me.intfOrderArr.push(Ext.clone(intf));
+                        // me.intfOrderArr.push(Ext.clone(intf));
                     });
                     vm.set('deviceStore', me.physicalDevsStore);
                 });
@@ -239,8 +240,6 @@ Ext.define('Ung.Setup.NetworkCards', {
                 vm = me.getViewModel();
 
             if (!me.enableAutoRefresh) { return; }
-
-            console.log('refresh');
 
             rpc.networkManager.getNetworkSettings(function (result, ex) {
                 if (ex) { Util.handleException('Unable to refresh the interfaces.'.t()); return; }
@@ -260,7 +259,7 @@ Ext.define('Ung.Setup.NetworkCards', {
                 }
 
                 rpc.networkManager.getDeviceStatus(function (result2, ex2) {
-                    if (ex) { Util.handleException(ex); return; }
+                    if (ex2) { Util.handleException(ex); return; }
                     if (result === null) { return; }
 
                     var deviceStatusMap = Ext.Array.toValueMap(result2.list, 'deviceName');
@@ -365,10 +364,13 @@ Ext.define('Ung.Setup.NetworkCards', {
         },
 
         onSave: function (cb) {
+
+            console.log('on save');
+
             var me = this, vm = me.getViewModel(), grid = me.getView().down('grid'), interfacesMap = {};
 
             // if no changes/remapping skip this step
-            if (grid.getStore().getModifiedRecords().length === 0) { cb(); return; }
+            // if (grid.getStore().getModifiedRecords().length === 0) { cb(); return; }
 
             grid.getStore().each(function (currentRow) {
                 interfacesMap[currentRow.get('interfaceId')] = currentRow.get('physicalDev');

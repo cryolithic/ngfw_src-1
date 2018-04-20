@@ -1,5 +1,5 @@
 Ext.define('Ung.Setup.InternetConnection', {
-    extend: 'Ext.panel.Panel',
+    extend: 'Ext.form.Panel',
     alias: 'widget.Internet',
 
     title: 'Internet Connection'.t(),
@@ -17,12 +17,16 @@ Ext.define('Ung.Setup.InternetConnection', {
         width: 300,
         layout: {
             type: 'vbox',
-            align: 'stretch'
+            // align: 'stretch'
+        },
+        hidden: true,
+        bind: {
+            hidden: '{!wan}'
         },
         items: [{
             xtype: 'component',
             cls: 'sectionheader',
-            // margin: '30 0 0 0',
+            margin: '0 0 10 0',
             html: 'Configuration Type'.t()
         }, {
             xtype: 'radiogroup',
@@ -41,11 +45,20 @@ Ext.define('Ung.Setup.InternetConnection', {
                 value: '{wan.v4ConfigType}'
             }
         }, {
+            xtype: 'button',
+            text: 'Renew DHCP'.t(),
+            iconCls: 'fa fa-refresh',
+            // handler: 'renewDhcp', // renew DHCP and refresh status
+            bind: {
+                hidden: '{wan.v4ConfigType !== "AUTO"}'
+            }
+        }, {
             xtype: 'container',
             width: 200,
+            margin: '0 10',
             layout: {
                 type: 'vbox',
-                // align: 'stretch'
+                align: 'stretch'
             },
             hidden: true,
             bind: {
@@ -57,7 +70,11 @@ Ext.define('Ung.Setup.InternetConnection', {
                 msgTarget: 'side',
                 validationEvent: 'blur',
                 maskRe: /(\d+|\.)/,
-                vtype: 'ipAddress'
+                vtype: 'ipAddress',
+                disabled: true,
+                bind: {
+                    disabled: '{wan.v4ConfigType !== "STATIC"}'
+                }
             },
             items: [{
                 fieldLabel: 'IP Address'.t(),
@@ -66,41 +83,7 @@ Ext.define('Ung.Setup.InternetConnection', {
             }, {
                 fieldLabel: 'Netmask'.t(),
                 xtype: 'combo',
-                store: [
-                    [32, '/32 - 255.255.255.255'],
-                    [31, '/31 - 255.255.255.254'],
-                    [30, '/30 - 255.255.255.252'],
-                    [29, '/29 - 255.255.255.248'],
-                    [28, '/28 - 255.255.255.240'],
-                    [27, '/27 - 255.255.255.224'],
-                    [26, '/26 - 255.255.255.192'],
-                    [25, '/25 - 255.255.255.128'],
-                    [24, '/24 - 255.255.255.0'],
-                    [23, '/23 - 255.255.254.0'],
-                    [22, '/22 - 255.255.252.0'],
-                    [21, '/21 - 255.255.248.0'],
-                    [20, '/20 - 255.255.240.0'],
-                    [19, '/19 - 255.255.224.0'],
-                    [18, '/18 - 255.255.192.0'],
-                    [17, '/17 - 255.255.128.0'],
-                    [16, '/16 - 255.255.0.0'],
-                    [15, '/15 - 255.254.0.0'],
-                    [14, '/14 - 255.252.0.0'],
-                    [13, '/13 - 255.248.0.0'],
-                    [12, '/12 - 255.240.0.0'],
-                    [11, '/11 - 255.224.0.0'],
-                    [10, '/10 - 255.192.0.0'],
-                    [9, '/9 - 255.128.0.0'],
-                    [8, '/8 - 255.0.0.0'],
-                    [7, '/7 - 254.0.0.0'],
-                    [6, '/6 - 252.0.0.0'],
-                    [5, '/5 - 248.0.0.0'],
-                    [4, '/4 - 240.0.0.0'],
-                    [3, '/3 - 224.0.0.0'],
-                    [2, '/2 - 192.0.0.0'],
-                    [1, '/1 - 128.0.0.0'],
-                    [0, '/0 - 0.0.0.0']
-                ],
+                store: Util.v4NetmaskList,
                 queryMode: 'local',
                 triggerAction: 'all',
                 value: 24,
@@ -148,9 +131,13 @@ Ext.define('Ung.Setup.InternetConnection', {
         xtype: 'container',
         margin: '50 20 0 0',
         width: 200,
+        hidden: true,
+        bind: {
+            hidden: '{!wan}'
+        },
         layout: {
             type: 'vbox',
-            align: 'stretch'
+            // align: 'stretch'
         },
         defaults: {
             xtype: 'displayfield',
@@ -161,10 +148,11 @@ Ext.define('Ung.Setup.InternetConnection', {
         items: [{
             xtype: 'component',
             cls: 'sectionheader',
+            margin: '0 0 10 0',
             html: 'Status'.t()
         }, {
             fieldLabel: 'IP Address'.t(),
-            bind: { value: '{wan.v4Address || "<not set>"}' }
+            bind: { value: '{wan.v4Address}' }
         }, {
             fieldLabel: 'Netmask'.t(),
             bind: { value: '{wan.v4Netmask}' }
@@ -177,246 +165,145 @@ Ext.define('Ung.Setup.InternetConnection', {
         }, {
             fieldLabel: 'Secondary DNS'.t(),
             bind: { value: '{wan.v4Dns2}' }
+        }, {
+            xtype: 'button',
+            text: 'Test Connectivity'.t(),
+            iconCls: 'fa fa-compress',
+            handler: 'onSave', // save is called because connectivity test is done inside of it
+            bind: {
+                hidden: '{wan.v4ConfigType !== "AUTO" && wan.v4ConfigType !== "STATIC" }'
+            }
         }]
     }],
 
 
-    // items: [{
-    //     xtype: 'component',
-    //     cls: 'sectionheader',
-    //     // margin: '30 0 0 0',
-    //     html: 'Configuration Type'.t()
-    // }, {
-    //     xtype: 'radiogroup',
-    //     // fieldLabel: 'Configuration Type'.t(),
-    //     // labelWidth: 160,
-    //     labelAlign: 'right',
-    //     simpleValue: true,
-    //     layout: { type: 'hbox' },
-    //     defaults: { padding: '1 15 1 0' },
-    //     items: [
-    //         { boxLabel: '<strong>' + 'Auto (DHCP)'.t() + '</strong>', inputValue: 'AUTO' },
-    //         { boxLabel: '<strong>' + 'Static'.t() + '</strong>', inputValue: 'STATIC' },
-    //         { boxLabel: '<strong>' + 'PPPoE'.t() + '</strong>', inputValue: 'PPPOE' }
-    //     ],
-    //     bind: {
-    //         value: '{wan.v4ConfigType}'
-    //     }
-    // }, {
-    //     xtype: 'panel',
-    //     layout: 'card',
-    //     border: false,
-    //     flex: 1,
-    //     margin: '10 0 0 0',
-    //     defaults: {
-    //         xtype: 'form',
-    //         border: false,
-    //         bodyBorder: false,
-    //         // margin: '10 0 0 0'
-    //     },
-    //     bind: {
-    //         activeItem: '{wan.v4ConfigType}'
-    //     },
-    //     items: [{
-    //         itemId: 'AUTO',
-    //         items: [{
-    //             xtype: 'fieldset',
-    //             title: 'DHCP Status'.t(),
-    //             padding: 10,
-    //             defaults: {
-    //                 xtype: 'displayfield',
-    //                 labelWidth: 170,
-    //                 labelAlign: 'right',
-    //                 margin: 0
-    //             },
-    //             items: [{
-    //                 fieldLabel: 'Current IP Address'.t(),
-    //                 bind: { value: '{wan.v4Address}' }
-    //             }, {
-    //                 fieldLabel: 'Current Netmask'.t(),
-    //                 bind: { value: '{wan.v4Netmask}' }
-    //             }, {
-    //                 fieldLabel: 'Current Gateway'.t(),
-    //                 bind: { value: '{wan.v4Gateway}' }
-    //             }, {
-    //                 fieldLabel: 'Current Primary DNS'.t(),
-    //                 bind: { value: '{wan.v4Dns1}' }
-    //             }, {
-    //                 fieldLabel: 'Current Secondary DNS'.t(),
-    //                 bind: { value: '{wan.v4Dns2}' }
-    //             }]
-    //         }]
-    //     }, {
-    //         itemId: 'STATIC',
-    //         items: [{
-    //             xtype: 'fieldset',
-    //             title: 'Static'.t(),
-    //             padding: 10,
-    //             defaults: {
-    //                 xtype: 'textfield',
-    //                 labelWidth: 150,
-    //                 width: 350,
-    //                 labelAlign: 'right',
-    //                 msgTarget: 'side',
-    //                 validationEvent: 'blur',
-    //                 maskRe: /(\d+|\.)/,
-    //                 vtype: 'ipAddress'
-    //             },
-    //             items: [{
-    //                 fieldLabel: 'IP Address'.t(),
-    //                 allowBlank: false,
-    //                 bind: { value: '{wan.v4StaticAddress}', emptyText: '{wan.v4Address}' }
-    //             }, {
-    //                 fieldLabel: 'Netmask'.t(),
-    //                 xtype: 'combo',
-    //                 store: [
-    //                     [32, '/32 - 255.255.255.255'],
-    //                     [31, '/31 - 255.255.255.254'],
-    //                     [30, '/30 - 255.255.255.252'],
-    //                     [29, '/29 - 255.255.255.248'],
-    //                     [28, '/28 - 255.255.255.240'],
-    //                     [27, '/27 - 255.255.255.224'],
-    //                     [26, '/26 - 255.255.255.192'],
-    //                     [25, '/25 - 255.255.255.128'],
-    //                     [24, '/24 - 255.255.255.0'],
-    //                     [23, '/23 - 255.255.254.0'],
-    //                     [22, '/22 - 255.255.252.0'],
-    //                     [21, '/21 - 255.255.248.0'],
-    //                     [20, '/20 - 255.255.240.0'],
-    //                     [19, '/19 - 255.255.224.0'],
-    //                     [18, '/18 - 255.255.192.0'],
-    //                     [17, '/17 - 255.255.128.0'],
-    //                     [16, '/16 - 255.255.0.0'],
-    //                     [15, '/15 - 255.254.0.0'],
-    //                     [14, '/14 - 255.252.0.0'],
-    //                     [13, '/13 - 255.248.0.0'],
-    //                     [12, '/12 - 255.240.0.0'],
-    //                     [11, '/11 - 255.224.0.0'],
-    //                     [10, '/10 - 255.192.0.0'],
-    //                     [9, '/9 - 255.128.0.0'],
-    //                     [8, '/8 - 255.0.0.0'],
-    //                     [7, '/7 - 254.0.0.0'],
-    //                     [6, '/6 - 252.0.0.0'],
-    //                     [5, '/5 - 248.0.0.0'],
-    //                     [4, '/4 - 240.0.0.0'],
-    //                     [3, '/3 - 224.0.0.0'],
-    //                     [2, '/2 - 192.0.0.0'],
-    //                     [1, '/1 - 128.0.0.0'],
-    //                     [0, '/0 - 0.0.0.0']
-    //                 ],
-    //                 queryMode: 'local',
-    //                 triggerAction: 'all',
-    //                 value: 24,
-    //                 bind: { value: '{wan.v4StaticPrefix}', emptyText: '/{wan.v4PrefixLength} - {wan.v4Netmask}' },
-    //                 editable: false,
-    //                 allowBlank: false
-    //             }, {
-    //                 fieldLabel: 'Gateway'.t(),
-    //                 allowBlank: false,
-    //                 bind: { value: '{wan.v4StaticGateway}', emptyText: '{wan.v4Gateway}' }
-    //             }, {
-    //                 fieldLabel: 'Primary DNS'.t(),
-    //                 allowBlank: false,
-    //                 bind: { value: '{wan.v4StaticDns1}', emptyText: '{wan.v4Dns1}' }
-    //             }, {
-    //                 xtype: 'fieldcontainer',
-    //                 width: 'auto',
-    //                 layout: { type: 'hbox', align: 'middle' },
-    //                 items: [{
-    //                     xtype: 'textfield',
-    //                     labelWidth: 150,
-    //                     width: 350,
-    //                     labelAlign: 'right',
-    //                     msgTarget: 'side',
-    //                     validationEvent: 'blur',
-    //                     maskRe: /(\d+|\.)/,
-    //                     vtype: 'ipAddress',
-    //                     name: 'dns2',
-    //                     fieldLabel: 'Secondary DNS'.t(),
-    //                     allowBlank: true,
-    //                     bind: { value: '{wan.v4StaticDns2}', emptyText: '{wan.v4Dns2}' }
-    //                 }, {
-    //                     xtype: 'label',
-    //                     margin: '0 0 0 5',
-    //                     style: { color: '#999', fontSize: '11px' },
-    //                     html: '(optional)'.t()
-    //                 }]
-    //             }]
-    //         }]
-    //     }, {
-    //         itemId: 'PPPOE',
-    //         items: [{
-    //             xtype: 'fieldset',
-    //             title: 'PPPoE Settings'.t(),
-    //             padding: 10,
-    //             defaults: {
-    //                 xtype: 'textfield',
-    //                 labelWidth: 150,
-    //                 width: 350,
-    //                 labelAlign: 'right'
-    //             },
-    //             items: [{
-    //                 fieldLabel: 'Username'.t(),
-    //                 bind: { value: '{wan.v4PPPoEUsername}' }
-    //             }, {
-    //                 inputType: 'password',
-    //                 fieldLabel: 'Password'.t(),
-    //                 bind: { value: '{wan.v4PPPoEPassword}' }
-    //             }]
-    //         }, {
-    //             xtype: 'fieldset',
-    //             title: 'PPPoE Status'.t(),
-    //             padding: 10,
-    //             defaults: {
-    //                 xtype: 'displayfield',
-    //                 labelWidth: 150,
-    //                 labelAlign: 'right',
-    //                 margin: 0
-    //             },
-    //             items: [
-    //                 { fieldLabel: 'IP Address'.t(),    bind: { value: '{wan.v4Address}' } },
-    //                 { fieldLabel: 'Netmask'.t(),       bind: { value: '{wan.v4Netmask}' } },
-    //                 { fieldLabel: 'Gateway'.t(),       bind: { value: '{wan.v4Gateway}' } },
-    //                 { fieldLabel: 'Primary DNS'.t(),   bind: { value: '{wan.v4Dns1}' } },
-    //                 { fieldLabel: 'Secondary DNS'.t(), bind: { value: '{wan.v4Dns2}' } }
-    //             ]
-    //         }]
-    //     }]
-    // }, {
-    //     xtype: 'container',
-    //     layout: {
-    //         type: 'hbox',
-    //         align: 'middle',
-    //         pack: 'center'
-    //     },
-    //     defaults: {
-    //         xtype: 'button',
-    //         margin: '0 5'
-    //     },
-    //     items: [{
-    //         text: 'Renew DHCP'.t(),
-    //         iconCls: 'fa fa-refresh',
-    //         handler: 'renewDhcp', // renew DHCP and refresh status
-    //         bind: {
-    //             hidden: '{wan.v4ConfigType !== "AUTO"}'
-    //         }
-    //     }, {
-    //         text: 'Test Connectivity'.t(),
-    //         iconCls: 'fa fa-compress',
-    //         handler: 'save', // save is called because connectivity test is done inside of it
-    //         bind: {
-    //             hidden: '{wan.v4ConfigType !== "AUTO" && wan.v4ConfigType !== "STATIC" }'
-    //         }
-    //     }]
-    // }],
-
     listeners: {
-        save: 'onSave'
+        activate: 'getInterface',
+        save: 'onSave',
     },
 
     controller: {
+
+        getInterface: function () {
+            var me = this, vm = this.getViewModel(),
+                interfaces = vm.get('networkSettings.interfaces.list'),
+                wanStatus,
+                // first WAN is external interface
+                wan = Ext.Array.findBy(interfaces, function (intf) {
+                    return (intf.isWan && intf.configType !== 'DISABLED');
+                });
+
+            // wan = null;
+
+            if (wan) {
+                try {
+                    wanStatus = rpc.networkManager.getInterfaceStatus(wan.interfaceId);
+                    Ext.applyIf(wan, wanStatus); // apply status on wan
+                } catch (e) {
+                    Util.handleException('Unable to fetch WAN interface status!'.t());
+                }
+            } else {
+                Ext.Msg.show({
+                    title: 'Warning!',
+                    message: 'No external interfaces found. Do you want to continue the setup?',
+                    buttons: Ext.Msg.YESNO,
+                    icon: Ext.Msg.QUESTION,
+                    fn: function (btn) {
+                        if (btn === 'yes') {
+                            me.getView().up('window').down('#nextBtn').click();
+                        } else {
+                            // if no is pressed
+                        }
+                    }
+                });
+            }
+            vm.set('wan', wan);
+        },
+
+
+        testConnectivity: function (testType, cb) {
+            Ung.app.loading('Testing Connectivity...'.t());
+            rpc.connectivityTester.getStatus(function (result, ex) {
+                Ung.app.loading(false);
+                if (ex) {
+                    Ext.MessageBox.show({
+                        title: 'Network Settings'.t(),
+                        msg: 'Unable to complete connectivity test, please try again.'.t(),
+                        width: 300,
+                        buttons: Ext.MessageBox.OK,
+                        icon: Ext.MessageBox.INFO
+                    });
+                    return;
+                }
+
+                // build test fail message if any
+                var message = null;
+                if (result.tcpWorking === false  && result.dnsWorking === false) {
+                    message = 'Warning! Internet tests and DNS tests failed.'.t();
+                } else if (result.tcpWorking === false) {
+                    message = 'Warning! DNS tests succeeded, but Internet tests failed.'.t();
+                } else if (result.dnsWorking === false) {
+                    message = 'Warning! Internet tests succeeded, but DNS tests failed.'.t();
+                } else {
+                    message = null;
+                }
+
+                if (testType === 'manual') {
+                    // on manual test just show the message
+                    Ext.MessageBox.show({
+                        title: 'Internet Status'.t(),
+                        msg: message || 'Success!'.t(),
+                        width: 300,
+                        buttons: Ext.MessageBox.OK,
+                        icon: Ext.MessageBox.INFO
+                    });
+                } else {
+                    // on next step just move forward if no failures
+                    if (!message) { cb(); return; }
+
+                    // otherwise show a warning message
+                    var warningText = message + '<br/><br/>' + 'It is recommended to configure valid internet settings before continuing. Try again?'.t();
+                    Ext.Msg.confirm('Warning:'.t(), warningText, function (btn, text) {
+                        if (btn === 'yes') { return; }
+                        cb();
+                    });
+                }
+            });
+
+        },
+
         onSave: function (cb) {
-            cb();
+            var me = this, vm = this.getViewModel(),
+                wan = vm.get('wan');
+
+            if (!wan) { cb(); return; }
+
+            // validate any current form first
+            if (!me.getView().isValid()) { return; }
+
+            if (wan.v4ConfigType === 'AUTO' || wan.v4ConfigType === 'PPPOE') {
+                wan.v4StaticAddress = null;
+                wan.v4StaticPrefix = null;
+                wan.v4StaticGateway = null;
+                wan.v4StaticDns1 = null;
+                wan.v4StaticDns2 = null;
+            }
+            if (wan.v4ConfigType === 'STATIC') {
+                wan.v4NatEgressTraffic = true;
+            }
+            if (wan.v4ConfigType === 'PPPOE') {
+                wan.v4NatEgressTraffic = true;
+                wan.v4PPPoEUsePeerDns = true;
+            }
+
+            // save
+            Ung.app.loading('Saving ...'.t());
+            rpc.networkManager.setNetworkSettings(function (response, ex) {
+                if (ex) { Util.handleException(ex); return; }
+                me.testConnectivity(Ext.isFunction(cb) ? 'auto' : 'manual', function () {
+                    cb();
+                });
+            }, vm.get('networkSettings'));
         }
     }
 

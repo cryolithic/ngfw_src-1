@@ -6,18 +6,27 @@ Ext.define('Ung.Setup.Wireless', {
     description: 'Configure Wireless Settings'.t(),
 
     layout: {
-        type: 'vbox',
-        align: 'stretch'
+        type: 'center'
     },
     items: [{
         xtype: 'container',
+        width: 200,
+        padding: '0 0 100 0',
+        layout: {
+            type: 'vbox',
+            align: 'stretch'
+        },
         defaults: {
-            labelAlign: 'right',
-            labelWidth: 150,
+            labelAlign: 'top',
             msgTarget: 'side',
             validationEvent: 'blur',
         },
         items: [{
+            xtype: 'component',
+            cls: 'sectionheader',
+            // margin: '30 0 0 0',
+            html: 'Settings'.t()
+        }, {
             xtype: 'textfield',
             fieldLabel: 'Network Name (SSID)'.t(),
             width: 350,

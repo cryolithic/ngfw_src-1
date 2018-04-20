@@ -125,12 +125,12 @@ Ext.define('Ung.Setup.Wizard', {
 
             //     var stepName = layout.getActiveItem().getXType();
 
-            //     if (!rpc.wizardSettings.wizardComplete && stepName !== 'Welcome') {
-            //         rpc.wizardSettings.completedStep = layout.getActiveItem().getXType();
-            //         rpc.jsonrpc.UvmContext.setWizardSettings(function (result, ex) {
-            //             if (ex) { Util.handleException(ex); return; }
-            //         }, rpc.wizardSettings);
-            //     }
+            //     // if (!rpc.wizardSettings.wizardComplete && stepName !== 'Welcome') {
+            //     //     rpc.wizardSettings.completedStep = layout.getActiveItem().getXType();
+            //     //     rpc.jsonrpc.UvmContext.setWizardSettings(function (result, ex) {
+            //     //         if (ex) { Util.handleException(ex); return; }
+            //     //     }, rpc.wizardSettings);
+            //     // }
 
             //     // move to next step
             //     layout.next();
