@@ -14,6 +14,20 @@
     </init-param>
   </servlet>
 
+  <servlet>
+    <servlet-name>NewSetupServlet</servlet-name>
+    <servlet-class>com.untangle.uvm.setup.servlet.SetupServlet</servlet-class>
+    <init-param>
+      <param-name>buildStamp</param-name>
+      <param-value>@BUILD_STAMP@</param-value>
+    </init-param>
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>NewSetupServlet</servlet-name>
+    <url-pattern>/newsetup.do</url-pattern>
+  </servlet-mapping>
+
   <servlet-mapping>
     <servlet-name>SetupServlet</servlet-name>
     <url-pattern>/index.do</url-pattern>
