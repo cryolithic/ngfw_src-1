@@ -555,7 +555,9 @@ Ext.define('Ung.Setup.Interfaces', {
             ptype: 'cellediting',
             clicksToEdit: 1
         },
-
+        store: {
+            data: []
+        },
 
         viewConfig: {
             plugins: {
@@ -1885,6 +1887,8 @@ Ext.define('Ung.Setup.MainController', {
 Ext.define('Ung.Setup', {
     extend: 'Ext.app.Application',
     mainView: 'Ung.Setup.Main',
+
+    namespace: 'Ung',
 
     launch: function () {
         var cards = [], steps = [], wizard = this.getMainView().down('#wizard');

@@ -1,8 +1,8 @@
 Ext.define('Ung.Setup.Wireless', {
-    extend: 'Ext.panel.Panel',
+    extend: 'Ext.form.Panel',
     alias: 'widget.Wireless',
 
-    title: 'Wireless'.t(),
+    title: 'Wireless Settings'.t(),
     description: 'Configure Wireless Settings'.t(),
 
     layout: {
@@ -20,6 +20,10 @@ Ext.define('Ung.Setup.Wireless', {
             labelAlign: 'top',
             msgTarget: 'side',
             validationEvent: 'blur',
+        },
+        hidden: true,
+        bind: {
+            hidden: '{!wirelessSettings}'
         },
         items: [{
             xtype: 'component',
@@ -52,8 +56,10 @@ Ext.define('Ung.Setup.Wireless', {
             maxLength: 63,
             minLength: 8,
             maskRe: /[a-zA-Z0-9~@#%_=,\!\-\/\?\(\)\[\]\\\^\$\+\*\.\|]/,
+            disabled: true,
             bind: {
-                value: '{wirelessSettings.password}'
+                value: '{wirelessSettings.password}',
+                disabled: '{wirelessSettings.encryption === "NONE"}'
             },
             validator: function (val) {
                 if (!val || val.length < 8) {
@@ -63,17 +69,113 @@ Ext.define('Ung.Setup.Wireless', {
                     return 'You must choose a new and different wireless password.'.t();
                 }
                 return true;
+            },
+            listeners: {
+                disable: function (el) {
+                    el.setValue('');
+                }
             }
         }]
     }],
 
     listeners: {
+        activate: 'getSettings',
         save: 'onSave'
     },
 
     controller: {
+
+        getSettings: function () {
+            var me = this, vm = me.getViewModel(),
+                interfaces = vm.get('networkSettings.interfaces.list'),
+                // first wireless interface
+                wireless = Ext.Array.findBy(interfaces, function (intf) {
+                    return intf.isWirelessInterface;
+                });
+
+            if (!wireless) {
+                Ext.Msg.show({
+                    title: 'Warning!',
+                    message: 'No wireless interfaces found. Do you want to continue the setup?',
+                    buttons: Ext.Msg.YESNO,
+                    icon: Ext.Msg.QUESTION,
+                    fn: function (btn) {
+                        if (btn === 'yes') {
+                            me.getView().up('window').down('#nextBtn').click();
+                        } else {
+                            // if no is pressed
+                        }
+                    }
+                });
+                return;
+            }
+
+            Ung.app.loading('Loading Wireless Settings ...');
+            Ext.Deferred.sequence([
+                me.getSsid,
+                me.getEncryption,
+                me.getPassword
+            ]).then(function (result) {
+                vm.set('wirelessSettings', {
+                    ssid: result[0] || '',
+                    encryption: result[1] || 'NONE',
+                    password: (!result[2] || result[2] === '12345678') ? '' : result[2]
+                });
+
+                me.initialSettings = Ext.clone(vm.get('wirelessSettings'));
+
+            }, function (ex) {
+                Util.handleException(ex);
+            }).always(function(){
+                Ung.app.loading(false);
+            });
+        },
+
+        getSsid: function () {
+            var deferred = new Ext.Deferred();
+            rpc.networkManager.getWirelessSsid(function (result, ex) {
+                if (ex) { deferred.reject(ex); }
+                deferred.resolve(result);
+            });
+            return deferred.promise;
+        },
+
+        getEncryption: function () {
+            var deferred = new Ext.Deferred();
+            rpc.networkManager.getWirelessEncryption(function (result, ex) {
+                if (ex) { deferred.reject(ex); }
+                deferred.resolve(result);
+            });
+            return deferred.promise;
+        },
+
+        getPassword: function () {
+            var deferred = new Ext.Deferred();
+            rpc.networkManager.getWirelessPassword(function (result, ex) {
+                if (ex) { deferred.reject(ex); }
+                deferred.resolve(result);
+            });
+            return deferred.promise;
+        },
+
         onSave: function (cb) {
-            cb();
+            var me = this, form = me.getView(), vm = me.getViewModel();
+
+            if (!vm.get('wirelessSettings')) { cb(); return; }
+
+            // if invalid form or no changes
+            if (!form.isValid() || Ext.Object.equals(me.initialSettings, vm.get('wirelessSettings'))) {
+                return;
+            }
+
+            Ung.app.loading('Saving Settings'.t());
+            rpc.networkManager.setWirelessSettings(function (result, ex) {
+                Ung.app.loading(false);
+                if (ex) { Util.handleException(ex); return; }
+                cb();
+            }, vm.get('wirelessSettings.ssid'),
+            vm.get('wirelessSettings.encryption'),
+            vm.get('wirelessSettings.password'));
         }
     }
 });

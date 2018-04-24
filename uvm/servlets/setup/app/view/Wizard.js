@@ -65,20 +65,31 @@ Ext.define('Ung.Setup.Wizard', {
         xtype: 'toolbar',
         dock: 'bottom',
         background: '#FFF',
+        layout: {
+            type: 'hbox',
+            align: 'stretch'
+        },
         defaults: {
             scale: 'medium',
-            hidden: true,
             focusable: false
         },
         items: [{
             itemId: 'prevBtn',
             iconCls: 'fa fa-chevron-circle-left fa-lg',
+            hidden: true,
             handler: 'onPrev'
+        }, {
+            xtype: 'component',
+            cls: 'steps',
+            width: 200,
+            // padding: 12,
+            html: '<i></i><i></i><i></i><i></i>',
         }, '->', {
             itemId: 'nextBtn',
             iconCls: 'fa fa-chevron-circle-right fa-lg',
             iconAlign: 'right',
             handler: 'onNext',
+            hidden: true,
             disabled: true,
             bind: {
                 disabled: '{activeStep === "Interfaces" && intfListLength < 2 && !forcecontinue.checked}'
@@ -114,27 +125,17 @@ Ext.define('Ung.Setup.Wizard', {
         onNext: function () {
             var me = this, layout = me.getView().getLayout();
 
-
             layout.getActiveItem().fireEvent('save', function () {
+                if (!rpc.wizardSettings.wizardComplete) {
+                    rpc.wizardSettings.completedStep = layout.getActiveItem().getXType();
+                    rpc.jsonrpc.UvmContext.setWizardSettings(function (result, ex) {
+                        if (ex) { Util.handleException(ex); return; }
+                    }, rpc.wizardSettings);
+                }
+                // move to next step
                 layout.next();
                 me.updateNav();
             });
-
-            // layout.getActiveItem().getController().save(function () {
-            //     // update completed step
-
-            //     var stepName = layout.getActiveItem().getXType();
-
-            //     // if (!rpc.wizardSettings.wizardComplete && stepName !== 'Welcome') {
-            //     //     rpc.wizardSettings.completedStep = layout.getActiveItem().getXType();
-            //     //     rpc.jsonrpc.UvmContext.setWizardSettings(function (result, ex) {
-            //     //         if (ex) { Util.handleException(ex); return; }
-            //     //     }, rpc.wizardSettings);
-            //     // }
-
-            //     // move to next step
-            //     layout.next();
-            // });
         },
 
         updateNav: function () {

@@ -17,15 +17,15 @@ public class WizardSettings implements Serializable, JSONString
     private boolean wizardComplete = false;
     private String completedStep;
     private String[] steps = new String[] {
-        "Welcome",
         "ServerSettings",
         "Interfaces",
         "Internet",
         "InternalNetwork",
+        "Wireless",
         "AutoUpgrades",
         "Complete"
     };
-    
+
     public WizardSettings() { }
 
     public String toJSONString()
@@ -36,10 +36,10 @@ public class WizardSettings implements Serializable, JSONString
 
     public String[] getSteps() { return steps; }
     public void setSteps( String[] newValue ) { this.steps = newValue; }
-    
+
     public boolean getWizardComplete() { return wizardComplete; }
     public void setWizardComplete( boolean newValue ) { this.wizardComplete = newValue; }
-    
+
     public String getCompletedStep() { return this.completedStep; }
     public void setCompletedStep( String newValue ) { this.completedStep = newValue; }
 

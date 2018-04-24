@@ -2,7 +2,7 @@ Ext.define('Ung.Setup.Complete', {
     extend: 'Ext.panel.Panel',
     alias: 'widget.Complete',
 
-    title: 'Complete'.t(),
+    title: 'Finish'.t(),
     description: 'Complete'.t(),
 
     layout: 'center',
@@ -15,11 +15,12 @@ Ext.define('Ung.Setup.Complete', {
         items: [{
             xtype: 'component',
             style: { textAlign: 'center' },
-            html: Ext.String.format('<b>The {0} Server is now configured.</b><br/><br/>You are now ready to configure the applications.'.t(), rpc.oemName)
+            html: '<h1 style="margin: 0;">' + Ext.String.format('The {0} Server is now configured.', rpc.oemName) + '</h1><br/><br/>You are now ready to configure the applications.'.t()
         }, {
             xtype: 'button',
             margin: '30 0 0 0',
-            text: 'Done'.t(),
+            scale: 'medium',
+            text: 'Go to Dashboard'.t(),
             iconCls: 'fa fa-check',
             handler: function () {
                 Ext.MessageBox.wait('Loading User Interface...'.t(), 'Please Wait'.t());

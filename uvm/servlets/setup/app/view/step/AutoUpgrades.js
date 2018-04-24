@@ -74,7 +74,7 @@ Ext.define('Ung.Setup.AutoUpgrades', {
                 vm.set('systemSettings.supportEnabled', true);
             }
 
-            Ung.app.loading('Saving Settings...'.t());
+            Ung.app.loading('Saving Settings ...'.t());
             rpc.systemManager.setSettings(function (result, ex) {
                 Ung.app.loading(false);
                 if (ex) { Util.handleException(ex); return; }

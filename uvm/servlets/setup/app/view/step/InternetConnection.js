@@ -11,6 +11,12 @@ Ext.define('Ung.Setup.InternetConnection', {
         pack: 'center'
     },
 
+    // viewModel: {
+    //     data: {
+    //         wan: null
+    //     }
+    // },
+
     items: [{
         xtype: 'container',
         margin: '50 20 0 0',
@@ -46,9 +52,10 @@ Ext.define('Ung.Setup.InternetConnection', {
             }
         }, {
             xtype: 'button',
+            margin: 10,
             text: 'Renew DHCP'.t(),
             iconCls: 'fa fa-refresh',
-            // handler: 'renewDhcp', // renew DHCP and refresh status
+            handler: 'renewDhcp', // renew DHCP and refresh status
             bind: {
                 hidden: '{wan.v4ConfigType !== "AUTO"}'
             }
@@ -79,7 +86,7 @@ Ext.define('Ung.Setup.InternetConnection', {
             items: [{
                 fieldLabel: 'IP Address'.t(),
                 allowBlank: false,
-                bind: { value: '{wan.v4StaticAddress}', emptyText: '{wan.v4Address}' }
+                bind: { value: '{wan.v4StaticAddress}' }
             }, {
                 fieldLabel: 'Netmask'.t(),
                 xtype: 'combo',
@@ -87,36 +94,40 @@ Ext.define('Ung.Setup.InternetConnection', {
                 queryMode: 'local',
                 triggerAction: 'all',
                 value: 24,
-                bind: { value: '{wan.v4StaticPrefix}', emptyText: '/{wan.v4PrefixLength} - {wan.v4Netmask}' },
+                bind: { value: '{wan.v4StaticPrefix}' },
                 editable: false,
                 allowBlank: false
             }, {
                 fieldLabel: 'Gateway'.t(),
                 allowBlank: false,
-                bind: { value: '{wan.v4StaticGateway}', emptyText: '{wan.v4Gateway}' }
+                bind: { value: '{wan.v4StaticGateway}' }
             }, {
                 fieldLabel: 'Primary DNS'.t(),
                 allowBlank: false,
-                bind: { value: '{wan.v4StaticDns1}', emptyText: '{wan.v4Dns1}' }
+                bind: { value: '{wan.v4StaticDns1}' }
             }, {
                 xtype: 'textfield',
                 vtype: 'ipAddress',
                 name: 'dns2',
-                fieldLabel: 'Secondary DNS'.t(),
+                fieldLabel: 'Secondary DNS (optional)'.t(),
                 allowBlank: true,
-                bind: { value: '{wan.v4StaticDns2}', emptyText: '{wan.v4Dns2}' }
+                bind: { value: '{wan.v4StaticDns2}' }
             }]
         }, {
             xtype: 'container',
+            width: 200,
+            margin: '0 10',
+            layout: {
+                type: 'vbox',
+                align: 'stretch'
+            },
             hidden: true,
             bind: {
                 hidden: '{wan.v4ConfigType !== "PPPOE"}'
             },
             defaults: {
                 xtype: 'textfield',
-                labelWidth: 150,
-                width: 350,
-                labelAlign: 'right'
+                labelAlign: 'top'
             },
             items: [{
                 fieldLabel: 'Username'.t(),
@@ -130,7 +141,7 @@ Ext.define('Ung.Setup.InternetConnection', {
     }, {
         xtype: 'container',
         margin: '50 20 0 0',
-        width: 200,
+        width: 300,
         hidden: true,
         bind: {
             hidden: '{!wan}'
@@ -142,8 +153,8 @@ Ext.define('Ung.Setup.InternetConnection', {
         defaults: {
             xtype: 'displayfield',
             // labelWidth: 170,
-            labelAlign: 'right',
-            margin: 0
+            // labelAlign: 'right',
+            // margin: 0
         },
         items: [{
             xtype: 'component',
@@ -155,7 +166,7 @@ Ext.define('Ung.Setup.InternetConnection', {
             bind: { value: '{wan.v4Address}' }
         }, {
             fieldLabel: 'Netmask'.t(),
-            bind: { value: '{wan.v4Netmask}' }
+            bind: { value: '/{wan.v4PrefixLength} - {wan.v4Netmask}' }
         }, {
             fieldLabel: 'Gateway'.t(),
             bind: { value: '{wan.v4Gateway}' }
@@ -168,58 +179,63 @@ Ext.define('Ung.Setup.InternetConnection', {
         }, {
             xtype: 'button',
             text: 'Test Connectivity'.t(),
-            iconCls: 'fa fa-compress',
+            margin: '10 0 0 0',
+            iconCls: 'fa fa-globe',
             handler: 'onSave', // save is called because connectivity test is done inside of it
-            bind: {
-                hidden: '{wan.v4ConfigType !== "AUTO" && wan.v4ConfigType !== "STATIC" }'
-            }
+            // bind: {
+            //     hidden: '{wan.v4ConfigType !== "AUTO" && wan.v4ConfigType !== "STATIC" }'
+            // }
         }]
     }],
 
 
     listeners: {
-        activate: 'getInterface',
+        activate: 'getSettings',
         save: 'onSave',
     },
 
     controller: {
 
-        getInterface: function () {
-            var me = this, vm = this.getViewModel(),
-                interfaces = vm.get('networkSettings.interfaces.list'),
-                wanStatus,
-                // first WAN is external interface
-                wan = Ext.Array.findBy(interfaces, function (intf) {
+        getSettings: function () {
+            var me = this, vm = me.getViewModel(),
+                firstWan = null;
+
+            rpc.networkManager.getNetworkSettings(function (settings, ex) {
+                if (ex) { Util.handleException('Unable to fetch Network Settings.'.t()); return; }
+                vm.set('networkSettings', settings);
+
+                // get the first wan
+                firstWan = Ext.Array.findBy(settings.interfaces.list, function (intf) {
                     return (intf.isWan && intf.configType !== 'DISABLED');
                 });
+                vm.set('wan', firstWan);
+                if (!firstWan) { return; }
 
-            // wan = null;
-
-            if (wan) {
-                try {
-                    wanStatus = rpc.networkManager.getInterfaceStatus(wan.interfaceId);
-                    Ext.applyIf(wan, wanStatus); // apply status on wan
-                } catch (e) {
-                    Util.handleException('Unable to fetch WAN interface status!'.t());
-                }
-            } else {
-                Ext.Msg.show({
-                    title: 'Warning!',
-                    message: 'No external interfaces found. Do you want to continue the setup?',
-                    buttons: Ext.Msg.YESNO,
-                    icon: Ext.Msg.QUESTION,
-                    fn: function (btn) {
-                        if (btn === 'yes') {
-                            me.getView().up('window').down('#nextBtn').click();
-                        } else {
-                            // if no is pressed
-                        }
-                    }
-                });
-            }
-            vm.set('wan', wan);
+                rpc.networkManager.getInterfaceStatus(function (status, e) {
+                    if (e) { Util.handleException('Unable to get WAN status.'.t()); return; }
+                    Ext.applyIf(firstWan, status);
+                    vm.set('wan', firstWan);
+                }, firstWan.interfaceId);
+            });
         },
 
+        renewDhcp: function () {
+            var me = this, vm = me.getViewModel(),
+                wan = vm.get('wan');
+            // save settings before
+            Ung.app.loading('Saving settings ...'.t());
+            rpc.networkManager.setNetworkSettings(function (response, ex) {
+                if (ex) { Util.handleException('Unable to set Network Settings.'.t()); return; }
+                // then force the DHCP lease renew just in case
+                // setNetworkSettings is not guaranteed to restart networking
+                Ung.app.loading('Renewing DHCP Lease...'.t());
+                rpc.networkManager.renewDhcpLease(function (r, e) {
+                    if (e) { Util.handleException(e); return; }
+                    Ung.app.loading(false);
+                    me.getSettings();
+                }, wan.interfaceId);
+            }, vm.get('networkSettings'));
+        },
 
         testConnectivity: function (testType, cb) {
             Ung.app.loading('Testing Connectivity...'.t());
@@ -297,7 +313,7 @@ Ext.define('Ung.Setup.InternetConnection', {
             }
 
             // save
-            Ung.app.loading('Saving ...'.t());
+            Ung.app.loading('Saving settings ...'.t());
             rpc.networkManager.setNetworkSettings(function (response, ex) {
                 if (ex) { Util.handleException(ex); return; }
                 me.testConnectivity(Ext.isFunction(cb) ? 'auto' : 'manual', function () {

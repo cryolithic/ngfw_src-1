@@ -104,30 +104,29 @@ Ext.define('Ung.Setup.NetworkCards', {
             dataIndex: 'connected',
             sortable: false,
             flex: 1,
-            renderer: Ext.bind(function (value, metadata, record, rowIndex, colIndex, store, view) {
-                var connected = record.get('connected');
-                var mbit = record.get('mbit');
-                var duplex = record.get('duplex');
-                var vendor = record.get('vendor');
-
-                var connectedStr = (connected == 'CONNECTED') ? 'connected'.t() : (connected == 'DISCONNECTED') ? 'disconnected'.t() : 'unknown'.t();
-                var duplexStr = (duplex == 'FULL_DUPLEX') ? 'full-duplex'.t() : (duplex == 'HALF_DUPLEX') ? 'half-duplex'.t() : 'unknown'.t();
+            renderer: function (value, metadata, record) {
+                var connected = record.get('connected'),
+                    mbit = record.get('mbit'),
+                    duplex = record.get('duplex'),
+                    vendor = record.get('vendor'),
+                    connectedStr = (connected == 'CONNECTED') ? 'connected'.t() : (connected == 'DISCONNECTED') ? 'disconnected'.t() : 'unknown'.t(),
+                    duplexStr = (duplex == 'FULL_DUPLEX') ? 'full-duplex'.t() : (duplex == 'HALF_DUPLEX') ? 'half-duplex'.t() : 'unknown'.t();
                 return connectedStr + ' ' + mbit + ' ' + duplexStr + ' ' + vendor;
-            }, this)
+            }
         }, {
             header: 'MAC Address'.t(),
             dataIndex: 'macAddress',
             sortable: false,
-            width: 120,
-            renderer: function (value, metadata, record, rowIndex, colIndex, store, view) {
-                var text = '';
-                if (value && value.length > 0) {
-                    // Build the link for the mac address
-                    text = '<a target="_blank" href="http://standards.ieee.org/cgi-bin/ouisearch?' +
-                        value.substring(0, 8).replace(/:/g, '') + '">' + value + '</a>';
-                }
-                return text;
-            }
+            width: 120
+            // renderer: function (value, metadata, record, rowIndex, colIndex, store, view) {
+            //     var text = '';
+            //     if (value && value.length > 0) {
+            //         // Build the link for the mac address
+            //         text = '<a target="_blank" href="http://standards.ieee.org/cgi-bin/ouisearch?' +
+            //             value.substring(0, 8).replace(/:/g, '') + '">' + value + '</a>';
+            //     }
+            //     return text;
+            // }
         }]
     }, {
         xtype: 'container',
@@ -278,7 +277,7 @@ Ext.define('Ung.Setup.NetworkCards', {
         },
 
         // use the same mechanism as for drop downs
-        onBeforeDrop: function (node, data, overModel, dropPosition, dropHandlers, eOpts) {
+        onBeforeDrop: function (node, data, overModel, dropPosition, dropHandlers) {
             dropHandlers.wait = true;
 
             var sourceRecord = data.records[0],
@@ -364,26 +363,24 @@ Ext.define('Ung.Setup.NetworkCards', {
         },
 
         onSave: function (cb) {
-
-            console.log('on save');
-
-            var me = this, vm = me.getViewModel(), grid = me.getView().down('grid'), interfacesMap = {};
+            var me = this, vm = me.getViewModel(),
+                grid = me.getView().down('grid'), interfacesMap = {};
 
             // if no changes/remapping skip this step
-            // if (grid.getStore().getModifiedRecords().length === 0) { cb(); return; }
+            if (grid.getStore().getModifiedRecords().length === 0) { cb(); return; }
 
             grid.getStore().each(function (currentRow) {
                 interfacesMap[currentRow.get('interfaceId')] = currentRow.get('physicalDev');
             });
 
             // apply new physicalDev for each interface from initial Network Settings
-            Ext.Array.each(vm.get('networkSettings.interfaces.list'), function (intf, idx) {
+            Ext.Array.each(vm.get('networkSettings.interfaces.list'), function (intf) {
                 if (!intf.isVlanInterface) {
                     intf.physicalDev = interfacesMap[intf.interfaceId];
                 }
             });
 
-            Ung.app.loading('Saving Settings'.t());
+            Ung.app.loading('Saving Settings ...'.t());
             rpc.networkManager.setNetworkSettings(function (result, ex) {
                 Ung.app.loading(false);
                 if (ex) { Util.handleException(ex); return; }
