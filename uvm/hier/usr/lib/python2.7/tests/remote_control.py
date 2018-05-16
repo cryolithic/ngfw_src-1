@@ -24,7 +24,7 @@ __orig_stdout = None
 __orig_stderr = None
 
 # set the key file permissions correctly just in case
-os.system("chmod 600 %s" % hostKeyFile)
+subprocess.call("chmod 600 %s" % hostKeyFile, shell=True)
 
 netsettings = uvmContext.networkManager().getNetworkSettings()
 for interface in netsettings['interfaces']['list']:
@@ -60,10 +60,10 @@ def run_command( command, host=None, stdout=False, nowait=False):
     try:
         sshCommand = "ssh %s -i %s %s@%s \"%s\"" % ( sshOptions, hostKeyFile, hostUsername, host, command )
         # if verbosity > 1:
-        #   print "\nSSH cmd : %s" % sshCommand
+        #   print("\nSSH cmd : %s" % sshCommand)
         if verbosity > 0:
-            print "\nClient  : %s" % host
-            print "Command : %s" % command
+            print("\nClient  : %s" % host)
+            print("Command : %s" % command)
             sys.stdout.flush()
         if (nowait):
             sshCommand += " & " # don't wait for process to complete
@@ -79,8 +79,8 @@ def run_command( command, host=None, stdout=False, nowait=False):
 
         result = proc.wait()
         output = proc.communicate()[0].strip()
-        print "Result  : %i"  % result
-        print "Output  : %s"  % output
+        print("Result  : %i"  % result)
+        print("Output  : %s"  % output)
         sys.stdout.flush()
         if stdout:
             return output

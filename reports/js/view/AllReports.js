@@ -42,18 +42,15 @@ Ext.define('Ung.apps.reports.view.AllReports', {
         dataIndex: 'displayOrder'
     }, {
         header: 'View'.t(),
+        menuText: 'View'.t(),
         xtype: 'actioncolumn',
         width: 70,
         align: 'center',
         iconCls: 'fa fa-external-link-square',
         isDisabled: 'isDisabledCategory',
         handler: function (view, rowIndex, colIndex, item, e, record) {
-            Ung.app.redirectTo('#reports/' + record.get('url'));
+            Ung.app.redirectTo('#reports?' + record.get('url'));
         }
-        // defaultRenderer: Ext.bind(this.viewRenderer, this),
-        // handler: Ext.bind(function(view, rowIndex, colIndex, item, e, record) {
-        //     this.viewReport(Ext.clone(record.getData()));
-        // }, this)
     }]
 
 });

@@ -101,33 +101,12 @@ Ext.define('Ung.config.network.Interface', {
             }, {
                 // is WAN
                 xtype: 'checkbox',
+                itemId: 'isWanCk',
                 fieldLabel: 'Is WAN Interface'.t(),
                 hidden: true,
-                initialized: false,
                 bind: {
                     value: '{intf.isWan}',
                     hidden: '{!isAddressed}'
-                },
-                listeners: {
-                    // dirty change will fire whenever the checkbox is checked/unchecked
-                    dirtychange: function (ck) {
-                        var win = ck.up('window');
-                        if (!ck.getValue()) {
-                            // not WAN
-                            win.down('#ipv4ConfigType').setValue('STATIC');
-                            win.down('#ipv6ConfigType').setValue('STATIC');
-                        } else {
-                            // WAN
-                            // automatically turn on NAT egress if its a WAN
-                            // but only if manually changed, not the first time this is called
-                            // during render
-                            if (ck.initialized) {
-                                win.down('#v4NatEgressTraffic').setValue(true);
-                            }
-                            win.down('tabpanel').setActiveItem(0);
-                        }
-                        ck.initialized = true; // mark the first call
-                    }
                 }
             }, {
                 xtype: 'combo',
@@ -772,6 +751,18 @@ Ext.define('Ung.config.network.Interface', {
                 maskRe: /[a-zA-Z0-9\-_=. ]/
                 //maskRe: /[a-zA-Z0-9~@%_=,<>\!\-\/\?\[\]\\\^\$\+\*\.\|]/
             }, {
+                // mode
+                xtype: 'combo',
+                fieldLabel: 'Mode'.t(),
+                value: 'AP',
+                bind: '{intf.wirelessMode}',
+                editable: false,
+                store: [
+                    ['AP', 'AP'.t()],
+                    ['CLIENT', 'Client'.t()],
+                ],
+                queryMode: 'local'
+            }, {
                 // encryption
                 xtype: 'combo',
                 fieldLabel: 'Encryption'.t(),
@@ -803,7 +794,8 @@ Ext.define('Ung.config.network.Interface', {
                 xtype: 'combo',
                 bind: {
                     value: '{intf.wirelessChannel}',
-                    store: '{wirelessChannelsList}'
+                    store: '{wirelessChannelsList}',
+                    hidden: '{intf.wirelessMode === "CLIENT"}'
                 },
                 fieldLabel: 'Channel'.t(),
                 editable: false,

@@ -6,11 +6,6 @@ Ext.define('Ung.view.reports.EntryModel', {
         eEntry: null, // editable entry, copy of the selected entry
         reportData: [],
         _currentData: [],
-        globalConditions: [],
-        autoRefresh: false,
-
-        f_startdate: null,
-        f_enddate: null,
 
         tableColumns: [],
 
@@ -52,9 +47,6 @@ Ext.define('Ung.view.reports.EntryModel', {
                 return tableConfig.comboItems;
             }
 
-            // for EVENT_LIST setup the columns
-            defaultColumns = Ext.clone(get('eEntry.defaultColumns'));
-
             // initially set none as default
             Ext.Array.each(tableConfig.comboItems, function (item) {
                 item.isDefault = false;
@@ -65,10 +57,8 @@ Ext.define('Ung.view.reports.EntryModel', {
                     return item.value === defaultColumn;
                 });
                 // remove default columns if not in TableConfig
-                if (!col) {
-                    // vm.set('eEntry.defaultColumns', Ext.Array.remove(defaultColumns, defaultColumn));
-                } else {
-                    // otherwise set it as default
+                if (col) {
+                    // Set it as default
                     col.isDefault = true;
                 }
             });

@@ -91,7 +91,7 @@ class WebFilterBaseTests(unittest2.TestCase):
         if ((expected == None) or (("monitor" in app_name) and (expected == "blockpage"))):
             result = remote_control.run_command("wget -q -O /dev/null -4 -t 2 --timeout=5 " + extra_options + " " +  url)
         else:
-            print "wget -4 -t 2 -q -O - " + extra_options + url + " 2>&1 | grep -q " + expected
+            print("wget -4 -t 2 -q -O - " + extra_options + url + " 2>&1 | grep -q " + expected)
             result = remote_control.run_command("wget -q -4 -t 2 -O - " + extra_options + " " + url + " 2>&1 | grep -q " + expected)
         return result
 
@@ -107,9 +107,9 @@ class WebFilterBaseTests(unittest2.TestCase):
             event_list = "Flagged Web Events"
         else:
             event_list = "All Web Events"
-        events = global_functions.get_events(app_display_name, event_list, None, 5)
+        events = global_functions.get_events(app_display_name, event_list, None, 10)
         assert(events != None)
-        found = global_functions.check_events( events.get('list'), 5,
+        found = global_functions.check_events( events.get('list'), 10,
                                             "host", host,
                                             "uri", uri,
                                             'web_filter_blocked', blocked,
@@ -120,7 +120,7 @@ class WebFilterBaseTests(unittest2.TestCase):
     def initialSetUp(self):
         if (uvmContext.appManager().isInstantiated(self.appName())):
             raise Exception('app %s already instantiated' % self.appName())
-        app = uvmContext.appManager().instantiate(self.appName(), defaultRackId)
+        app = uvmContext.appManager().instantiate(self.appName(), default_policy_id)
         appmetrics = uvmContext.metricManager().getMetrics(app.getAppSettings()["id"])
         self.app = app
 
@@ -332,12 +332,12 @@ class WebFilterBaseTests(unittest2.TestCase):
         self.pass_url_list_add("playboy.com")
         # this test URL should NOT be blocked (porn is blocked by default, but playboy.com now on pass list
         result1 = self.get_web_request_results(url="http://playboy.com/")
+        found1 = self.check_events("playboy.com", "/", False)
         result2 = self.get_web_request_results(url="http://www.playboy.com/")
+        found2 = self.check_events("www.playboy.com", "/", False)
         self.block_url_list_clear()
         assert (result1 == 0)
         assert (result2 == 0)
-        found1 = self.check_events("playboy.com", "/", False)
-        found2 = self.check_events("www.playboy.com", "/", False)
         assert( found1 )
         assert( found2 )
 

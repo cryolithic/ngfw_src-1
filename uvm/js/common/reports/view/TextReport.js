@@ -35,21 +35,19 @@ Ext.define('Ung.view.reports.TextReport', {
 
             // if it's a widget, than fetch data after the report entry is binded to it
             vm.bind('{entry}', function (entry) {
-                if (!entry || entry.get('type') !== 'TEXT') { return; }
-
-                // if rendered as widget, add to dashboard queue
-                // if (view.getWidget()) {
-                //     DashboardQueue.addFirst(view.getWidget());
-                // }
+                if(Util.isDestroyed(view)){
+                    return;
+                }
+                if (!entry || entry.get('type') !== 'TEXT') { 
+                    return; 
+                }
 
                 // if rendered in creating new widget dialog, fetch data
                 if (view.up('new-widget')) {
                     me.fetchData(true);
                 }
             });
-
-            // });
-
+            
             // needed on Create New
 
             // vm.bind('{eEntry.type}', function (type) {
@@ -78,8 +76,8 @@ Ext.define('Ung.view.reports.TextReport', {
                 endDate = null;
             } else {
                 // if it's a report, convert UI client start date to server date
-                startDate = Util.clientToServerDate(vm.get('f_startdate'));
-                endDate = Util.clientToServerDate(vm.get('f_enddate'));
+                startDate = Util.clientToServerDate(vm.get('time.range.since'));
+                endDate = Util.clientToServerDate(vm.get('time.range.until'));
             }
 
             me.getView().setLoading(true);
@@ -87,18 +85,24 @@ Ext.define('Ung.view.reports.TextReport', {
                 entry.getData(), // entry
                 startDate,
                 endDate,
-                vm.get('globalConditions'), -1) // sql filters
+                vm.get('query.conditions'), -1) // sql filters
                 .then(function(result) {
-                    if (!me.getView()) { return; }
+                    if(Util.isDestroyed(me)){
+                        return;
+                    }
                     me.getView().setLoading(false);
                     if (reps) { reps.getViewModel().set('fetching', false); }
                     me.processData(result.list);
 
                     if (cb) { cb(result.list); }
 
+                }, function () {
+                    if (cb) { cb(); }
                 })
                 .always(function() {
-                    if (!me.getView()) { return; }
+                    if(Util.isDestroyed(me)){
+                        return;
+                    }
                     me.getView().setLoading(false);
                     if (reps) { reps.getViewModel().set('fetching', false); }
                 });

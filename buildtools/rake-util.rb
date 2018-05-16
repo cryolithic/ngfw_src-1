@@ -162,6 +162,11 @@ class JavaCompiler
   JavahCommand = "#{ENV['JAVA_HOME']}/bin/javah"
   KeyToolCommand = "#{ENV['JAVA_HOME']}/bin/keytool"
 
+  @@JavadocCommand = "#{ENV['JAVA_HOME']}/bin/javadoc"
+  def self.JavadocCommand
+    @@JavadocCommand
+  end
+
   def JavaCompiler.compile(dstdir, classpath, fileList)
     ## ... could move the tempfile into an open block, it would be a
     ## little cleaner

@@ -4,34 +4,18 @@
 
 package com.untangle.app.tunnel_vpn;
 
-import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Random;
 import java.io.FilenameFilter;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 
 import org.apache.log4j.Logger;
-import org.json.JSONObject;
 
-import com.untangle.uvm.UvmContext;
 import com.untangle.uvm.UvmContextFactory;
-import com.untangle.uvm.NetworkManager;
 import com.untangle.uvm.ExecManagerResult;
-import com.untangle.uvm.app.IPMaskedAddress;
-import com.untangle.uvm.app.AppSettings;
-import com.untangle.uvm.util.I18nUtil;
-import com.untangle.uvm.network.NetworkSettings;
-import com.untangle.uvm.network.InterfaceSettings;
+import com.untangle.uvm.network.InterfaceStatus;
 
 /**
  * This class has all the logic for "managing" the tunnel configs. This includes
@@ -50,11 +34,20 @@ public class TunnelVpnManager
 
     private HashMap<Integer, Process> processMap = new HashMap<Integer, Process>();
 
+    /**
+     * Constructor
+     * 
+     * @param app
+     *        The tunnel vpn application
+     */
     protected TunnelVpnManager(TunnelVpnApp app)
     {
         this.app = app;
     }
 
+    /**
+     * Launches the openvpn process for each configured tunnel
+     */
     protected synchronized void launchProcesses()
     {
         logger.info("Launching OpenVPN processes...");
@@ -73,6 +66,9 @@ public class TunnelVpnManager
         }
     }
 
+    /**
+     * Kills the openvpn process for each active tunnel
+     */
     protected synchronized void killProcesses()
     {
         logger.info("Killing OpenVPN processes...");
@@ -80,6 +76,15 @@ public class TunnelVpnManager
             File dir = new File("/run/tunnelvpn/");
             File[] matchingFiles = dir.listFiles(new FilenameFilter()
             {
+                /**
+                 * accept method for FilenameFilter
+                 * 
+                 * @param dir
+                 *        The directory where the file is located
+                 * @param name
+                 *        The name of the file
+                 * @return True to accept, otherwise false
+                 */
                 public boolean accept(File dir, String name)
                 {
                     return name.startsWith("tunnel-") && name.endsWith("pid");
@@ -91,6 +96,7 @@ public class TunnelVpnManager
                     logger.info("Killing OpenVPN process: " + pid);
                     UvmContextFactory.context().execManager().execOutput("kill -INT " + pid);
                     UvmContextFactory.context().execManager().execOutput("kill -TERM " + pid);
+                    UvmContextFactory.context().execManager().execOutput("kill -KILL " + pid);
                     f.delete();
                 }
             }
@@ -99,12 +105,21 @@ public class TunnelVpnManager
         }
     }
 
+    /**
+     * Kills and restarts the process for each enabled tunnel
+     */
     protected synchronized void restartProcesses()
     {
         killProcesses();
         launchProcesses();
     }
 
+    /**
+     * Starts an openvpn instance for a tunnel
+     * 
+     * @param tunnelSettings
+     *        The tunnel to be started
+     */
     protected synchronized void launchProcess(TunnelVpnTunnelSettings tunnelSettings)
     {
         if (!tunnelSettings.getEnabled()) {
@@ -114,7 +129,9 @@ public class TunnelVpnManager
         int tunnelId = tunnelSettings.getTunnelId();
         String directory = System.getProperty("uvm.settings.dir") + "/" + "tunnel-vpn/tunnel-" + tunnelId;
         String tunnelName = "tunnel-" + tunnelId;
-
+        Integer interfaceId = tunnelSettings.getBoundInterfaceId();
+        boolean localBound = false;
+        
         String cmd = "/usr/sbin/openvpn ";
         cmd += "--config " + directory + "/tunnel.conf ";
         cmd += "--writepid /run/tunnelvpn/" + tunnelName + ".pid ";
@@ -126,11 +143,32 @@ public class TunnelVpnManager
         cmd += "--up " + System.getProperty("prefix") + "/usr/share/untangle/bin/tunnel-vpn-up.sh ";
         cmd += "--down " + System.getProperty("prefix") + "/usr/share/untangle/bin/tunnel-vpn-down.sh ";
         cmd += "--management 127.0.0.1 " + (TunnelVpnApp.BASE_MGMT_PORT + tunnelId) + " ";
+        if (interfaceId != null && interfaceId != 0) {
+            // if bound to a specific interface, specify that interface's main IP as the local address
+            InterfaceStatus status = UvmContextFactory.context().networkManager().getInterfaceStatus(interfaceId);
+            if (status != null && status.getV4Address() != null) {
+                cmd += "--bind --local " + status.getV4Address().getHostAddress();
+                localBound = true;
+            }
+        }
+        if (!localBound) {
+            cmd += "--nobind ";
+        }
 
         Process proc = UvmContextFactory.context().execManager().execEvilProcess(cmd);
         processMap.put(tunnelId, proc);
     }
 
+    /**
+     * Imports an uploaded tunnel configuration
+     * 
+     * @param filename
+     *        The filename to import
+     * @param provider
+     *        The name of the tunnel provider
+     * @param tunnelId
+     *        The tunnel ID
+     */
     protected synchronized void importTunnelConfig(String filename, String provider, int tunnelId)
     {
         if (filename == null || provider == null) {
@@ -164,6 +202,14 @@ public class TunnelVpnManager
         return;
     }
 
+    /**
+     * Validates a tunnel configuration
+     * 
+     * @param filename
+     *        The filename to validate
+     * @param provider
+     *        The tunnel provider
+     */
     protected synchronized void validateTunnelConfig(String filename, String provider)
     {
         if (filename == null || provider == null) {
@@ -198,11 +244,22 @@ public class TunnelVpnManager
         return;
     }
 
+    /**
+     * Gets a nwe tunnel ID value
+     * 
+     * @return The tunnel ID value
+     */
     protected int getNewTunnelId()
     {
         return this.newTunnelId;
     }
 
+    /**
+     * Stops and restarts a tunnel
+     * 
+     * @param tunnelId
+     *        The tunnel to restart
+     */
     public void recycleTunnel(int tunnelId)
     {
         for (TunnelVpnTunnelSettings tunnelSettings : app.getSettings().getTunnels()) {
@@ -235,27 +292,6 @@ public class TunnelVpnManager
         }
     }
 
-    private void writeFile(String fileName, StringBuilder sb)
-    {
-        logger.info("Writing File: " + fileName);
-        BufferedWriter out = null;
-
-        try {
-            String data = sb.toString();
-            out = new BufferedWriter(new FileWriter(fileName));
-            out.write(data, 0, data.length());
-        } catch (Exception ex) {
-            logger.error("Error writing file " + fileName + ":", ex);
-        }
-
-        try {
-            if (out != null) out.close();
-        } catch (Exception ex) {
-            logger.error("Unable to close file", ex);
-        }
-
-    }
-
     /**
      * Inserts iptables rules
      */
@@ -279,6 +315,13 @@ public class TunnelVpnManager
         }
     }
 
+    /**
+     * Finds the lowest unused tunnel ID value
+     * 
+     * @param settings
+     *        The application settings
+     * @return The lowest unused tunnel ID value
+     */
     private int findLowestAvailableTunnelId(TunnelVpnSettings settings)
     {
         if (settings.getTunnels() == null) return 1;

@@ -14,7 +14,7 @@ import test_registry
 import base64
 import global_functions
 
-defaultRackId = 1
+default_policy_id = 1
 app = None
 appAD = None
 appDataRD = None
@@ -39,7 +39,7 @@ configuredHostIPs = [('10.111.0.134','192.168.2.1','192.168.2.0/24'), # ATS
                      ('10.111.56.56','10.111.56.56','10.111.56.15/32'), # QA 3 Bridged
                      ('10.111.56.94','192.168.10.94','192.168.10.0/24'), # QA 4 Dual WAN
                      ('10.111.56.93','192.168.234.93','192.168.234.0/24'), # QA box .93
-                     ('10.111.56.57','192.168.2.1','192.168.2.0/24')] # QA box .57
+                     ('10.111.56.57','192.168.4.1','192.168.4.0/24')] # QA box .57
 
 # pdb.set_trace()
 
@@ -131,8 +131,8 @@ def createRadiusSettings():
             "authenticationMethod": "MSCHAPV2",
             "enabled": True,
             "javaClass": "com.untangle.app.directory_connector.RadiusSettings",
-            "server": global_functions.radiusServer,
-            "sharedSecret": "chakas"
+            "server": global_functions.radius_server,
+            "sharedSecret": global_functions.radius_server_password
         },
         "version": 1
     }
@@ -169,16 +169,16 @@ class IPsecTests(unittest2.TestCase):
         tunnelUp = False
         if (uvmContext.appManager().isInstantiated(self.appName())):
             raise Exception('app %s already instantiated' % self.appName())
-        app = uvmContext.appManager().instantiate(self.appName(), defaultRackId)
+        app = uvmContext.appManager().instantiate(self.appName(), default_policy_id)
         if (uvmContext.appManager().isInstantiated(self.appNameAD())):
             raise unittest2.SkipTest('app %s already instantiated' % self.appName())
         if orig_netsettings == None:
             orig_netsettings = uvmContext.networkManager().getNetworkSettings()
-        appAD = uvmContext.appManager().instantiate(self.appNameAD(), defaultRackId)
+        appAD = uvmContext.appManager().instantiate(self.appNameAD(), default_policy_id)
         appDataRD = appAD.getSettings().get('radiusSettings')
         ipsecHostResult = subprocess.call(["ping","-c","1",ipsecHost],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         l2tpClientHostResult = subprocess.call(["ping","-c","1",l2tpClientHost],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        radiusResult = subprocess.call(["ping","-c","1",global_functions.radiusServer],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        radiusResult = subprocess.call(["ping","-c","1",global_functions.radius_server],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
 
     def setUp(self):
         pass
@@ -201,7 +201,7 @@ class IPsecTests(unittest2.TestCase):
         pairMatchNotFound = True
         listOfPairs = ""
         for hostConfig in configuredHostIPs:
-            print hostConfig[0]
+            print(hostConfig[0])
             listOfPairs += str(hostConfig[0]) + ", "
             if (wan_IP in hostConfig[0]):
                 appendTunnel(addIPSecTunnel(ipsecHost,ipsecHostLAN,hostConfig[0],hostConfig[1],hostConfig[2]))
@@ -304,7 +304,7 @@ class IPsecTests(unittest2.TestCase):
         ipsecSettings["vpnflag"] = False
         app.setSettings(ipsecSettings)
         for hostConfig in configuredHostIPs:
-            print hostConfig[0]
+            print(hostConfig[0])
             listOfPairs += str(hostConfig[0]) + ", "
             if (wan_IP in hostConfig[0]):
                 appendTunnel(addIPSecTunnel(ipsecHostname,ipsecHostLAN,hostConfig[0],hostConfig[1],hostConfig[2]))
@@ -328,7 +328,7 @@ class IPsecTests(unittest2.TestCase):
     def finalTearDown(self):
         global app, appAD
         # Restore original settings to return to initial settings
-        # print "orig_netsettings <%s>" % orig_netsettings
+        # print("orig_netsettings <%s>" % orig_netsettings)
         uvmContext.networkManager().setNetworkSettings(orig_netsettings)
         if app != None:
             uvmContext.appManager().destroy( app.getAppSettings()["id"] )

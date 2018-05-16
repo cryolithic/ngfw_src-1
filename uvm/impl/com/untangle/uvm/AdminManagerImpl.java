@@ -3,26 +3,14 @@
  */
 package com.untangle.uvm;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.net.InetAddress;
-import java.net.URLEncoder;
-import java.net.UnknownHostException;
-import java.util.Hashtable;
 import java.util.Set;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-
-import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
 
 import com.untangle.uvm.UvmContextFactory;
 import com.untangle.uvm.SettingsManager;
-import com.untangle.uvm.LanguageSettings;
 import com.untangle.uvm.AdminManager;
 import com.untangle.uvm.AdminSettings;
 import com.untangle.uvm.AdminUserSettings;
@@ -321,7 +309,7 @@ public class AdminManagerImpl implements AdminManager
         String passwordHashShadow = admin.getPasswordHashShadow();
         if ( pass != null ) {
             logger.info("Setting root password.");
-            String cmd = "echo 'root:" + pass + "' | sudo chpasswd";
+            String cmd = "echo 'root:" + pass + "' | chpasswd";
                     
             // turn down logging so we dont log password
             UvmContextImpl.context().execManager().setLevel(  org.apache.log4j.Level.DEBUG );
@@ -333,7 +321,7 @@ public class AdminManagerImpl implements AdminManager
                 logger.warn( "Setting root password returned non-zero exit code: " + exitCode );
             }
 
-            String shadowHash = UvmContextImpl.context().execManager().execOutput("sudo awk -F: '/root/ {print $2}' /etc/shadow");
+            String shadowHash = UvmContextImpl.context().execManager().execOutput("awk -F: '/root/ {print $2}' /etc/shadow");
 
             /**
              * If the shadowHash is different than the value in settings

@@ -4,7 +4,6 @@
 
 package com.untangle.app.ipsec_vpn;
 
-import java.util.List;
 import java.io.*;
 
 /**
@@ -230,7 +229,7 @@ public class AddressCalculator
     public String getOffsetIP(int offset)
     {
         Integer baseIP = baseIPnumeric & netmaskNumeric;
-        String address = convertNumericIpToSymbolic(baseIP + offset);
+        String address = convertNumericIpToSymbolic(baseIP + ( offset * 4 ) - 3);
         return (address);
     }
 }

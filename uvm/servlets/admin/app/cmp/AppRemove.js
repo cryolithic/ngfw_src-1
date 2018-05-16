@@ -37,10 +37,11 @@ Ext.define('Ung.cmp.AppRemove', {
                 mainView.setLoading(true);
 
                 Rpc.asyncData('rpc.appManager.destroy', vm.get('instance.id'))
-                    .then(function (result) {
+                    .then(function () {
 
-                        if (vm.get('instance.appName') === 'reports') { // just reload the dashboard
-                            window.location.href = '/admin/index.do';
+                        if (vm.get('instance.appName') === 'reports') {
+                            Ung.app.reportscheck(); // check reports
+                            Ung.app.redirectTo('#apps');
                             return;
                         }
 
@@ -48,12 +49,7 @@ Ext.define('Ung.cmp.AppRemove', {
                             Ext.getStore('policiestree').build();
                         }
 
-                        if (rpc.reportsManager) {
-                            Rpc.asyncData('rpc.reportsManager.getUnavailableApplicationsMap')
-                                .then(function (unavailApps) {
-                                    Ext.getStore('unavailableApps').loadRawData(unavailApps.map);
-                                });
-                        }
+                        Ext.fireEvent('appremove', vm.get('props.displayName'));
 
                         vm.set('instance.targetState', null);
                         vm.set('instance.runState', null);
@@ -64,16 +60,6 @@ Ext.define('Ung.cmp.AppRemove', {
                         if (Ung.app.getMainView().down('#appCard')) {
                             Ung.app.getMainView().remove('appCard');
                         }
-
-                        // Rpc.asyncData('rpc.appManager.getAppsViews')
-                        //     .then(function (policies) {
-                        //         Ext.getStore('policies').loadData(policies);
-                        //         Ung.app.redirectTo('#apps/');
-                        //     });
-
-                        // todo: fire global event
-                        Ext.fireEvent('appremove');
-                        // Ext.GlobalEvents.fireEvent('appinstall', 'remove', appItem.app);
                     }, function (ex) {
                         Util.handleException(ex);
                     });

@@ -33,11 +33,10 @@ Ext.define('Ung.view.reports.EntryController', {
 
             me.reload(true); // important to fetch data in reports view
 
-            me.lookup('dataCk').setValue(false); // close the data panel if open
+            me.lookup('dataCk').setPressed(false); // close the data panel if open
 
             // check if widget in admin context
             if (Ung.app.context === 'ADMIN') {
-                // widget = Ext.getStore('widgets').findRecord('entryId', entry.get('uniqueId')) || null;
                 vm.set('widget', Ext.getStore('widgets').findRecord('entryId', entry.get('uniqueId')));
             }
         });
@@ -117,8 +116,23 @@ Ext.define('Ung.view.reports.EntryController', {
             }
         });
 
-        // vm.bind('{f_startdate}', function () { me.reload(); });
-        // vm.bind('{f_enddate}', function () { me.reload(); });
+        /**
+         * When query string changes, reload the chart data with the new conditions
+         */
+        vm.bind('{query.string}', function (conditionsQuery) {
+            if (!me.conditionsQuery || me.conditionsQuery !== conditionsQuery) {
+                me.conditionsQuery = conditionsQuery;
+                me.reload();
+            }
+        });
+
+        /**
+         * When time range changes reload report
+         */
+        vm.bind('{time.range}', function () {
+            me.reload();
+        });
+
     },
 
     /**
@@ -287,12 +301,9 @@ Ext.define('Ung.view.reports.EntryController', {
 
     // // DASHBOARD ACTION
     dashboardAddRemove: function () {
-        var me = this, vm = me.getViewModel(), widget = vm.get('widget'), entry = vm.get('entry'), action;
-
-        me.getView().setLoading(true);
+        var me = this, vm = me.getViewModel(), widget = vm.get('widget'), entry = vm.get('entry');
 
         if (!widget) {
-            action = 'add';
             widget = Ext.create('Ung.model.Widget', {
                 displayColumns: entry.get('defaultColumns'),
                 enabled: true,
@@ -302,66 +313,15 @@ Ext.define('Ung.view.reports.EntryController', {
                 timeframe: '',
                 type: 'ReportEntry'
             });
+
+            Ext.getStore('widgets').add(widget);
+            vm.set('widget', widget);
         } else {
-            action = 'remove';
+            var records = Ext.getStore('widgets').queryRecords('entryId', entry.get('uniqueId'));
+            Ext.getStore('widgets').remove(records);
+            vm.set('widget', null);
         }
-
-        Ext.fireEvent('widgetaction', action, widget, entry, function (wg) {
-            vm.set('widget', wg);
-            Util.successToast('<span style="color: yellow; font-weight: 600;">' + vm.get('entry.title') + '</span> ' + (action === 'add' ? 'added to' : 'removed from') + ' Dashboard!');
-            me.getView().setLoading(false);
-        });
     },
-
-    // titleChange: function( control, newValue) {
-    //     var me = this, vm = me.getViewModel();
-
-    //     var currentRecord = vm.get('entry');
-
-    //     var titleConflictSave = false;
-    //     var titleConflictSaveNew = false;
-    //     var sameCustomizableReport = false;
-    //     var sameReport = false;
-    //     Rpc.asyncData('rpc.reportsManager.getReportEntries')
-    //         .then(function(result) {
-    //             result.list.forEach( function(reportEntry) {
-    //                 if( ( reportEntry.category + '/' + reportEntry.title.trim() )  == ( currentRecord.get('category') + '/' + newValue.trim() ) ){
-    //                     titleConflictSave = true;
-    //                     titleConflictSaveNew = true;
-
-    //                     if( reportEntry.uniqueId == currentRecord.get('uniqueId') ){
-    //                         sameReport = true;
-    //                     }
-    //                     if( sameReport &&
-    //                         currentRecord.get('readOnly') == false){
-    //                         sameCustomizableReport = true;
-    //                         titleConflictSave = false;
-    //                     }
-    //                 }
-    //             });
-
-    //             if (control){
-    //                 if( titleConflictSave && !sameReport ){
-    //                     control.setValidation('Another report within this category has this title'.t());
-    //                 }else{
-    //                     control.setValidation(true);
-    //                 }
-    //             }
-
-    //             var messages = [];
-    //             if(currentRecord.get('readOnly')){
-    //                 messages.push( '<i class="fa fa-info-circle fa-lg"></i>&nbsp;' + 'This default report is read-only. Delete and Save are disabled.'.t());
-    //             }
-    //             if( ( titleConflictSaveNew && !sameCustomizableReport ) || titleConflictSaveNew){
-    //                 messages.push( '<i class="fa fa-info-circle fa-lg"></i>&nbsp;'+ 'Change Title to Save as New Report.'.t());
-    //             }
-    //             vm.set('reportMessages',  messages.join('<br>'));
-
-    //             if(!titleConflictSave){
-    //                 vm.set('entry.title', newValue);
-    //             }
-    //         });
-    // },
 
 
     validateTitle: function (entry, action) {
@@ -417,6 +377,9 @@ Ext.define('Ung.view.reports.EntryController', {
         v.setLoading(true);
         Rpc.asyncData('rpc.reportsManager.saveReportEntry', eEntry.getData())
             .then(function() {
+                if(Util.isDestroyed(v, vm, me)){
+                    return;
+                }
                 v.setLoading(false);
 
                 var modFields = entry.copyFrom(eEntry);
@@ -430,8 +393,13 @@ Ext.define('Ung.view.reports.EntryController', {
 
                 // if title or category changed, update route
                 if (Ext.Array.contains(modFields, 'category') || Ext.Array.contains(modFields, 'title')) {
+                    if (Ext.Array.contains(modFields, 'category') ){
+                        var oldIndex = Ext.getStore('reports').find('uniqueId', entry.get('uniqueId'));
+                        Ext.getStore('reports').removeAt(oldIndex);
+                        Ext.getStore('reports').add(eEntry);
+                    }
                     Ext.getStore('reportstree').build();
-                    Ung.app.redirectTo('#reports/' + entry.get('category').replace(/ /g, '-').toLowerCase() + '/' + entry.get('title').replace(/\s+/g, '-').toLowerCase());
+                    Ung.app.redirectTo('#reports?cat=' + Util.urlEncode(entry.get('category')) + '&rep=' + Util.urlEncode(entry.get('title')));
                 }
 
                 vm.set('eEntry', null);
@@ -474,10 +442,13 @@ Ext.define('Ung.view.reports.EntryController', {
         v.setLoading(true);
         Rpc.asyncData('rpc.reportsManager.saveReportEntry', entry.getData())
             .then(function() {
+                if(Util.isDestroyed(v, me)){
+                    return;
+                }
                 v.setLoading(false);
                 Ext.getStore('reports').add(entry);
                 Util.successToast('<span style="color: yellow; font-weight: 600;">' + entry.get('title') + ' report added!');
-                Ung.app.redirectTo('#reports/' + entry.get('category').replace(/ /g, '-').toLowerCase() + '/' + entry.get('title').replace(/\s+/g, '-').toLowerCase());
+                Ung.app.redirectTo('#reports?cat=' + Util.urlEncode(entry.get('category')) + '&rep=' + Util.urlEncode(entry.get('title')));
 
                 Ext.getStore('reportstree').build(); // rebuild tree after save new
                 me.reload();
@@ -494,19 +465,18 @@ Ext.define('Ung.view.reports.EntryController', {
         Ext.MessageBox.confirm('Warning'.t(),
             'Deleting this report will also remove Dashboard widgets containing this report!'.t() + '<br/><br/>' +
             'Do you want to continue?'.t(),
-        function (btn) {
-            if (btn === 'yes') {
-                if (vm.get('widget')) {
-                    // remove it from dashboard first
-                    Ext.fireEvent('widgetaction', 'remove', vm.get('widget'), entry, function (wg) {
-                        vm.set('widget', wg);
-                        me.removeReportAction(entry.getData());
-                    });
-                } else {
+            function (btn) {
+                if(Util.isDestroyed(vm, me)){
+                    return;
+                }
+                if (btn === 'yes') {
+                    if (vm.get('widget')) {
+                        var records = Ext.getStore('widgets').queryRecords('entryId', entry.get('uniqueId'));
+                        Ext.getStore('widgets').remove(records);
+                    }
                     me.removeReportAction(entry.getData());
                 }
-            }
-        });
+            });
 
     },
 
@@ -514,7 +484,10 @@ Ext.define('Ung.view.reports.EntryController', {
         var vm = this.getViewModel();
         Rpc.asyncData('rpc.reportsManager.removeReportEntry', entry)
             .then(function () {
-                Ung.app.redirectTo('#reports/' + entry.category.replace(/ /g, '-').toLowerCase());
+                if(Util.isDestroyed(vm)){
+                    return;
+                }
+                Ung.app.redirectTo('#reports?cat=' + Util.urlEncode(entry.category));
                 Util.successToast(entry.title + ' ' + 'deleted successfully'.t());
                 vm.set('eEntry', null);
                 var removableRec = Ext.getStore('reports').findRecord('uniqueId', entry.uniqueId);
@@ -564,7 +537,7 @@ Ext.define('Ung.view.reports.EntryController', {
         });
 
         var conditions = [];
-        Ext.Array.each(Ext.clone(vm.get('globalConditions')), function (cnd) {
+        Ext.Array.each(Ext.clone(vm.get('query.conditions')), function (cnd) {
             delete cnd._id;
             conditions.push(cnd);
         });
@@ -637,20 +610,13 @@ Ext.define('Ung.view.reports.EntryController', {
     },
 
     removeTextColumn: function (view, rowIndex, colIndex, item, e, record) {
-        var me = this, vm = me.getViewModel(), store = view.getStore(), tdc = [];
+        var me = this, store = view.getStore(), tdc = [];
         store.remove(record);
         view.refresh();
     },
 
     removeTimeDataColumn: function (view, rowIndex, colIndex, item, e, record) {
-        var me = this, vm = me.getViewModel(), store = view.getStore(), tdc = [];
-        store.remove(record);
-        // vm.set('timeDataColumns', Ext.Array.removeAt(vm.get('timeDataColumns'), rowIndex));
-        // store.commitChanges();
-        // store.reload();
-        // record.drop();
-        // store.each(function (col) { tdc.push(col.get('str')); });
-        // vm.set('eEntry.timeDataColumns', tdc);
+        view.getStore().remove(record);
     },
 
     exportSettings: function () {

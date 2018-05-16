@@ -6,27 +6,19 @@ package com.untangle.app.reports;
 import org.apache.log4j.Logger;
 
 import com.untangle.uvm.MailSender;
-import com.untangle.uvm.UvmContext;
 import com.untangle.uvm.UvmContextFactory;
 import com.untangle.uvm.util.I18nUtil;
 
 import com.untangle.uvm.WebBrowser;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.io.IOException;
 
 import java.net.URLEncoder;
-
-import java.nio.channels.FileChannel;
-import java.nio.file.Files;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -42,11 +34,9 @@ import java.util.LinkedHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import java.lang.Integer;
 import java.lang.reflect.Method;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Random;
 
 import org.json.JSONObject;
 
@@ -60,6 +50,10 @@ public class FixedReports
     private static final Logger logger = Logger.getLogger( FixedReports.class );
 
     public static final String REPORTS_FIXED_TEMPLATE_FILENAME =  System.getProperty("uvm.lib.dir") + "/reports/templates/reports.html";
+    public static final int DEFAULT_BROWSER_WIDTH = 800;
+    public static final int DEFAULT_BROWSER_HEIGHT = 800;
+    public static final int MOBILE_BROWSER_WIDTH = 250;
+    public static final int MOBILE_BROWSER_HEIGHT = 250;
 
     private StringBuilder messageText = null;
 
@@ -689,6 +683,26 @@ public class FixedReports
 
     private ReportsManager reportsManager;
 
+    public FixedReports(){
+        webbrowser = null;
+        if(WebBrowser.exists()){
+            try{
+                webbrowser = new WebBrowser(1, 5, DEFAULT_BROWSER_WIDTH, DEFAULT_BROWSER_HEIGHT, 8);
+            }catch(Exception e){
+                logger.warn("Unable to start WebBrowser instance",e);
+                webbrowser = null;
+            }
+        }
+
+    }
+
+    public void destroy(){
+        if(webbrowser != null){
+            webbrowser.close();
+        }
+        webbrowser = null;
+    }
+
     /**
      * Create and send fixed reports
      *
@@ -798,17 +812,15 @@ public class FixedReports
 
         logger.warn("Generating report for \"" + title + "\"");
 
-        Integer browserWidth = 800;
-        Integer browserHeight = 400;
-        if(emailTemplate.getMobile() == true){
-            browserWidth = 250;
-            browserHeight = 250;
+        if(webbrowser != null){
+            Integer browserWidth = DEFAULT_BROWSER_WIDTH;
+            Integer browserHeight = DEFAULT_BROWSER_WIDTH;
+            if(emailTemplate.getMobile() == true){
+                browserWidth = MOBILE_BROWSER_WIDTH;
+                browserHeight = DEFAULT_BROWSER_HEIGHT;
+            }
+            webbrowser.resize( browserWidth, browserWidth);
         }
-
-        webbrowser = null;
-        try{
-            webbrowser = new WebBrowser(1, 5, browserWidth, browserHeight, 8);
-        }catch(Exception e){}
 
         File fixedReportTemplateFile = new File(REPORTS_FIXED_TEMPLATE_FILENAME);
 
@@ -893,10 +905,6 @@ public class FixedReports
             outputLines = new ArrayList<StringBuilder>();
             parseBuffer(inputLines, outputLines, variableKeyValues);
             sendEmail(recipientsWithOnlineAccess, outputLines);
-        }
-
-        if(webbrowser != null){
-            webbrowser.close();
         }
     }
 
@@ -2032,15 +2040,15 @@ public class FixedReports
                 "&startDate=" + URLEncoder.encode(Long.toString(startDate.getTime()), "UTF-8") +
                 "&endDate=" + URLEncoder.encode(Long.toString(endDate.getTime()), "UTF-8");
             webbrowser.openUrl(url);
-            webbrowser.waitForElement(WebBrowser.FIND_KEYS.CLASS, "highcharts-legend", 60);
+            webbrowser.waitForElement(WebBrowser.FIND_KEYS.CLASS, "highcharts-legend", 120);
             Thread.sleep(1000);
             webbrowser.takeScreenshot(filename);
         } catch (org.openqa.selenium.TimeoutException e) {
-            webbrowser.waitForElement(WebBrowser.FIND_KEYS.ID, "label-1016", 60);
+            webbrowser.waitForElement(WebBrowser.FIND_KEYS.CLASS, "highcharts-no-data", 120);
             webbrowser.takeScreenshot(filename);
         } catch (Exception e) {
             logger.warn("Exception",e);
-            return "";
+            webbrowser.takeScreenshot(filename);
         }
 
         return filename;

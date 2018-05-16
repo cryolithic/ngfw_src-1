@@ -14,17 +14,17 @@ Ext.define('Ung.view.apps.AppsController', {
             }
         },
         global: {
-            init: 'onInit',
-            appremove: 'onRemoveApp',
+            // init: 'onInit',
+            appremove: 'onAppRemove',
             postregistration: 'onPostRegistration',
         }
     },
 
     // build the apps components and add them to the view
-    onInit: function () {
+    onAfterRender: function () {
         var me = this;
         // maybe there is a better way to get all the available apps regardless of policy
-        var initPolicy = rpc.appsViews[0]; // take the first policy (default)
+        var initPolicy = Rpc.directData('rpc.appsViews')[0]; // take the first policy (default)
         // build add all the apps containers (rack items) and only update them when based on selected policy
 
         var apps = [], appCmps = [], srvCmps = [];
@@ -41,40 +41,93 @@ Ext.define('Ung.view.apps.AppsController', {
         });
 
         Ext.Array.each(apps, function (app) {
+            var appItem = {
+                xtype: me.getView().itemType,
+                itemId: 'app_' + app.name,
+                app: app,
+                viewModel: { 
+                    data: { 
+                        app: app, 
+                        instanceId: null, 
+                        installing: false
+                    },
+                    formulas: {
+                        powerCls: {
+                            bind: {
+                                bindTo: '{state}',
+                                deep: true
+                            },
+                            get: function(state){
+                                if(state == null){
+                                    return '';
+                                }
+                                if(state.get('inconsistent')){
+                                    return 'inconsistent';
+                                }else if(state.get('power')){
+                                    return 'powering';
+                                }else if(state.get('on')){
+                                    return 'on';
+                                }else{
+                                    return '';
+                                }
+                            }
+                        }
+                    }
+                }
+            };
             if (app.type === 'FILTER') {
-                appCmps.push({
-                    xtype: me.getView().itemType,
-                    itemId: 'app_' + app.name,
-                    app: app,
-                    viewModel: { data: { app: app, instanceId: null, installing: false } }
-                });
-            }
-            if (app.type === 'SERVICE') {
-                srvCmps.push({
-                    xtype: me.getView().itemType,
-                    itemId: 'app_' + app.name,
-                    app: app,
-                    viewModel: { data: { app: app, instanceId: null, installing: false } }
-                });
+                appCmps.push(appItem);
+            }else{
+                srvCmps.push(appItem);
             }
         });
 
         me.getView().down('#_apps').add(appCmps);
         me.getView().down('#_services').add(srvCmps);
 
-        // me.applyPolicy(initPolicy);
+        var vm = this.getViewModel();
+
+        vm.bind('{reportsAppStatus}', function () {
+            Ext.getStore('policiestree').build();
+            me.getApps();
+        });
+
+        // when policy changes get the apps, this is needed because
+        vm.bind('{policyId}', function () {
+            if (Ext.getStore('policiestree').getCount() > 0) {
+                var policyNode = Ext.getStore('policiestree').findNode('policyId', vm.get('policyId'));
+                if (policyNode) {
+                    vm.set('policyName', policyNode.get('name'));
+                    me.getApps();
+                } else {
+                    Ext.fireEvent('invalidquery');
+                }
+            }
+        });
     },
 
     // when policy changes the apps components are updated based on this policy app instances/props
     applyPolicy: function(policy) {
-        var me = this, vm = me.getViewModel(), appVm, instance;
+        var me = this, vm = me.getViewModel(), appVm;
 
+        var app;
         me.getView().query(me.getView().itemType).forEach(function (app) {
             appVm = app.getViewModel();
+            if(appVm.get('state') && appVm.get('state').get('power')){
+                // App is already processing its power mode.  Let them handle it.
+                return;
+            }
+            var appName = appVm.get('app.name');
+
             var instance = Ext.Array.findBy(policy.instances.list, function(instance) {
-                return instance.appName === appVm.get('app.name');
+                return instance.appName === appName;
             });
+            var appProperties = Ext.Array.findBy(policy.appProperties.list, function (prop) {
+                return prop.name === appName;
+            });
+
             if (instance) {
+                // !!! do async stuff
                 var parentPolicy = null, metrics = null;
                 if (instance.policyId && policy.policyId !== instance.policyId) {
                     parentPolicy = Ext.getStore('policiestree').findNode('policyId', instance.policyId).get('name');
@@ -82,19 +135,21 @@ Ext.define('Ung.view.apps.AppsController', {
                 if (policy.appMetrics.map[instance.id]) {
                     metrics = policy.appMetrics.map[instance.id].list;
                 }
+
                 appVm.set({
+                    instance: instance,
                     instanceId: instance.id,
-                    targetState: instance.targetState,
-                    state: policy.runStates.map[instance.id],
+                    props: appProperties,
                     parentPolicy: parentPolicy,
                     metrics: metrics,
                     route: (appVm.get('app.type') === 'FILTER') ? '#apps/' + policy.policyId + '/' + appVm.get('app.name') : '#service/' + appVm.get('app.name'),
-                    helpSource: rpc.helpUrl + '?fragment=apps/' + policy.policyId + '/' + appVm.get('app.name').replace(/ /g, '-') + '&' + Util.getAbout()
+                    helpSource: Rpc.directData('rpc.helpUrl') + '?fragment=apps/' + policy.policyId + '/' + appVm.get('app.name').replace(/ /g, '-') + '&' + Util.getAbout()
                 });
+                appVm.set('state', Ext.create('Ung.model.AppState',{vm: appVm, app: Rpc.directData('rpc.appManager.app', instance.id)}));
             } else {
                 appVm.set({
+                    instance: null,
                     instanceId: null,
-                    targetState: null,
                     state: null,
                     parentPolicy: null,
                     metrics: null,
@@ -103,7 +158,7 @@ Ext.define('Ung.view.apps.AppsController', {
             }
             var license = policy.licenseMap.map[appVm.get('app.name')];
             var licenseMessage = Util.getLicenseMessage(license);
-            //console.log("license: " + license + " licenseMessage: " + licenseMessage);
+
             appVm.set({
                 license: license,
                 licenseMessage: licenseMessage,
@@ -113,12 +168,11 @@ Ext.define('Ung.view.apps.AppsController', {
         // deal with installable apps
         var installableApps = [], installableServices = [];
         Ext.Array.each(policy.installable.list, function (appName) {
-            var app = Ext.Array.findBy(policy.appProperties.list, function (a) {
+            app = Ext.Array.findBy(policy.appProperties.list, function (a) {
                 return a.name === appName;
             });
             app.desc = Util.appDescription[app.name];
             app.route = (app.type === 'FILTER') ? '#apps/' + policy.policyId + '/' + app.name : '#service/' + app.name;
-            // app.parentPolicy = null;
             if (app.type === 'FILTER') {
                 installableApps.push(app);
             } else {
@@ -131,24 +185,7 @@ Ext.define('Ung.view.apps.AppsController', {
 
     // check policy manager when activating apps view
     onActivate: function () {
-        this.getViewModel().set('policyManagerInstalled', rpc.appManager.app('policy-manager') ? true : false);
-    },
-
-    // after rendering, get the apps of the selected policy ID
-    onAfterRender: function () {
-        var me = this, vm = this.getViewModel();
-        // when policy changes get the apps, this is needed because
-        vm.bind('{policyId}', function (val) {
-            if (Ext.getStore('policiestree').getCount() > 0) {
-                var policyNode = Ext.getStore('policiestree').findNode('policyId', vm.get('policyId'));
-                if (policyNode) {
-                    vm.set('policyName', policyNode.get('name'));
-                    me.getApps();
-                } else {
-                    Ung.app.redirectTo('#apps/1'); // redirect to main policy if in apps view
-                }
-            }
-        });
+        this.getViewModel().set('policyManagerInstalled', Rpc.directData('rpc.appManager.app', 'policy-manager') ? true : false);
     },
 
     // remove already finished installed apps when deactivating the view
@@ -169,10 +206,9 @@ Ext.define('Ung.view.apps.AppsController', {
             Ext.getStore('policiestree').each(function (node) {
                 menuItems.push({
                     margin: '0 0 0 ' + (node.get('depth') - 1) * 20,
-                    text: '<strong>' + node.get('name') + '</strong>',
-                    iconCls: node.get('iconCls') + ' fa-lg',
+                    text: node.get('name'),
+                    iconCls: node.get('iconCls'),
                     href: '#apps/' + node.get('policyId'),
-                    // href: '#apps/' + node.get('slug'),
                     hrefTarget: '_self'
                 });
             });
@@ -180,7 +216,7 @@ Ext.define('Ung.view.apps.AppsController', {
             menuItems.push('-');
             menuItems.push({
                 text: 'Manage Policies',
-                iconCls: 'fa fa-cog fa-lg',
+                iconCls: 'fa fa-cog',
                 href: '#service/policy-manager/policies',
                 hrefTarget: '_self'
             });
@@ -215,15 +251,18 @@ Ext.define('Ung.view.apps.AppsController', {
 
     // actual method which fetches apps for a specific policy, then updates the components
     getApps: function () {
-        var me = this, vm = this.getViewModel(), instance, license;
+        var me = this, vm = this.getViewModel();
 
         // we need policies store before fetching apps
         if (Ext.getStore('policiestree').getCount() === 0) { return; }
 
         Rpc.asyncData('rpc.appManager.getAppsView', vm.get('policyId'))
-            .then(function (policy) {
-                me.applyPolicy(policy);
-            });
+        .then(function (policy) {
+            if(Util.isDestroyed(me)){
+                return;
+            }
+            me.applyPolicy(policy);
+        });
     },
 
     // show installable apps card
@@ -246,7 +285,7 @@ Ext.define('Ung.view.apps.AppsController', {
      */
     onInstallApp: function (view, record) {
         var me = this, vm = me.getViewModel();
-        if (!rpc.isRegistered) {
+        if (!Rpc.directData('rpc.isRegistered')){
             Ext.fireEvent('openregister');
             return;
         }
@@ -265,25 +304,30 @@ Ext.define('Ung.view.apps.AppsController', {
         // used for installable components
         record.set('extraCls', 'progress');
 
-        Rpc.asyncData('rpc.appManager.instantiate', record.get('name'), vm.get('policyId'))
+        Ext.Deferred.sequence([
+            Rpc.asyncPromise('rpc.appManager.instantiate', record.get('name'), vm.get('policyId')),
+            Rpc.asyncPromise('rpc.appManager.getAppsViews')
+        ])
         .then(function (result) {
-            var instance = result.getAppSettings();
+            if(Util.isDestroyed(appVm, vm)){
+                return;
+            }
+            var instance = result[0].getAppSettings();
 
             appVm.set({
                 installing: false,
+                instance: instance,
                 instanceId: instance.id,
-                targetState: instance.targetState,
-                state: result.getRunState(),
                 parentPolicy: null,
-                metrics: result.getMetrics().list,
+                metrics: result[0].getMetrics().list,
                 route: (record.get('type') === 'FILTER') ? '#apps/' + instance.policyId + '/' + record.get('name') : '#service/' + record.get('name')
             });
+            appVm.set('state', Ext.create('Ung.model.AppState',{vm: appVm, app: Rpc.directData('rpc.appManager.app', instance.id)}));
 
             record.set('extraCls', 'finish');
 
-            if (record.get('name') === 'reports') { // just reload the page for now
-                window.location.href = '/admin/index.do';
-                return;
+            if (record.get('name') === 'reports') {
+                Ung.app.reportscheck();
             }
 
             if (record.get('name') === 'live-support') { // just reload the page for now
@@ -296,16 +340,12 @@ Ext.define('Ung.view.apps.AppsController', {
             }
 
             // update policies to refresh instances
-            Rpc.asyncData('rpc.appManager.getAppsViews')
-                .then(function (policies) {
-                    Ext.getStore('policies').loadData(policies);
-                });
-
-            Ext.fireEvent('appinstall');
+            Ext.getStore('policies').loadData(result[1]);
+            Ext.fireEvent('appinstall', record.get('displayName'));
         });
     },
 
-    onRemoveApp: function () {
+    onAppRemove: function () {
         // just refresh apps to avoid any possible issues with rendering apps from parent policies
         Ung.app.getMainView().getController().setLiveSupport();
         this.getApps();
@@ -317,47 +357,77 @@ Ext.define('Ung.view.apps.AppsController', {
             appInstanceId = appVm.get('instanceId'), appManager;
 
         // supress clicking if operation pending
-        if (btn.hasCls('pending')) {
+        if (btn.hasCls('powering')) {
             return;
         }
 
-        btn.setUserCls('pending');
+        btn.setUserCls('powering');
 
-        if (appInstanceId) {
-            Rpc.asyncData('rpc.appManager.app', appInstanceId)
-                .then(function (result) {
-                    appManager = result;
-                    if (appVm.get('targetState') !== 'RUNNING') {
-                        appManager.start(function (result, ex) {
-                            btn.setUserCls('');
-                            if (ex) {
-                                if (ex.message) {
-                                    Ext.Msg.alert('Warning'.t(), ex.message);
-                                } else {
-                                    Util.handleException(ex);
-                                }
-                                return;
-                            }
-                            rpc.appsViews= rpc.appManager.getAppsViews();
-                            Ext.getStore('policies').loadData(rpc.appsViews);
-                            Ung.app.getGlobalController().getAppsView().getController().getApps();
-                        });
-                    } else {
-                        appManager.stop(function (result, ex) {
-                            btn.setUserCls('');
-                            if (ex) { Util.handleException(ex); return; }
-                            appVm.set({
-                                metrics: null
-                            });
-                            rpc.appsViews= rpc.appManager.getAppsViews();
-                            Ext.getStore('policies').loadData(rpc.appsViews);
-                            Ung.app.getGlobalController().getAppsView().getController().getApps();
-                        });
-                    }
-                }, function (ex) {
-                    Util.handleException(ex);
-                });
+        if (!appInstanceId) {
+            return;
         }
+        Rpc.asyncData('rpc.appManager.app', appInstanceId)
+        .then(function (result) {
+            if(Util.isDestroyed(appVm, btn)){
+                return;
+            }
+            appManager = result;
+            appVm.get('state').set('power', true);
+            if (!appVm.get('state').get('on') ){
+                appVm.set('instance.targetState', 'RUNNING');
+                appManager.start(function (result, ex) {
+                    if(Util.isDestroyed(appVm)){
+                        return;
+                    }
+                    appVm.get('state').detect();
+                    if (ex) {
+                        // Expected to be off
+                        if (ex.message) {
+                            Ext.Msg.alert('Warning'.t(), ex.message);
+                        } else {
+                            Util.handleException(ex);
+                        }
+                        appVm.set('instance.targetState', 'INITIALIZED');
+                        appVm.get('state').detect();
+                        return;
+                    }
+                    Rpc.asyncData('rpc.appManager.getAppsViews')
+                    .then( function(result){
+                        Ext.getStore('policies').loadData(result);
+                        Ung.app.getGlobalController().getAppsView().getController().getApps();
+                    },function(ex){
+                        Util.handleException(ex);
+                    });
+                });
+            } else {
+                appVm.set('instance.targetState', 'INITIALIZED');
+                appManager.stop(function (result, ex) {
+                    if(Util.isDestroyed(appVm)){
+                        return;
+                    }
+                    appVm.get('state').detect();
+                    if (ex) {
+                        // Expected to be on?
+                        Util.handleException(ex);
+                        appVm.set('instance.targetState', 'RUNNING');
+                        appVm.get('state').detect();
+                        return;
+                    }
+                    appVm.set({
+                        metrics: null
+                    });
+                    Rpc.asyncData('rpc.appManager.getAppsViews')
+                    .then( function(result){
+                        Ext.getStore('policies').loadData(result);
+                        Ung.app.getGlobalController().getAppsView().getController().getApps();
+                    },function(ex){
+                        Util.handleException(ex);
+                    });
+                });
+            }
+        }, function (ex) {
+            Util.handleException(ex);
+        });
     },
 
 
@@ -390,25 +460,29 @@ Ext.define('Ung.view.apps.AppsController', {
 
                     // only install WAN failover/balancer apps if more than 2 interfaces
                     try {
-                        if (rpc.networkSettings.interfaces.list.length > 2) {
+                        if (Rpc.directData('rpc.networkSettings.interfaces.list').length > 2) {
                             apps.push({ displayName: 'WAN Failover', name: 'wan-failover'});
                             apps.push({ displayName: 'WAN Balancer', name: 'wan-balancer'});
                         }
-                    } catch (e) {}
+                    } catch (e) {
+                        console.log(e);
+                    }
 
                     // only install these if enough memory
                     // or if its arm still install virus blocker (in clientless mode)
                     try {
                         var memTotal = Util.bytesToMBs(Ext.getStore('stats').first().get('MemTotal'));
-                        if (memTotal && memTotal > 900) {
-                            apps.splice(2, 0, { displayName: 'Phish Blocker', name: 'phish-blocker'});
-                            apps.splice(2, 0, { displayName: 'Spam Blocker', name: 'spam-blocker'});
+                        if (memTotal && memTotal > 1400) {
+                            //apps.splice(2, 0, { displayName: 'Phish Blocker', name: 'phish-blocker'});
+                            //apps.splice(2, 0, { displayName: 'Spam Blocker', name: 'spam-blocker'});
                             apps.splice(2, 0, { displayName: 'Virus Blocker Lite', name: 'virus-blocker-lite'});
                             apps.splice(2, 0, { displayName: 'Virus Blocker', name: 'virus-blocker'});
-                        } else if (rpc.architecture == "arm") {
+                        } else if (Rpc.directData('rpc.architecture') == 'arm') {
                             apps.splice(2, 0, { displayName: 'Virus Blocker', name: 'virus-blocker'});
                         }
-                    } catch (e) {}
+                    } catch (e) {
+                        console.log(e);
+                    }
 
                     popup.close();
                     me.installRecommendedApps(apps);
@@ -440,16 +514,19 @@ Ext.define('Ung.view.apps.AppsController', {
 
         Rpc.asyncData('rpc.appManager.instantiate', app.name, vm.get('policyId'))
         .then(function (result) {
+            if(Util.isDestroyed(appVm)){
+                return;
+            }
             var instance = result.getAppSettings();
             appVm.set({
-                installing: false,
+                instance: instance,
                 instanceId: instance.id,
-                targetState: instance.targetState,
-                state: result.getRunState(),
+                installing: false,
                 parentPolicy: null,
                 metrics: result.getMetrics().list,
                 route: (appVm.get('app.type') === 'FILTER') ? '#apps/' + instance.policyId + '/' + appVm.get('app.name') : '#service/' + appVm.get('app.name')
             });
+            appVm.set('state', Ext.create('Ung.model.AppState',{vm: appVm, app: Rpc.directData('rpc.appManager.app', instance.id)}));
             cb();
         });
     },

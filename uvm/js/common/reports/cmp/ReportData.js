@@ -4,7 +4,6 @@ Ext.define('Ung.reports.cmp.ReportData', {
 
     viewModel: true,
 
-    border: false,
     store: { data: [] },
     columns: [],
     bbar: ['->', {
@@ -18,7 +17,8 @@ Ext.define('Ung.reports.cmp.ReportData', {
         control: {
             '#': {
                 afterrender: 'onAfterRender',
-                deactivate: 'onDeactivate'
+                deactivate: 'onDeactivate',
+                cellclick: 'onCellClick'
             }
         },
 
@@ -131,9 +131,7 @@ Ext.define('Ung.reports.cmp.ReportData', {
                 header: 'Timestamp'.t(),
                 width: 130,
                 flex: 1,
-                renderer: function (val) {
-                    return (!val) ? 0 : Util.timestampFormat(val);
-                }
+                renderer: Renderer.timestamp
             }];
             var seriesRenderer = null, title;
             if (!Ext.isEmpty(entry.get('seriesRenderer'))) {
@@ -166,6 +164,7 @@ Ext.define('Ung.reports.cmp.ReportData', {
                 dataIndex: entry.get('pieGroupColumn'),
                 header: header,
                 flex: 1,
+                tdCls: 'anchor',
                 renderer: Renderer[entry.get('pieGroupColumn')] || null
             }, {
                 dataIndex: 'value',
@@ -178,36 +177,8 @@ Ext.define('Ung.reports.cmp.ReportData', {
                         return value;
                     }
                 }
-            }, {
-                xtype: 'actioncolumn',
-                menuDisabled: true,
-                width: 30,
-                align: 'center',
-                items: [{
-                    iconCls: 'fa fa-filter',
-                    tooltip: 'Add Condition'.t(),
-                    handler: 'addPieFilter'
-                }]
             }]);
             me.getView().getStore().loadData(data);
-        },
-
-        addPieFilter: function (view, rowIndex, colIndex, item, e, record) {
-            var me = this, vm = me.getViewModel(),
-                // gridFilters =  me.getView().down('#sqlFilters'),
-                col = vm.get('entry.pieGroupColumn');
-
-            if (col) {
-                me.getView().up('entry').down('globalconditions').getStore().add({
-                    column: col,
-                    operator: '=',
-                    value: record.get(col),
-                    javaClass: 'com.untangle.app.reports.SqlCondition'
-                });
-            } else {
-                console.log('Issue with pie column!');
-                return;
-            }
         },
 
         /**
@@ -245,7 +216,7 @@ Ext.define('Ung.reports.cmp.ReportData', {
                 var r = [];
                 for (j = 0; j < columns.length; j += 1) {
                     if (columns[j] === 'time_trunc') {
-                        r.push(Util.timestampFormat(row.get('time_trunc')));
+                        r.push(Renderer.timestamp(row.get('time_trunc')));
                     } else {
                         r.push(row.get(columns[j]));
                     }
@@ -281,6 +252,26 @@ Ext.define('Ung.reports.cmp.ReportData', {
                     document.body.removeChild(f);
                 }, 400);
                 return true;
+            }
+
+        },
+        /**
+         * used for applying/replace new global condition
+         */
+        onCellClick: function (cell, td, cellIndex, record, tr, rowIndex) {
+            var me = this, entry = me.getViewModel().get('entry'), grid = me.getView(), column, value;
+
+            // works only for PIE_GRAPH Data View
+            if (entry.get('type') !== 'PIE_GRAPH') {
+                return;
+            }
+
+            if (cellIndex === 0) {
+                column = grid.getColumns()[0].dataIndex;
+                value = record.get(column);
+
+                // fire event to add global condition, implemented in GlobalConditions.js controller section
+                Ext.fireEvent('addglobalcondition', column, value);
             }
         }
 

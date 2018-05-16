@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Sync Settings is takes the tunnel-vpn settings JSON file and "syncs" it to the 
 # It reads through the settings and writes the appropriate files:
@@ -17,7 +17,7 @@ import traceback
 import json
 import datetime
 
-from   netd import *
+from   sync import *
 
 class ArgumentParser(object):
     def __init__(self):
@@ -56,8 +56,8 @@ class ArgumentParser(object):
             for opt in optlist:
                 handlers[opt[0]](opt[1])
             return args
-        except getopt.GetoptError, exc:
-            print exc
+        except getopt.GetoptError as exc:
+            print(exc)
             printUsage()
             exit(1)
 
@@ -96,7 +96,7 @@ def write_iptables_rule( file, rule, verbosity=0 ):
         return
     tunnelId = rule.get('tunnelId')
     if tunnelId <= -2:
-        print "Invalid tunnelId: " + tunnelId 
+        print("Invalid tunnelId: " + tunnelId )
         return
 
     if tunnelId == 0:
@@ -177,9 +177,12 @@ fi
         file.write("${IPTABLES} -t mangle -I mark-dst-intf 3 -o tun%i -j MARK --set-mark %i/0xff00 -m comment --comment \"Set dst interface mark for tunnel vpn\""%(tunnel.get('tunnelId'),tunnel.get('tunnelId')<<8) + "\n");
         file.write("\n");
 
-        file.write("${IPTABLES} -t nat -D nat-rules -o tun%i -j MASQUERADE -m comment --comment \"NAT tunnel vpn sessions\" >/dev/null 2>&1"%(tunnel.get('tunnelId')) + "\n");
-        file.write("${IPTABLES} -t nat -I nat-rules -o tun%i -j MASQUERADE -m comment --comment \"NAT tunnel vpn sessions\""%(tunnel.get('tunnelId')) + "\n");
-        file.write("\n");
+        # If the nat settings is true, or its missing
+        # Add rules to NAT traffic exiting the tunnel
+        if tunnel.get('nat') == None or tunnel.get('nat') == True:
+            file.write("${IPTABLES} -t nat -D nat-rules -o tun%i -j MASQUERADE -m comment --comment \"NAT tunnel vpn sessions\" >/dev/null 2>&1"%(tunnel.get('tunnelId')) + "\n");
+            file.write("${IPTABLES} -t nat -I nat-rules -o tun%i -j MASQUERADE -m comment --comment \"NAT tunnel vpn sessions\""%(tunnel.get('tunnelId')) + "\n");
+            file.write("\n");
         
     try:
         file.write("\n")
@@ -188,9 +191,9 @@ fi
         for rule in rules:
             try:
                 write_iptables_rule( file, rule, parser.verbosity );
-            except Exception,e:
+            except Exception as e:
                 traceback.print_exc(e)
-    except Exception,e:
+    except Exception as e:
         traceback.print_exc(e)
 
 parser = ArgumentParser()
@@ -206,8 +209,8 @@ try:
     settingsData = settingsFile.read()
     settingsFile.close()
     settings = json.loads(settingsData)
-except IOError,e:
-    print "Unable to read settings file: ",e
+except IOError as e:
+    print("Unable to read settings file: ",e)
     exit(1)
 
 try:
@@ -215,13 +218,13 @@ try:
     networkSettingsData = networkSettingsFile.read()
     networkSettingsFile.close()
     networkSettings = json.loads(networkSettingsData)
-except IOError,e:
-    print "Unable to read network settings file: ",e
+except IOError as e:
+    print("Unable to read network settings file: ",e)
     exit(1)
 
 try:
     check_settings(settings)
-except Exception,e:
+except Exception as e:
     traceback.print_exc(e)
     exit(1)
 
@@ -230,7 +233,7 @@ NetworkUtil.settings = networkSettings
 
 fixup_settings()
 
-if parser.verbosity > 0: print "Syncing %s to system..." % parser.file
+if parser.verbosity > 0: print("Syncing %s to system..." % parser.file)
 
 # Write 350-tunnel-vpn iptables file
 filename = parser.prefix + "/etc/untangle/iptables-rules.d/350-tunnel-vpn"
@@ -245,7 +248,7 @@ write_iptables_file( file, parser.verbosity )
 file.flush()
 file.close()
 os.system("chmod a+x %s" % filename)
-if parser.verbosity > 0: print "Wrote %s" % filename
+if parser.verbosity > 0: print("Wrote %s" % filename)
 
 # Write the auth.txt files
 for tunnel in settings.get('tunnels').get('list'):
@@ -264,7 +267,7 @@ for tunnel in settings.get('tunnels').get('list'):
     file.write("%s\n%s\n" % (username,password));
     file.flush()
     file.close()
-    if parser.verbosity > 0: print "Wrote %s" % filename
+    if parser.verbosity > 0: print("Wrote %s" % filename)
 
 
 

@@ -5,18 +5,15 @@ package com.untangle.uvm;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Collections;
+import java.util.Comparator;
 import java.net.InetAddress;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.apache.log4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
@@ -46,13 +43,16 @@ import com.untangle.uvm.network.QosRule;
 import com.untangle.uvm.network.QosRuleCondition;
 import com.untangle.uvm.network.QosPriority;
 import com.untangle.uvm.network.DnsSettings;
-import com.untangle.uvm.network.DnsStaticEntry;
-import com.untangle.uvm.network.DnsLocalServer;
 import com.untangle.uvm.network.DhcpStaticEntry;
 import com.untangle.uvm.network.UpnpSettings;
 import com.untangle.uvm.network.UpnpRule;
 import com.untangle.uvm.network.UpnpRuleCondition;
 import com.untangle.uvm.network.NetflowSettings;
+import com.untangle.uvm.network.DynamicRoutingSettings;
+import com.untangle.uvm.network.DynamicRouteBgpNeighbor;
+import com.untangle.uvm.network.DynamicRouteNetwork;
+import com.untangle.uvm.network.DynamicRouteOspfArea;
+import com.untangle.uvm.network.DynamicRouteOspfInterface;
 import com.untangle.uvm.app.IPMaskedAddress;
 import com.untangle.uvm.app.RuleCondition;
 import com.untangle.uvm.servlet.DownloadHandler;
@@ -129,6 +129,14 @@ public class NetworkManagerImpl implements NetworkManager
             
             this.networkSettings = readSettings;
             configureInterfaceSettingsArray();
+
+            /* 13.2 (dynamic routing) conversion */
+            if(this.networkSettings.getVersion() < 7){
+                this.networkSettings.setDynamicRoutingSettings( defaultDynamicRoutingSettings() );
+                this.networkSettings.setAccessRules( addDynamicRoutingAccessRules( this.networkSettings.getAccessRules() ) );
+                this.networkSettings.setVersion( 7 );
+                this.setNetworkSettings( this.networkSettings, false );
+            }
 
             logger.debug( "Loading Settings: " + this.networkSettings.toJSONString() );
         }
@@ -217,28 +225,14 @@ public class NetworkManagerImpl implements NetworkManager
         configureInterfaceSettingsArray();
         try {logger.debug("New Settings: \n" + new org.json.JSONObject(this.networkSettings).toString(2));} catch (Exception e) {}
 
+
         /**
-         * Now that the settings have been successfully saved
-         * Restart networking
+         * Now actually sync the settings to the system
          */
         ExecManagerResult result;
         boolean errorOccurred = false;
         String errorStr = null;
-
-        String[] commands = getAppropriateNetworkRestartCommand( newSettings );
-        downCommand = commands[0];
-        upCommand = commands[1];
-        
-        // run down command (usually ifdown)
-        result = UvmContextFactory.context().execManager().exec( downCommand );
-        try {
-            String lines[] = result.getOutput().split("\\r?\\n");
-            for ( String line : lines )
-                logger.info( downCommand + ": " + line );
-        } catch (Exception e) {}
-
-        // Now sync those settings to the OS
-        String cmd = "/usr/bin/sync-settings.py -v -f " + settingsFilename;
+        String cmd = "/usr/bin/sync-settings.py -f " + settingsFilename;
         result = UvmContextFactory.context().execManager().exec( cmd );
         try {
             String lines[] = result.getOutput().split("\\r?\\n");
@@ -252,21 +246,8 @@ public class NetworkManagerImpl implements NetworkManager
             errorStr = "sync-settings.py failed: returned " + result.getResult();
         }
         
-        // run up command (usually ifup)
-        result = UvmContextFactory.context().execManager().exec( upCommand );
-        try {
-            String lines[] = result.getOutput().split("\\r?\\n");
-            for ( String line : lines )
-                logger.info( upCommand + ": " + line );
-        } catch (Exception e) {}
-
-        if ( result.getResult() != 0 ) {
-            errorOccurred = true;
-            errorStr = upCommand + " failed: returned " + result.getResult();
-        }
-        
         // notify interested parties that the settings have changed
-        UvmContextFactory.context().hookManager().callCallbacks( HookManager.NETWORK_SETTINGS_CHANGE, this.networkSettings );
+        UvmContextFactory.context().hookManager().callCallbacksSynchronous( HookManager.NETWORK_SETTINGS_CHANGE, this.networkSettings );
 
         if ( errorOccurred ) {
             throw new RuntimeException(errorStr);
@@ -560,7 +541,7 @@ public class NetworkManagerImpl implements NetworkManager
     public InterfaceStatus getInterfaceStatus( int interfaceId )
     {
         InterfaceStatus status = null;
-        String filename = "/var/lib/untangle-interface-status/interface-" + interfaceId + "-status.js";
+        String filename = "/var/lib/interface-status/interface-" + interfaceId + "-status.js";
 
         try {
             status = UvmContextFactory.context().settingsManager().load( InterfaceStatus.class,  filename);
@@ -791,7 +772,7 @@ public class NetworkManagerImpl implements NetworkManager
         NetworkSettings newSettings = new NetworkSettings();
         
         try {
-            newSettings.setVersion( 6 ); // Currently on v6 (as of v13.1)
+            newSettings.setVersion( 7 ); // Currently on v7 (as of v13.2.1)
 
             String hostname = UvmContextFactory.context().oemManager().getOemName().toLowerCase();
             try {
@@ -948,6 +929,7 @@ public class NetworkManagerImpl implements NetworkManager
             newSettings.setQosSettings( defaultQosSettings() );
             newSettings.setUpnpSettings( defaultUpnpSettings() );
             newSettings.setNetflowSettings( new NetflowSettings() );
+            newSettings.setDynamicRoutingSettings( defaultDynamicRoutingSettings() );
             newSettings.setDnsSettings( new DnsSettings() );
             newSettings.setFilterRules( new LinkedList<FilterRule>() );
             newSettings.setAccessRules( defaultAccessRules() );
@@ -1419,7 +1401,7 @@ public class NetworkManagerImpl implements NetworkManager
                 pppCount++;
             }
         }
-        
+
         /**
          * Determine if the interface is a bridge. If so set the symbolic device name
          */
@@ -1450,6 +1432,64 @@ public class NetworkManagerImpl implements NetworkManager
         for ( InterfaceSettings intf : networkSettings.getInterfaces() ) {
             sanitizeInterfaceSettings( intf );
         }
+
+        /**
+         * Sort Interfaces
+         * We may have added new VLAN interfaces and set their interfaceId above
+         * We need to position them in the correct place
+         */
+        List<InterfaceSettings> interfaceList = networkSettings.getInterfaces();
+        Collections.sort(interfaceList, new Comparator<InterfaceSettings>() {
+            public int compare(InterfaceSettings i1, InterfaceSettings i2) {
+                int oi1 = i1.getInterfaceId();
+                int oi2 = i2.getInterfaceId();
+                if (oi1 == oi2) {
+                    return 0;
+                } else if (oi1 < oi2) {
+                    return -1;
+                } else {
+                    return 1;
+                }
+            }
+        });
+        networkSettings.setInterfaces(interfaceList);
+        
+        /**
+         *  Sanitize dynamic routing settings
+         */
+        if (networkSettings.getDynamicRoutingSettings() != null ){
+            if( networkSettings.getDynamicRoutingSettings().getBgpNeighbors() != null) {
+                idx = 0;
+                for (DynamicRouteBgpNeighbor neighbor : networkSettings.getDynamicRoutingSettings().getBgpNeighbors()) {
+                    neighbor.setRuleId(++idx);
+                }
+            }
+            if( networkSettings.getDynamicRoutingSettings().getBgpNetworks() != null) {
+                idx = 0;
+                for (DynamicRouteNetwork network : networkSettings.getDynamicRoutingSettings().getBgpNetworks()) {
+                    network.setRuleId(++idx);
+                }
+            }
+            if( networkSettings.getDynamicRoutingSettings().getOspfNetworks() != null) {
+                idx = 0;
+                for (DynamicRouteNetwork network : networkSettings.getDynamicRoutingSettings().getOspfNetworks()) {
+                    network.setRuleId(++idx);
+                }
+            }
+            if( networkSettings.getDynamicRoutingSettings().getOspfAreas() != null) {
+                idx = 0;
+                for (DynamicRouteOspfArea area : networkSettings.getDynamicRoutingSettings().getOspfAreas()) {
+                    area.setRuleId(++idx);
+                }
+            }
+            if( networkSettings.getDynamicRoutingSettings().getOspfInterfaces() != null) {
+                idx = 0;
+                for (DynamicRouteOspfInterface intf : networkSettings.getDynamicRoutingSettings().getOspfInterfaces()) {
+                    intf.setRuleId(++idx);
+                }
+            }
+        }
+        
         
     }
 
@@ -1682,6 +1722,92 @@ public class NetworkManagerImpl implements NetworkManager
         return upnpSettings;
     }
 
+    private DynamicRoutingSettings defaultDynamicRoutingSettings()
+    {
+        DynamicRoutingSettings drSettings = new DynamicRoutingSettings();
+
+        drSettings.setEnabled( false );
+        List<DynamicRouteBgpNeighbor> bgpNeighbors = new LinkedList<>();
+        drSettings.setBgpNeighbors(bgpNeighbors);
+
+        List<DynamicRouteNetwork> bgpNetworks = new LinkedList<>();
+        drSettings.setBgpNetworks(bgpNetworks);
+
+        List<DynamicRouteNetwork> ospfNetworks = new LinkedList<>();
+        drSettings.setOspfNetworks(ospfNetworks);
+
+        List<DynamicRouteOspfInterface> ospfInterfaces = new LinkedList<>();
+        drSettings.setOspfInterfaces(ospfInterfaces);
+
+        List<DynamicRouteOspfArea> ospfAreas = new LinkedList<>();
+
+        DynamicRouteOspfArea ospfArea = new DynamicRouteOspfArea();
+        ospfArea.setRuleId(1);
+        ospfArea.setDescription("Backbone");
+        ospfArea.setArea("0.0.0.0");
+        ospfArea.setType(0);
+        ospfArea.setVirtualLinks(new LinkedList<InetAddress>());
+        ospfAreas.add(ospfArea);
+
+        drSettings.setOspfAreas(ospfAreas);
+
+        return drSettings;
+    }
+
+    private List<FilterRule> addDynamicRoutingAccessRules(List<FilterRule> accessRules){
+
+        if(accessRules != null){
+            List<FilterRule> dynamicRoutingRules = defaultDynamicRoutingAcessRules();
+            for(FilterRule accessRule: accessRules){
+                if(accessRule.getDescription().startsWith("Allow Dynamic Routing")){
+                    break;
+                }
+                if(accessRule.getDescription().startsWith("Allow AH/ESP")){
+                    int index = accessRules.lastIndexOf(accessRule);
+                    for(FilterRule rule: dynamicRoutingRules){
+                        accessRules.add(index, rule);
+                        index++;
+                    }
+                    break;
+                }
+            }
+        }
+
+        return accessRules;
+    }
+
+    private List<FilterRule> defaultDynamicRoutingAcessRules()
+    {
+        List<FilterRule> rules = new LinkedList<FilterRule>();
+        List<FilterRuleCondition> conditions;
+
+        FilterRule filterRuleBgp = new FilterRule();
+        filterRuleBgp.setReadOnly( true );
+        filterRuleBgp.setEnabled( true );
+        filterRuleBgp.setIpv6Enabled( true );
+        filterRuleBgp.setDescription( "Allow Dynamic Routing BGP (TCP/179)" );
+        filterRuleBgp.setBlocked( false );
+        conditions = new LinkedList<FilterRuleCondition>();
+        conditions.add(new FilterRuleCondition( FilterRuleCondition.ConditionType.DST_PORT, "179" ));
+        conditions.add(new FilterRuleCondition( FilterRuleCondition.ConditionType.PROTOCOL, "TCP" ));
+        filterRuleBgp.setConditions( conditions );
+
+        FilterRule filterRuleOspf = new FilterRule();
+        filterRuleOspf.setReadOnly( true );
+        filterRuleOspf.setEnabled( true );
+        filterRuleOspf.setIpv6Enabled( true );
+        filterRuleOspf.setDescription( "Allow Dynamic Routing OSPF" );
+        filterRuleOspf.setBlocked( false );
+        conditions = new LinkedList<FilterRuleCondition>();
+        conditions.add(new FilterRuleCondition( FilterRuleCondition.ConditionType.PROTOCOL, "OSPF" ));
+        filterRuleOspf.setConditions( conditions );
+
+        rules.add(filterRuleBgp);
+        rules.add(filterRuleOspf);
+
+        return rules;
+    }
+
     private List<FilterRule> defaultAccessRules()
     {
         List<FilterRule> rules = new LinkedList<FilterRule>();
@@ -1891,6 +2017,8 @@ public class NetworkManagerImpl implements NetworkManager
         conditions.add(new FilterRuleCondition( FilterRuleCondition.ConditionType.SRC_INTF, "non_wan" ));
         filterRuleUpnpC.setConditions( conditions );
 
+        List<FilterRule> dynamicRoutingRules = defaultDynamicRoutingAcessRules();
+        
         FilterRule filterRuleAhEsp = new FilterRule();
         filterRuleAhEsp.setReadOnly( true );
         filterRuleAhEsp.setEnabled( true );
@@ -1990,7 +2118,7 @@ public class NetworkManagerImpl implements NetworkManager
         filterRuleBlock.setReadOnly( true );
         List<FilterRuleCondition> rule4Conditions = new LinkedList<FilterRuleCondition>();
         filterRuleBlock.setConditions( rule4Conditions );
-        
+
         rules.add( filterRuleSsh );
         rules.add( filterRuleHttpsWan );
         rules.add( filterRuleHttpsNonWan );
@@ -2002,6 +2130,11 @@ public class NetworkManagerImpl implements NetworkManager
         rules.add( filterRuleUpnp );
         rules.add( filterRuleUpnpB );
         rules.add( filterRuleUpnpC );
+
+        for(FilterRule rule: dynamicRoutingRules){
+            rules.add(rule);
+        }
+
         rules.add( filterRuleAhEsp );
         rules.add( filterRuleIke );
         rules.add( filterRuleNatT );
@@ -2110,150 +2243,6 @@ public class NetworkManagerImpl implements NetworkManager
         }
         
         return deviceNames;
-    }
-
-    /**
-     * This method predicts the files that will change when syncing the new settings to the O/S
-     * It returns a list of files that will change (in content)
-     * If the prediction fails, null is returned
-     */
-    private LinkedList<String> predictUpdatedFiles( NetworkSettings newSettings )
-    {
-        ExecManagerResult result;
-        int retCode;
-        LinkedList<String> changedFiles = new LinkedList<String>();
-        Path tmpDir = null;
-        String cmd;
-        
-        try {
-            tmpDir = Files.createTempDirectory( "tmp-sync-settings" );
-
-            // apply settings in new dir
-            cmd = "/usr/bin/sync-settings.py -v -f " + settingsFilename + " -p " + tmpDir.getFileName();
-            retCode = UvmContextFactory.context().execManager().execResult( cmd );
-
-            if ( retCode != 0 ) {
-                logger.warn( "sync-settings.py failed: returned " + retCode );
-                return null;
-            }
-
-            cmd = "diff -rqP / " + tmpDir + " | grep -v '^Only in' | awk '{print $2}'";
-            result = UvmContextFactory.context().execManager().exec( cmd );
-            
-            if ( result.getResult() != 0 ) {
-                logger.warn( "diff failed: returned " + result.getResult() );
-                return null;
-            }
-            try {
-                String lines[] = result.getOutput().split("\\r?\\n");
-                for ( String line : lines ) {
-                    String filename = line.replaceAll("\\s","");
-                    if ( ! "".equals( filename ) )
-                        changedFiles.add( filename );
-                }
-            } catch (Exception e) {}
-        } catch ( Exception e ) {
-            logger.warn( "Failed to predict changed files", e );
-            try { Files.delete( tmpDir ); } catch ( Exception exc ) { logger.warn("Failed to delete directory " + tmpDir, exc); }
-        }
-
-        return changedFiles;
-    }
-
-    /**
-     * Usually when saving network settings we need to restart all of networking.
-     * However, in a few cases we can get away with just restarting a daemon or two.
-     *
-     * This method computes what is necessary for the provided new NetworkSettings.
-     * 
-     * Returns a string array. The first entry is the command to run before
-     * syncing settings, the second is the command to run after syncing settings
-     */
-    private String[] getAppropriateNetworkRestartCommand( NetworkSettings newSettings )
-    {
-        // default fullRestartCommands are full restart
-        //String[] fullRestartCommands = {"ifdown -a --exclude=lo", "ifup -a --exclude=lo"};
-        String[] fullRestartCommands = {"ifdown -a -v --exclude=lo", "ifup -a -v --exclude=lo"};
-
-        try {
-            LinkedList<String> changedFiles = predictUpdatedFiles( newSettings );
-
-            /**
-             * prediction failed, just do a full restart
-             */
-            if ( changedFiles == null )
-                return fullRestartCommands;
-
-            /**
-             * If nothing is new, we could do several things
-             * Currently we do nothing because in theory nothing has changed
-             * Alternatively, we could just do a full restart anyway
-             */
-            if ( changedFiles.size() == 0 ) {
-                logger.info("No config files changed. Skipping restart...");
-                return new String[] {"/bin/true", "/bin/true"};
-                //logger.info("No config files changed. Syncing settings anyway...");
-                //return fullRestartCommands;
-            }
-
-            for ( String filename : changedFiles )
-                logger.info("Changing file: " + filename);
-
-            /**
-             * If only /etc/hosts and /etc/hosts.dnsmasq have been written, just restart dnsmasq
-             */
-            if ( changedFiles.contains("/etc/hosts") && changedFiles.contains("/etc/hosts.dnsmasq") && changedFiles.size() == 2 ) {
-                return new String[] {"/bin/true", "/etc/untangle/post-network-hook.d/990-restart-dnsmasq"};
-            }
-
-            /**
-             * If only /etc/dnsmasq.d/dhcp-static has changed, just restart dnsmasq
-             */
-            if ( changedFiles.contains("/etc/dnsmasq.d/dhcp-static") && changedFiles.size() == 1 ) {
-                return new String[] {"/bin/true", "/etc/untangle/post-network-hook.d/990-restart-dnsmasq"};
-            }
-
-            /*
-             * If only miniupnp config has been written, just restart miniupnpd
-             */
-            if ( changedFiles.contains("/etc/miniupnpd/miniupnpd.conf") && changedFiles.contains("/etc/untangle/post-network-hook.d/990-restart-upnp") && changedFiles.size() == 2 ) {
-                return new String[] {"/bin/true", "/etc/untangle/post-network-hook.d/990-restart-upnp"};
-            }
-
-            /*
-             * If only miniupnp config has been written, just restart miniupnpd
-             */
-            if ( changedFiles.contains("/etc/miniupnpd/miniupnpd.conf") && changedFiles.size() == 1 ) {
-                return new String[] {"/bin/true", "/etc/untangle/post-network-hook.d/990-restart-upnp"};
-            }
-
-            /**
-             * If only /etc/dnsmasq.conf has been written, just restart dnsmasq
-             * This is commented out because if you just change DNS settings, it will only change dnsmasq.conf
-             * We still need to do a full network restart so new /var/lib/untangle-interface-status/interface-x-status.js files are written
-             * with the new values (bug #12669 for more info)
-             */
-            //if ( changedFiles.contains("/etc/dnsmasq.conf") && changedFiles.size() == 1 ) {
-            //    return new String[] {"/bin/true", "/etc/untangle/post-network-hook.d/990-restart-dnsmasq"};
-            //}
-
-            /**
-             * If only /etc/untangle/iptables-rules.d/* files are changed, just restart iptables rules
-             */
-            int count = 0;
-            for ( String changedFile : changedFiles ) {
-                if ( changedFile.startsWith("/etc/untangle/iptables-rules.d/") )
-                    count++;
-            }
-            if ( count == changedFiles.size() ) {
-                return new String[] {"/bin/true", "/etc/untangle/post-network-hook.d/960-iptables"};
-            }
-        }
-        catch ( Exception e ) {
-            logger.warn("Exception",e);
-        }
-        
-        return fullRestartCommands;
     }
 
     /**

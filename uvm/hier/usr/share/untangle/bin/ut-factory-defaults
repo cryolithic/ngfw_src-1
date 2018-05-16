@@ -4,15 +4,7 @@
 # This file should be rewritten as a run-parts script on a /etc/untangle/restore.d directory
 # This would allow us to create plugins for other packages in the restore.d directory
 
-ourInit() {
-if [ -x /usr/sbin/invoke-rc.d ] && [ ! "`readlink /usr/sbin/invoke-rc.d`" = /bin/true ] ; then
-  invoke-rc.d $1 $2
-else
-  /etc/init.d/$1 $2
-fi
-}
-
-ourInit untangle-vm stop
+systemctl stop untangle-vm
 
 echo "Removing settings and configuration..."
 
@@ -50,17 +42,13 @@ fi
 # rerun all the hardware default scripts
 /usr/sbin/invoke-rc.d --query untangle-vm start
 if [ $? != 101 ] ; then # action is allowed, we're not in a chroot
-    ls /etc/init.d/untangle-hardware-* 2>/dev/null | while read script ; do 
-	echo "$script restart"
-	$script restart
-    done
-    ls /etc/init.d/untangle-firmware-* 2>/dev/null | while read script ; do
-	echo "$script restart"
-	$script restart
+    systemctl list-units | awk '/untangle-(hard|firm)ware/ {print $1}' | while read s ; do
+        echo "systemctl restart $s"
+	systemctl restart $s
     done
 fi
 echo "Restoring File System State...done"
 
-ourInit untangle-vm start
+systemctl start untangle-vm
 
 exit 0

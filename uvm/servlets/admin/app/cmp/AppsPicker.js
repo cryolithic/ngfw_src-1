@@ -81,14 +81,14 @@ Ext.define('Ung.cmp.AppsPicker', {
                 dataIndex: 'state',
                 align: 'right',
                 width: 24,
-                renderer: function (val) {
-                    return '<i class="fa fa-circle ' + (val === 'RUNNING' ? 'fa-green' : 'fa-gray') + '"></i>';
+                renderer: function (state) {
+                    return '<i class="fa fa-circle ' + (state.get('on') ? 'fa-green' : 'fa-gray') + '"></i>';
                 }
             }, {
                 dataIndex: 'displayName',
                 flex: 1,
                 renderer: function (val, meta, record) {
-                    var str = '<img src="/skins/modern-rack/images/admin/apps/' + record.get('name') + '_17x17.png" style="width: 12px; height: 12px; vertical-align: middle;"/> ';
+                    var str = '<img src="/icons/apps/' + record.get('name') + '.svg" style="width: 12px; height: 12px; vertical-align: middle;"/> ';
                     if (!record.get('parentPolicy')) {
                         str += '<strong>' + val + '</strong>';
                     } else {
@@ -125,7 +125,7 @@ Ext.define('Ung.cmp.AppsPicker', {
         if (!apps) { return; }
         var total = apps.length, running = 0, inherited = 0;
         Ext.Array.each(apps, function (app) {
-            if (app.state === 'RUNNING') {
+            if (app.state.get('on')) {
                 running++;
             }
             if (app.inherited) {

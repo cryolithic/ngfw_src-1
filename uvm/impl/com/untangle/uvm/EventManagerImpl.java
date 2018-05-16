@@ -11,23 +11,17 @@ import com.untangle.uvm.event.SyslogRule;
 import com.untangle.uvm.event.TriggerRule;
 import com.untangle.uvm.event.EventRuleCondition;
 import com.untangle.uvm.app.App;
-import com.untangle.uvm.app.AppSettings;
-import com.untangle.uvm.app.AppSettings.AppState;
 import com.untangle.uvm.app.Reporting;
 import com.untangle.uvm.UvmContextFactory;
 import com.untangle.uvm.util.I18nUtil;
 import com.untangle.uvm.SyslogManagerImpl;
 
-import com.untangle.uvm.AdminManager;
-import com.untangle.uvm.AdminSettings;
 import com.untangle.uvm.AdminUserSettings;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -217,7 +211,7 @@ public class EventManagerImpl implements EventManager
         conditions = new LinkedList<EventRuleCondition>();
         condition1 = new EventRuleCondition( "class", "=", "*SessionEvent*" );
         conditions.add( condition1 );
-        condition2 = new EventRuleCondition( "sServerPort", "=", "22" );
+        condition2 = new EventRuleCondition( "SServerPort", "=", "22" );
         conditions.add( condition2 );
         eventRule = new AlertRule( true, conditions, true, true, "Suspicious Activity: Client created many SSH sessions", true, 60, Boolean.TRUE, 20.0D, 60, "CClientAddr");
         rules.add( eventRule );
@@ -225,7 +219,7 @@ public class EventManagerImpl implements EventManager
         conditions = new LinkedList<EventRuleCondition>();
         condition1 = new EventRuleCondition( "class", "=", "*SessionEvent*" );
         conditions.add( condition1 );
-        condition2 = new EventRuleCondition( "sServerPort", "=", "3389" );
+        condition2 = new EventRuleCondition( "SServerPort", "=", "3389" );
         conditions.add( condition2 );
         eventRule = new AlertRule( true, conditions, true, true, "Suspicious Activity: Client created many RDP sessions", true, 60, Boolean.TRUE, 20.0D, 60, "CClientAddr");
         rules.add( eventRule );

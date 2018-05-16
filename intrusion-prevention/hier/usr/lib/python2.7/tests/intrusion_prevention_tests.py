@@ -85,7 +85,7 @@ class IntrusionPreventionInterface:
         try:
             connection = opener.open(request)
         except Exception, e:
-            print e
+            print(e)
             connection = e
 
         if connection.code == 200:
@@ -100,7 +100,7 @@ class IntrusionPreventionInterface:
         """
         Create a patch
         """
-        patch = IntrusionPreventionInterface.config_request_patch_template
+        patch = copy.deepcopy(IntrusionPreventionInterface.config_request_patch_template)
 
         patch_action = ""
         if action == "add":
@@ -241,7 +241,7 @@ class IntrusionPreventionTests(unittest2.TestCase):
         self.intrusion_prevention_interface.setup()
 
         # create blank ruleset to start
-        patch = IntrusionPreventionInterface.config_request_patch_template
+        patch = copy.deepcopy(IntrusionPreventionInterface.config_request_patch_template)
         patch["activeGroups"] = {
             "classtypes": "custom",
             "classtypesSelected": [],
@@ -250,7 +250,6 @@ class IntrusionPreventionTests(unittest2.TestCase):
         }
         self.intrusion_prevention_interface.config_request( "save", patch )
         app.reconfigure()
-        app.start() # must be called since intrusion-prevention doesn't auto-start
 
     def setUp(self):
         self.intrusion_prevention_interface = IntrusionPreventionInterface(app.getAppSettings()["id"])
@@ -278,7 +277,7 @@ class IntrusionPreventionTests(unittest2.TestCase):
         settings = json.loads( self.intrusion_prevention_interface.config_request( "load" ) )
         pre_count = self.intrusion_prevention_interface.count_enabled_rules(settings)
 
-        patch = IntrusionPreventionInterface.config_request_patch_template
+        patch = copy.deepcopy(IntrusionPreventionInterface.config_request_patch_template)
         patch["activeGroups"] = {
             "classtypes": "custom",
             "classtypesSelected": [
@@ -300,7 +299,7 @@ class IntrusionPreventionTests(unittest2.TestCase):
         settings = json.loads( self.intrusion_prevention_interface.config_request( "load" ) )
         pre_count = self.intrusion_prevention_interface.count_enabled_rules(settings)
 
-        patch = IntrusionPreventionInterface.config_request_patch_template
+        patch = copy.deepcopy(IntrusionPreventionInterface.config_request_patch_template)
         patch["activeGroups"] = {
             "classtypes": "recommended",
             "categories": "custom",
@@ -322,7 +321,7 @@ class IntrusionPreventionTests(unittest2.TestCase):
         settings = json.loads( self.intrusion_prevention_interface.config_request( "load" ) )
         pre_count = self.intrusion_prevention_interface.count_enabled_rules(settings)
 
-        patch = IntrusionPreventionInterface.config_request_patch_template
+        patch = copy.deepcopy(IntrusionPreventionInterface.config_request_patch_template)
         patch["activeGroups"] = {
             "classtypes": "custom",
             "classtypesSelected": [
@@ -347,7 +346,7 @@ class IntrusionPreventionTests(unittest2.TestCase):
         settings = json.loads( self.intrusion_prevention_interface.config_request( "load" ) )
         pre_count = self.intrusion_prevention_interface.count_enabled_rules(settings)
 
-        patch = IntrusionPreventionInterface.config_request_patch_template
+        patch = copy.deepcopy(IntrusionPreventionInterface.config_request_patch_template)
         patch["activeGroups"] = {
             "classtypes": "recommended",
             "categories": "recommended"
@@ -369,7 +368,7 @@ class IntrusionPreventionTests(unittest2.TestCase):
         settings = json.loads( self.intrusion_prevention_interface.config_request( "load" ) )
         pre_count = self.intrusion_prevention_interface.count_enabled_rules(settings)
 
-        patch = IntrusionPreventionInterface.config_request_patch_template
+        patch = copy.deepcopy(IntrusionPreventionInterface.config_request_patch_template)
         patch["rules"] = {
             "-1": {
                 "op":"added",
@@ -402,7 +401,7 @@ class IntrusionPreventionTests(unittest2.TestCase):
         settings = json.loads( self.intrusion_prevention_interface.config_request( "load" ) )
         pre_count = self.intrusion_prevention_interface.count_enabled_rules(settings)
 
-        patch = IntrusionPreventionInterface.config_request_patch_template
+        patch = copy.deepcopy(IntrusionPreventionInterface.config_request_patch_template)
         patch["rules"] = {
             "1":{
                 "op":"modified",
@@ -435,7 +434,7 @@ class IntrusionPreventionTests(unittest2.TestCase):
         settings = json.loads( self.intrusion_prevention_interface.config_request( "load" ) )
         pre_count = self.intrusion_prevention_interface.count_enabled_rules(settings)
 
-        patch = IntrusionPreventionInterface.config_request_patch_template
+        patch = copy.deepcopy(IntrusionPreventionInterface.config_request_patch_template)
         patch["rules"] = {
             "4194":{
                 "op":"deleted",
@@ -471,7 +470,7 @@ class IntrusionPreventionTests(unittest2.TestCase):
         settings = json.loads( self.intrusion_prevention_interface.config_request( "load" ) )
         pre_count = self.intrusion_prevention_interface.count_variables(settings)
 
-        patch = IntrusionPreventionInterface.config_request_patch_template
+        patch = copy.deepcopy(IntrusionPreventionInterface.config_request_patch_template)
         patch["variables"] = {
             "-1":{
                 "op":"added",
@@ -490,8 +489,8 @@ class IntrusionPreventionTests(unittest2.TestCase):
 
         settings = json.loads( self.intrusion_prevention_interface.config_request( "load" ) )
         post_count = self.intrusion_prevention_interface.count_variables(settings)
-        print "pre_count: %i"%pre_count
-        print "post_count: %i"%post_count
+        print("pre_count: %i"%pre_count)
+        print("post_count: %i"%post_count)
         assert(pre_count < post_count)
 
     def test_041_variable_modify(self):
@@ -501,7 +500,7 @@ class IntrusionPreventionTests(unittest2.TestCase):
         settings = json.loads( self.intrusion_prevention_interface.config_request( "load" ) )
         pre_count = self.intrusion_prevention_interface.count_variables(settings)
 
-        patch = IntrusionPreventionInterface.config_request_patch_template
+        patch = copy.deepcopy(IntrusionPreventionInterface.config_request_patch_template)
         patch["variables"] = {
             "1":{
                 "op":"modified",
@@ -520,8 +519,8 @@ class IntrusionPreventionTests(unittest2.TestCase):
 
         settings = json.loads( self.intrusion_prevention_interface.config_request( "load" ) )
         post_count = self.intrusion_prevention_interface.count_variables(settings)
-        print "pre_count: %i"%pre_count
-        print "post_count: %i"%post_count
+        print("pre_count: %i"%pre_count)
+        print("post_count: %i"%post_count)
         assert(pre_count == post_count)
 
     def test_042_variable_delete(self):
@@ -531,7 +530,7 @@ class IntrusionPreventionTests(unittest2.TestCase):
         settings = json.loads( self.intrusion_prevention_interface.config_request( "load" ) )
         pre_count = self.intrusion_prevention_interface.count_variables(settings)
 
-        patch = IntrusionPreventionInterface.config_request_patch_template
+        patch = copy.deepcopy(IntrusionPreventionInterface.config_request_patch_template)
         patch["variables"] = {
             "8":{
                 "op":"deleted",
@@ -550,8 +549,8 @@ class IntrusionPreventionTests(unittest2.TestCase):
 
         settings = json.loads( self.intrusion_prevention_interface.config_request( "load" ) )
         post_count = self.intrusion_prevention_interface.count_variables(settings)
-        print "pre_count: %i"%pre_count
-        print "post_count: %i"%post_count
+        print("pre_count: %i"%pre_count)
+        print("post_count: %i"%post_count)
         assert(pre_count > post_count)
 
     #
@@ -713,16 +712,19 @@ class IntrusionPreventionTests(unittest2.TestCase):
             raise unittest2.SkipTest('Skipping a time consuming test')
 
         rule = self.intrusion_prevention_interface.create_rule(msg="TCP Block", type="tcp", block=True, directive="content:\"CompanySecret\"; nocase;")
-
         self.intrusion_prevention_interface.config_request( "save", self.intrusion_prevention_interface.create_patch( "rule", "add", rule ) )
+
         app.reconfigure()
         app.forceUpdateStats()
+
+        time.sleep(5)
 
         pre_events_scan = global_functions.get_app_metric_value(app,"scan")
         pre_events_detect = global_functions.get_app_metric_value(app,"detect")
         pre_events_block = global_functions.get_app_metric_value(app,"block")
         
         result = remote_control.run_command("wget -q -O /dev/null -t 1 --timeout=3 http://test.untangle.com/CompanySecret")
+        time.sleep(5)
 
         app.forceUpdateStats()
         events = global_functions.get_events('Intrusion Prevention','All Events',None,1)
@@ -733,9 +735,9 @@ class IntrusionPreventionTests(unittest2.TestCase):
         post_events_detect = global_functions.get_app_metric_value(app,"detect")
         post_events_block = global_functions.get_app_metric_value(app,"block")
 
-        print "pre_events_scan: %s post_events_scan: %s"%(str(pre_events_scan),str(post_events_scan))
-        print "pre_events_detect: %s post_events_detect: %s"%(str(pre_events_detect),str(post_events_detect))
-        print "pre_events_block: %s post_events_block: %s"%(str(pre_events_block),str(post_events_block))
+        print("pre_events_scan: %s post_events_scan: %s"%(str(pre_events_scan),str(post_events_scan)))
+        print("pre_events_detect: %s post_events_detect: %s"%(str(pre_events_detect),str(post_events_detect)))
+        print("pre_events_block: %s post_events_block: %s"%(str(pre_events_block),str(post_events_block)))
         assert(pre_events_scan < post_events_scan)
         assert(pre_events_detect < post_events_detect)
         assert(pre_events_block < post_events_block)
@@ -779,7 +781,7 @@ class IntrusionPreventionTests(unittest2.TestCase):
                                                "blocked", True,
                                                min_date=startTime )
 
-        print "found: %s"%str(found)
+        print("found: %s"%str(found))
         assert(not found)
 
     def test_071_bypass_tcp_block(self):
@@ -817,7 +819,7 @@ class IntrusionPreventionTests(unittest2.TestCase):
                                                "blocked", True,
                                                min_date=startTime )
 
-        print "found: %s"%str(found)
+        print("found: %s"%str(found))
         assert(not found)
 
     @staticmethod

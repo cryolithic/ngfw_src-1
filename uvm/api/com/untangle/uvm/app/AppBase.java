@@ -14,14 +14,11 @@ import java.net.InetAddress;
 
 import org.apache.log4j.Logger;
 
-import com.untangle.uvm.UvmContext;
 import com.untangle.uvm.UvmContextFactory;
 import com.untangle.uvm.SessionMatcher;
-import com.untangle.uvm.MetricManager;
 import com.untangle.uvm.vnet.AppSession;
 import com.untangle.uvm.vnet.PipelineConnector;
 import com.untangle.uvm.app.AppSettings.AppState;
-import com.untangle.uvm.util.I18nUtil;
 import com.untangle.uvm.logging.LogEvent;
 
 /**
@@ -414,6 +411,10 @@ public abstract class AppBase implements App
 
         this.metrics.remove( metric.getName() );
         this.metricList.remove( metric );
+    }
+
+    public String getStatus(){
+        return "";
     }
     
     public String toString()

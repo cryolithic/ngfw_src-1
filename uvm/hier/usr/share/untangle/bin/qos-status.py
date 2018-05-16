@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os, getopt, sys, json, subprocess, parse, platform
 
@@ -8,7 +8,7 @@ def debug(str):
 
 def run( cmd, ignore_errors=False, print_cmd=False ):
     if print_cmd:
-        print cmd
+        print(cmd)
     ret = os.system( cmd )
     if ret != 0 and not ignore_errors:
         print("ERROR: Command failed: %i \"%s\"" % (ret, cmd))
@@ -36,6 +36,7 @@ def statusToJSON(input):
     entry = {}
     skipEntry=False
     for line in input:
+        line = str(line, 'ascii','ignore')
         if count <= 5:
             res=parse.parse(indexMap[count],line)
             if res == None:
@@ -90,7 +91,7 @@ def status( qos_interfaces, wan_intfs ):
         #run("echo ------ Filter ------")
         #run("tc -s filter ls dev %s" % wan_dev)
         #run("tc -s filter ls dev %s" % imq_dev)
-    print json_objs
+    print(json_objs)
         
 
 #
@@ -98,25 +99,25 @@ def status( qos_interfaces, wan_intfs ):
 #
 
 if not os.path.exists('/usr/share/untangle/settings/untangle-vm/network.js'):
-    print "Failed to read network settings"
+    print("Failed to read network settings")
     sys.exit(1)
 
 network_settings = json.loads(open('/usr/share/untangle/settings/untangle-vm/network.js', 'r').read())
 if network_settings == None:
-    print "Failed to read network settings"
+    print("Failed to read network settings")
     sys.exit(1)
 
 qos_settings = network_settings.get('qosSettings')
 if qos_settings == None:
-    print "Failed to read qos settings"
+    print("Failed to read qos settings")
     sys.exit(1)
 
 if qos_settings.get('defaultPriority') == None:
-    print "Failed to read default class"
+    print("Failed to read default class")
     sys.exit(1)
 
 if network_settings.get('interfaces') == None:
-    print "Failed to read interfaces"
+    print("Failed to read interfaces")
     sys.exit(1)
 interfaces = network_settings.get('interfaces').get('list')
 
@@ -124,16 +125,16 @@ wan_intfs = []
 for intf in interfaces:
     if intf.get('configType') == "ADDRESSED" and intf.get('isWan'):
         if intf.get('systemDev') == None:
-            print "Failed to read systemDev on %s" % intf.get('name')
+            print("Failed to read systemDev on %s" % intf.get('name'))
             sys.exit(1)
         if intf.get('imqDev') == None:
-            print "Failed to read imqDev on %s" % intf.get('name')
+            print("Failed to read imqDev on %s" % intf.get('name'))
             sys.exit(1)
         if intf.get('downloadBandwidthKbps') == None:
-            print "Failed to read downloadBandwidthKbps on %s" % intf.get('name')
+            print("Failed to read downloadBandwidthKbps on %s" % intf.get('name'))
             sys.exit(1)
         if intf.get('uploadBandwidthKbps') == None:
-            print "Failed to read uploadBandwidthKbps on %s" % intf.get('name')
+            print("Failed to read uploadBandwidthKbps on %s" % intf.get('name'))
             sys.exit(1)
         wan_intfs.append(intf)
 

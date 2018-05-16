@@ -24,6 +24,8 @@ Ext.define('Ung.apps.bandwidthcontrol.view.Rules', {
     listProperty: 'settings.rules.list',
     ruleJavaClass: 'com.untangle.app.bandwidth_control.BandwidthControlRuleCondition',
 
+    emptyText: 'No Rules defined'.t(),
+
     emptyRow: {
         ruleId: 0,
         enabled: true,
@@ -163,7 +165,7 @@ Ext.define('Ung.apps.bandwidthcontrol.view.Rules', {
         {name:"DST_PORT",displayName: "Destination Port".t(), type: "textfield",vtype:"portMatcher", visible: true},
         {name:"DST_INTF",displayName: "Destination Interface".t(), type: "checkboxgroup", values: Util.getInterfaceList(true, false), visible: true},
         {name:"SRC_ADDR",displayName: "Source Address".t(), type: "textfield", visible: true, vtype:"ipMatcher"},
-        {name:"SRC_PORT",displayName: "Source Port".t(), type: "textfield", vtype:"portMatcher", visible: rpc.isExpertMode},
+        {name:"SRC_PORT",displayName: "Source Port".t(), type: "textfield", vtype:"portMatcher", visible: Rpc.directData('rpc.isExpertMode')},
         {name:"SRC_INTF",displayName: "Source Interface".t(), type: "checkboxgroup", values: Util.getInterfaceList(true, false), visible: true},
         {name:"PROTOCOL",displayName: "Protocol".t(), type: "checkboxgroup", values: [["TCP","TCP"],["UDP","UDP"],["any","any".t()]], visible: true},
         {name:"TAGGED",displayName: "Tagged".t(), type: "textfield", visible: true},

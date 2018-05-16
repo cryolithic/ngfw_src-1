@@ -20,7 +20,7 @@ Ext.define('Ung.apps.openvpn.view.Status', {
         items: [{
             xtype: 'component',
             cls: 'app-desc',
-            html: '<img src="/skins/modern-rack/images/admin/apps/openvpn_80x80.png" width="80" height="80"/>' +
+            html: '<img src="/icons/apps/openvpn.svg" width="80" height="80"/>' +
                 '<h3>OpenVPN</h3>' +
                 '<p>' + 'OpenVPN provides secure network access and tunneling to remote users and sites using the OpenVPN protocol.'.t() + '</p>'
         }, {
@@ -46,8 +46,8 @@ Ext.define('Ung.apps.openvpn.view.Status', {
             collapsed: true,
             disabled: true,
             bind: {
-                collapsed: '{instance.runState !== "RUNNING"}',
-                disabled: '{instance.runState !== "RUNNING"}'
+                collapsed: '{!state.on}',
+                disabled: '{!state.on}'
             },
             items: [{
                 xtype: 'ungrid',
@@ -118,8 +118,8 @@ Ext.define('Ung.apps.openvpn.view.Status', {
             collapsed: true,
             disabled: true,
             bind: {
-                collapsed: '{instance.runState !== "RUNNING"}',
-                disabled: '{instance.runState !== "RUNNING"}'
+                collapsed: '{!state.on}',
+                disabled: '{!state.on}'
             },
             items: [{
                 xtype: 'ungrid',

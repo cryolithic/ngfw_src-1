@@ -21,7 +21,7 @@ Ext.define('Ung.config.network.MainModel', {
     },
     data: {
         title: 'Network'.t(),
-        iconName: 'icon_config_network',
+        iconName: 'network',
 
         // si = selected interface (from grid)
         settings: null,
@@ -70,6 +70,14 @@ Ext.define('Ung.config.network.MainModel', {
                 property: 'address',
                 direction: 'ASC'
             }],
+        },
+        nextHopDevices:     { 
+            data: '{nextHopDevicesList}',
+            fields:[{
+                name: 'key'
+            },{
+                name: 'value'
+            }]
         },
         // Port Forward
         portForwardRules:   { data: '{settings.portForwardRules.list}' },
@@ -162,9 +170,185 @@ Ext.define('Ung.config.network.MainModel', {
                 direction: 'ASC'
             }],
         },
+        bgpNeighbors:       { data: '{settings.dynamicRoutingSettings.bgpNeighbors.list}' },
+        bgpNetworks:        { data: '{settings.dynamicRoutingSettings.bgpNetworks.list}' },
+        ospfNetworks:       { data: '{settings.dynamicRoutingSettings.ospfNetworks.list}' },
         wanInterfaces: {
             source: '{interfaces}',
             filters: [{ property: 'configType', value: 'ADDRESSED' }, { property: 'isWan', value: true }]
         },
+        ospfAreas: {
+            data: '{settings.dynamicRoutingSettings.ospfAreas.list}',
+            fields:[{
+                name: 'ruleId',
+                type: 'integer'
+            },{
+                name: 'area',
+                type: 'string'
+            },{
+                name: 'description',
+                type: 'string'
+            },{
+                name: 'comboValueField',
+                type: 'string',
+                convert: function(v, record){
+                    return record.get('area') + ' - ' + record.get('description');
+                }
+            }]
+        },
+        ospfInterfaces: {
+            data: '{settings.dynamicRoutingSettings.ospfInterfaces.list}',
+            fields:[{
+                name: 'ruleId',
+                type: 'integer'
+            },{
+                name: 'description',
+                type: 'string'
+            }]
+        },
+        ospfAreaTypes: {
+            data: [{
+                value: 0,
+                type: 'Normal'.t()
+            },{
+                value: 1,
+                type: 'Stub'.t()
+            },{
+                value: 2,
+                type: 'Stub, no summary'.t()
+            },{
+                value: 3,
+                type: 'Not so stubby'.t()
+            },{
+                value: 4,
+                type: 'Not so stubby, no summary'.t()
+            }]
+        },
+        ospfAuthenticationTypes: {
+            data: [{
+                value: 0,
+                type: 'None'.t()
+            },{
+                value: 1,
+                type: 'Text'.t()
+            },{
+                value: 2,
+                type: 'MD5'.t()
+            }]
+        },
+        ospfAbrTypes:{
+            data: [{
+                value: 0,
+                type: 'Default'.t()
+            },{
+                value: 1,
+                type: 'Cisco'.t()
+            },{
+                value: 2,
+                type: 'IBM'.t()
+            },{
+                value: 3,
+                type: 'Shortcut'.t()
+            },{
+                value: 4,
+                type: 'Standard'.t()
+            }]
+        },
+        ospfDevices:{
+            data: [],
+            fields:[{
+                name: 'dev',
+                type: 'string'
+            },{
+                name: 'interface',
+                type: 'string'
+            },{
+                name: 'comboValueField',
+                type: 'string',
+                convert: function(v, record){
+                    return record.get('dev') + ' - ' + record.get('interface');
+                }
+            }]
+        },
+        ospfDefaultInformationOriginates:{
+            data: [{
+                value: 0,
+                type: 'Never'.t()
+            },{
+                value: 1,
+                type: 'Regular'.t()
+            },{
+                value: 2,
+                type: 'Always'.t()
+            }]
+        },
+        ospfMetricTypes:{
+            data: [{
+                value: 1,
+                type: 'Type 1'.t()
+            },{
+                value: 2,
+                type: 'Type 2'.t()
+            }]
+        },
+        dymamicRoutes: {
+            data: [],
+            fields: [{
+                name: 'network',
+                sortType: 'asIp'
+            },{
+                name: 'prefix',
+                type: 'integer'
+            },{
+                name: 'via',
+                sortType: 'asIp'
+            },{
+                name: 'dev',
+                type: 'string'
+            },{
+                name: 'interface',
+                type: 'string'
+            },{
+                name: 'attributes'
+            }]
+        },
+        bgpStatus: {
+            data: [],
+            fields: [{
+                name: 'neighbor',
+                sortType: 'asIp'
+            },{
+                name: 'as',
+                type: 'integer'
+            },{
+                name: 'msgsRecv',
+                typ: 'integer'
+            },{
+                name: 'msgsSent',
+                typ: 'integer'
+            },{
+                name: 'uptime',
+                typ: 'integer'
+            }]
+        },
+        ospfStatus: {
+            data: [],
+            fields: [{
+                name: 'neighbor',
+                sortType: 'asIp'
+            },{
+                name: 'address',
+                sortType: 'asIp'
+            },{
+                name: 'time',
+                type: 'float'
+            },{
+                name: 'dev',
+                typ: 'string'
+            },{
+                name: 'interface',
+                typ: 'string'
+            }]
+        }
     }
 });

@@ -5,11 +5,16 @@
 package com.untangle.app.tunnel_vpn;
 
 import java.net.InetAddress;
-import java.util.Date;
 import java.io.Serializable;
 import org.json.JSONObject;
 import org.json.JSONString;
 
+/**
+ * Class for managing the status of a VPN tunnel
+ * 
+ * @author mahotz
+ * 
+ */
 @SuppressWarnings("serial")
 public class TunnelVpnTunnelStatus implements JSONString, Serializable
 {
@@ -18,6 +23,7 @@ public class TunnelVpnTunnelStatus implements JSONString, Serializable
     private String tunnelName;
     private String stateInfo = STATE_DISCONNECTED;
     private String stateLast = STATE_DISCONNECTED;
+    private long cycleCount = 0;
     private long connectStamp = 0;
     private long xmitTotal = 0;
     private long xmitLast = 0;
@@ -31,10 +37,9 @@ public class TunnelVpnTunnelStatus implements JSONString, Serializable
     public static final String STATE_DISCONNECTED = "DISCONNECTED";
     public static final String STATE_CONNECTED = "CONNECTED";
 
-    public TunnelVpnTunnelStatus(int tunnelId, String tunnelName)
+    public TunnelVpnTunnelStatus(int tunnelId)
     {
         this.tunnelId = tunnelId;
-        this.tunnelName = tunnelName;
     }
 
 // THIS IS FOR ECLIPSE - @formatter:off
@@ -54,6 +59,9 @@ public class TunnelVpnTunnelStatus implements JSONString, Serializable
 
         public String getStateLast() { return(stateLast); }
         public void setStateLast(String argValue) { this.stateLast = argValue; }
+
+        public long getCycleCount() { return(cycleCount); }
+        public void setCycleCount(long argValue) { this.cycleCount = argValue; }
 
         public long getConnectStamp() { return(connectStamp); }
         public void setConnectStamp(long argValue) { this.connectStamp = argValue; }

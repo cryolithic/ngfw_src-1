@@ -18,8 +18,8 @@ os.environ['DEBIAN_FRONTEND'] = 'noninteractive'
 os.environ['PATH'] = '/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:' + os.environ['PATH']
 
 # apt-get options for various commands
-INSTALL_OPTS = " -o DPkg::Options::=--force-confnew --yes --force-yes --fix-broken --purge "
-UPGRADE_OPTS = " -o DPkg::Options::=--force-confnew --yes --force-yes --fix-broken --purge -o Debug::Pkgproblemresolver=1 -o Debug::Pkgpolicy=1 "
+INSTALL_OPTS = " -o DPkg::Options::=--force-confnew -o DPkg::Options::=--force-confmiss --yes --force-yes --fix-broken --purge "
+UPGRADE_OPTS = " -o DPkg::Options::=--force-confnew -o DPkg::Options::=--force-confmiss --yes --force-yes --fix-broken --purge -o Debug::Pkgproblemresolver=1 -o Debug::Pkgpolicy=1 "
 UPDATE_OPTS = " --yes --force-yes "
 AUTOREMOVE_OPTS = " --yes --force-yes --purge "
 QUIET=False
@@ -45,7 +45,7 @@ upgrade_log = open("/var/log/uvm/upgrade.log", "a")
 try:
      opts, args = getopt.getopt(sys.argv[1:], "q", ['quiet'])
 except getopt.GetoptError, err:
-     print str(err)
+     print(str(err))
      printUsage()
      sys.exit(2)
 
@@ -65,7 +65,7 @@ def log(str):
         pass
     try:
         if not QUIET:
-            print str
+            print(str)
     except: 
         pass
 
@@ -120,6 +120,7 @@ if "2.6.32" in platform.platform():
     log("Upgrade(s) are not allowed on the 2.6.32 kernel. Please reboot and select a newer kernel.")
     sys.exit(1)
 
+log_date("")
 log("")
 
 r = check_upgrade();
@@ -128,9 +129,13 @@ if r != 0:
     sys.exit(1)
 
 upgrade()
+
+log_date("")
 log("")
 
 autoremove()
+
+log_date("")
 log("")
 
 log_date( os.path.basename( sys.argv[0]) + " done." )

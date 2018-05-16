@@ -14,7 +14,6 @@ import java.util.StringTokenizer;
 
 import org.apache.log4j.Logger;
 import org.jabsorb.JSONSerializer;
-import org.jabsorb.serializer.UnmarshallException;
 
 import com.untangle.app.ad_blocker.cookies.CookieElement;
 import com.untangle.uvm.app.GenericRule;
@@ -46,12 +45,12 @@ public class RulesLoader
      */
     static void loadRules(AdBlockerSettings settings)
     {
-        HashMap<String,GenericRule> currentRulesMap = new HashMap<String,GenericRule>();
+        HashMap<String,GenericRule> currentRulesMap = new HashMap<>();
         for ( GenericRule rule : settings.getRules() ) {
             currentRulesMap.put( rule.getString(), rule);
         }
 
-        LinkedList<GenericRule> rules = new LinkedList<GenericRule>();
+        LinkedList<GenericRule> rules = new LinkedList<>();
         try {
             File file = new File(RULE_FILE);
             BufferedReader in = new BufferedReader(new FileReader(file));
@@ -107,9 +106,9 @@ public class RulesLoader
      */
     static void loadCookieListGhostery(AdBlockerSettings settings)
     {
-        List<GenericRule> cookieRules = new LinkedList<GenericRule>();
+        List<GenericRule> cookieRules = new LinkedList<>();
 
-        HashMap<String,GenericRule> currentCookiesMap = new HashMap<String,GenericRule>();
+        HashMap<String,GenericRule> currentCookiesMap = new HashMap<>();
         for ( GenericRule rule : settings.getCookies() ) {
             currentCookiesMap.put( rule.getString(), rule );
         }

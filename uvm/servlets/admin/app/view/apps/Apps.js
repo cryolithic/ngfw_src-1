@@ -3,9 +3,8 @@ Ext.define('Ung.view.apps.Apps', {
     xtype: 'ung.apps',
     itemId: 'apps',
     layout: 'card',
-    // layout: 'border',
 
-    itemType: rpc.skinInfo.appsViewType === 'rack' ? 'rackitem' : 'simpleitem',
+    itemType: Rpc.directData('rpc.skinInfo.appsViewType') === 'rack' ? 'rackitem' : 'simpleitem',
 
     controller: 'apps',
     viewModel: {
@@ -31,21 +30,14 @@ Ext.define('Ung.view.apps.Apps', {
 
     dockedItems: [{
         xtype: 'toolbar',
-        ui: 'navigation',
+        ui: 'footer',
         dock: 'top',
-        border: false,
-        style: {
-            background: '#333435',
-            // zIndex: 9997
-        },
-        defaults: {
-            border: false
-        },
-        items: Ext.Array.insert(Ext.clone(Util.subNav), 0, [{
+        style: { background: '#D8D8D8' },
+        items: [{
             xtype: 'button',
-            html: 'Back to Apps',
+            text: 'Back to Apps',
             iconCls: 'fa fa-arrow-circle-left',
-            hrefTarget: '_self',
+            focusable: false,
             hidden: true,
             bind: {
                 hidden: '{onInstalledApps}'
@@ -55,49 +47,40 @@ Ext.define('Ung.view.apps.Apps', {
             xtype: 'button',
             reference: 'policyBtn',
             hidden: true,
-            cls: 'policy-menu',
             iconCls: 'fa fa-file-text-o',
-            arrowVisible: false,
+            focusable: false,
             bind: {
-                text: '{policyName} &nbsp;<i class="fa fa-angle-down fa-lg"></i>',
+                text: '{policyName}',
                 hidden: '{!onInstalledApps || !policyManagerInstalled}'
             }
         }, {
             xtype: 'button',
-            html: 'Install Apps'.t(),
+            text: 'Install Apps'.t(),
             iconCls: 'fa fa-download',
-            hrefTarget: '_self',
-            // hidden: true,
+            focusable: false,
             handler: 'showInstall',
+            hidden: true,
             bind: {
-            //     href: '#apps/{policyId}/install',
                 hidden: '{!onInstalledApps}'
             }
         }, {
             xtype: 'component',
-            margin: '0 10',
-            cls: 'install-header',
             reference: 'installHeader',
             html: '',
             hidden: true,
             bind: {
-                html: '<i class="fa fa-angle-right fa-lg"></i> &nbsp;&nbsp;&nbsp;&nbsp; Install Apps in &nbsp;<i class="fa fa-file-text-o"></i> <strong>{policyName}</strong> policy',
+                html: 'Available Apps for &nbsp;<i class="fa fa-file-text-o"></i> <strong>{policyName}</strong>',
                 hidden: '{onInstalledApps || !policyManagerInstalled}'
             }
-        }])
+        }]
     }],
 
 
     items: [{
         itemId: 'installedApps',
-        xtype: rpc.skinInfo.appsViewType === 'rack' ? 'apps-rack' : 'apps-simple',
-        // region: 'center',
+        xtype: Rpc.directData('rpc.skinInfo.appsViewType') === 'rack' ? 'apps-rack' : 'apps-simple',
     }, {
         scrollable: true,
-
-        // region: 'east',
-        // width: '55%',
-        // split: true,
 
         itemId: 'installableApps',
         layout: { type: 'vbox', align: 'stretch' },
@@ -110,7 +93,7 @@ Ext.define('Ung.view.apps.Apps', {
             bind: '{installableApps}',
             tpl: '<tpl for=".">' +
                     '<div class="app-install-item {extraCls}">' +
-                    '<img src="' + '/skins/modern-rack/images/admin/apps/{name}_80x80.png" width=80 height=80/>' +
+                    '<img src="' + '/icons/apps/{name}.svg" width=80 height=80/>' +
                     '<i class="fa fa-download fa-3x"></i>' +
                     '<i class="fa fa-check fa-3x"></i>' +
                     '<span class="loader">Loading...</span>' +
@@ -127,7 +110,7 @@ Ext.define('Ung.view.apps.Apps', {
             bind: '{installableServices}',
             tpl: '<tpl for=".">' +
                     '<div class="app-install-item {extraCls}">' +
-                    '<img src="' + '/skins/modern-rack/images/admin/apps/{name}_80x80.png" width=80 height=80/>' +
+                    '<img src="' + '/icons/apps/{name}.svg" width=80 height=80/>' +
                     '<i class="fa fa-download fa-3x"></i>' +
                     '<i class="fa fa-check fa-3x"></i>' +
                     '<span class="loader">Loading...</span>' +

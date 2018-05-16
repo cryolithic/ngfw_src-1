@@ -7,15 +7,15 @@ echo " = IPv4 Rules = "
 ip -4 rule ls
 echo
 
-echo " = IPv4 Table main = "
-ip -4 route show table main | grep -v '192.0.2.'
-echo
-
 for i in main balance default local ; do
     echo " = IPv4 Table $i = "
     ip -4 route show table $i
     echo
 done
+
+echo " = IPv4 Dynamic Routing = "
+ip -4 route show proto zebra
+echo
 
 awk '/uplink/ {print $2}' /etc/iproute2/rt_tables | while read table ; do
     echo " = IPv4 Table $table = "

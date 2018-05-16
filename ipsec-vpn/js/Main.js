@@ -4,38 +4,6 @@ Ext.define('Ung.apps.ipsecvpn.Main', {
     controller: 'app-ipsec-vpn',
 
     viewModel: {
-
-        formulas: {
-
-            ipsecStateInfo: {
-                get: function(get) {
-                    var ipsecApp = rpc.appManager.app('ipsec-vpn');
-                    return(ipsecApp.getStateInfo());
-                }
-            },
-
-            ipsecPolicyInfo: {
-                get: function(get) {
-                    var ipsecApp = rpc.appManager.app('ipsec-vpn');
-                    return(ipsecApp.getPolicyInfo());
-                }
-            },
-
-            ipsecSystemLog: {
-                get: function(get) {
-                    var ipsecApp = rpc.appManager.app('ipsec-vpn');
-                    return(ipsecApp.getLogFile());
-                }
-            },
-
-            ipsecVirtualLog: {
-                get: function(get) {
-                    var ipsecApp = rpc.appManager.app('ipsec-vpn');
-                    return(ipsecApp.getVirtualLogFile());
-                }
-            }
-        },
-
         data: {
             autoRefresh: false,
             tunnelStatusData: [],
@@ -206,23 +174,6 @@ Ext.define('Ung.apps.ipsecvpn.Main', {
                 ]
             }
         }
-    },
-
-    tabBar: {
-        items: [{
-            xtype: 'component',
-            margin: '0 0 0 10',
-            cls: 'view-reports',
-            autoEl: {
-                tag: 'a',
-                href: '#reports/ipsec-vpn',
-                html: '<i class="fa fa-line-chart"></i> ' + 'View Reports'.t()
-            },
-            hidden: true,
-            bind: {
-                hidden: '{!reportsEnabled || instance.runState !== "RUNNING"}'
-            }
-        }]
     },
 
     items: [

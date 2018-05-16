@@ -14,30 +14,13 @@ Ext.define('Ung.apps.virusblocker.Main', {
         formulas: {
             getSignatureTimestamp: {
                 get: function(get) {
-                    var stamp = this.getView().appManager.getLastSignatureUpdate();
+                    var stamp = Rpc.directData(this.getView().appManager, 'getLastSignatureUpdate');
                     if ((stamp == null) || (stamp === 0)) return('unknown');
                     return(Util.timestampFormat(stamp));
                 }
             }
         }
 
-    },
-
-    tabBar: {
-        items: [{
-            xtype: 'component',
-            margin: '0 0 0 10',
-            cls: 'view-reports',
-            autoEl: {
-                tag: 'a',
-                href: '#reports/virus-blocker',
-                html: '<i class="fa fa-line-chart"></i> ' + 'View Reports'.t()
-            },
-            hidden: true,
-            bind: {
-                hidden: '{!reportsEnabled || instance.runState !== "RUNNING"}'
-            }
-        }]
     },
 
     items: [

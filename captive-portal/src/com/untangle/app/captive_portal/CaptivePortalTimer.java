@@ -7,7 +7,6 @@ package com.untangle.app.captive_portal;
 import java.util.TimerTask;
 import java.util.ArrayList;
 import org.apache.log4j.Logger;
-import com.untangle.uvm.util.LoadAvg;
 
 /**
  * This is a timer task that runs periodically, gets a list of stale users, and
@@ -50,7 +49,7 @@ public class CaptivePortalTimer extends TimerTask
             int counter = 0;
 
             for (CaptivePortalUserTable.StaleUser item : staleUsers) {
-                app.userLogout(item.netaddr, item.reason);
+                app.userForceLogout(item.useraddr, item.reason);
                 counter++;
             }
 

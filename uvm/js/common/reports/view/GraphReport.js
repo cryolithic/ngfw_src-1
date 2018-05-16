@@ -32,6 +32,9 @@ Ext.define('Ung.view.reports.GraphReport', {
             view.setWidget(view.up('reportwidget'));
             // if it's a widget, than fetch data after the report entry is binded to it
             vm.bind('{entry}', function (entry) {
+                if(Util.isDestroyed(me, view)){
+                    return;
+                }
                 if (!entry ||
                     ( entry.get('type') !== 'PIE_GRAPH' &&
                       entry.get('type') !== 'TIME_GRAPH' &&
@@ -53,11 +56,17 @@ Ext.define('Ung.view.reports.GraphReport', {
 
             // when editing entry update graph styles on the fly
             vm.bind('{eEntry.pieStyle}', function (pieStyle) {
+                if(Util.isDestroyed(me)){
+                    return;
+                }
                 if (!pieStyle) { return; }
                 me.setStyles();
             });
 
             vm.bind('{eEntry.timeStyle}', function (timeStyle) {
+                if(Util.isDestroyed(me)){
+                    return;
+                }
                 if (!timeStyle) { return; }
                 me.setStyles();
             });
@@ -76,10 +85,56 @@ Ext.define('Ung.view.reports.GraphReport', {
                     marginRight: isWidget ? undefined : 20,
                     spacing: isWidget ? [5, 5, 10, 5] : [30, 10, 15, 10],
                     style: { fontFamily: 'Roboto Condensed', fontSize: '10px' },
-                    backgroundColor: 'transparent'
+                    backgroundColor: 'transparent',
+                    selectedrange: null,
+                    events: {
+                        selection: function (event) {
+                            if (isWidget) { return; } // applies only when viewing the report
+                            if (event.resetSelection) {
+                                me.chart.update({
+                                    exporting: {
+                                        buttons: {
+                                            timerangeButton: {
+                                                enabled: false
+                                            }
+                                        }
+                                    }
+                                });
+                                me.chart.selectedrange = null;
+                            } else {
+                                me.chart.update({
+                                    exporting: {
+                                        buttons: {
+                                            timerangeButton: {
+                                                enabled: true
+                                            }
+                                        }
+                                    }
+                                });
+                                me.chart.selectedrange = {
+                                    min: event.xAxis[0].min,
+                                    max: event.xAxis[0].max
+                                };
+                            }
+                        }
+                    }
                 },
                 exporting: {
-                    enabled: false
+                    enabled: true,
+                    buttons: {
+                        contextButton: {
+                            enabled: false // disable default contextButton
+                        },
+                        timerangeButton: {
+                            text: 'Apply this timerange'.t(),
+                            align: 'center',
+                            enabled: false, // this updates based on zoom selection
+                            y: 10,
+                            onclick: function() {
+                                Ext.fireEvent('timerangechange', me.chart.selectedrange);
+                            }
+                        }
+                    }
                 },
                 navigator: { enabled: false },
                 rangeSelector : { enabled: false },
@@ -333,8 +388,8 @@ Ext.define('Ung.view.reports.GraphReport', {
                 endDate = null;
             } else {
                 // if it's a report, convert UI client start date to server date
-                startDate = Util.clientToServerDate(vm.get('f_startdate'));
-                endDate = Util.clientToServerDate(vm.get('f_enddate'));
+                startDate = Util.clientToServerDate(vm.get('time.range.since'));
+                endDate = Util.clientToServerDate(vm.get('time.range.until'));
             }
 
             // if (reset) { me.reset(); }
@@ -345,16 +400,29 @@ Ext.define('Ung.view.reports.GraphReport', {
                 entry.getData(), // entry
                 startDate,
                 endDate,
-                vm.get('globalConditions'), -1) // sql filters
+                vm.get('query.conditions'), -1) // sql filters
                 .then(function (result) {
+                    if(Util.isDestroyed(me)){
+                        return;
+                    }
                     me.data = result.list;
                     me.setSeries();
                     if (cb) { cb(me.data); }
                 }, function () {
+                    if(Util.isDestroyed(vm)){
+                        return;
+                    }
+                    if (cb) { cb(); }
                     vm.set('eError', true);
                 })
                 .always(function () {
+                    if(Util.isDestroyed(me)){
+                        return;
+                    }
                     if (reps) { reps.getViewModel().set('fetching', false); }
+                    if( me.chart.noDataLabel === undefined){
+                        me.chart.zoomOut();
+                    }
                     me.chart.hideLoading();
                 });
         },
@@ -392,7 +460,7 @@ Ext.define('Ung.view.reports.GraphReport', {
          */
         setSeries: function () {
             var me = this, vm = this.getViewModel(), entry = vm.get('eEntry') || vm.get('entry'),
-                seriesRenderer = entry.get('seriesRenderer') ? Renderer[entry.get('seriesRenderer')] : null,
+                seriesRenderer = ( entry && entry.get('seriesRenderer') ) ? Renderer[entry.get('seriesRenderer')] : null,
                 seriesData,
                 seriesName;
 
@@ -406,7 +474,7 @@ Ext.define('Ung.view.reports.GraphReport', {
                 return;
             }
 
-            if (entry.get('type') === 'TIME_GRAPH' || entry.get('type') === 'TIME_GRAPH_DYNAMIC') {
+            if ( entry && ( entry.get('type') === 'TIME_GRAPH' || entry.get('type') === 'TIME_GRAPH_DYNAMIC') ){
                 var dataColumns = [], units = entry.get('units');
 
                 // get or generate series names based on timeDataColumns for TIME_GRAPH or data form TIME_GRAPH_DYNAMIC
@@ -432,7 +500,7 @@ Ext.define('Ung.view.reports.GraphReport', {
                     seriesData = [];
                     Ext.Array.each(me.data, function (row) {
                         seriesData.push([
-                            row.time_trunc.time || row.time_trunc, // for sqlite is time_trunc, for postgres is time_trunc.time
+                            ( row.time_trunc && row.time_trunc.time ) || row.time_trunc, // for sqlite is time_trunc, for postgres is time_trunc.time
                             row[column] || 0
                         ]);
                     });
@@ -463,7 +531,7 @@ Ext.define('Ung.view.reports.GraphReport', {
                 });
             }
 
-            if (entry.get('type') === 'PIE_GRAPH') {
+            if (entry && ( entry.get('type') === 'PIE_GRAPH') ){
                 var othersValue = 0;
                 seriesData = [];
 
@@ -523,14 +591,15 @@ Ext.define('Ung.view.reports.GraphReport', {
             var me = this, vm = me.getViewModel(), entry = vm.get('eEntry') || vm.get('entry'), colors,
                 isWidget = me.getView().isWidget, plotLines = [],
 
-                isTimeColumn = false, isColumnStacked = false, isColumnOverlapped = false,
+                isColumnStacked = false, isColumnOverlapped = false,
                 isPieColumn = false, isDonut = false, isPie = false, is3d = false;
 
             if (!entry) { return; }
 
             // NGFW-11448 - apply 12/24 time format on graphs
             var timeLabelFormats;
-            if (rpc.translations.timestamp_fmt && rpc.translations.timestamp_fmt.indexOf('h:i:s a') >= 0 ) {
+            var timestampFormat = Rpc.directData('rpc.translations.timestamp_fmt');
+            if (timestampFormat && timestampFormat.indexOf('h:i:s a') >= 0 ) {
                 // 12 hours format
                 timeLabelFormats = {
                     xAxis: {
@@ -582,7 +651,6 @@ Ext.define('Ung.view.reports.GraphReport', {
             var isTimeGraph = entry.get('type').indexOf('TIME_GRAPH') >= 0;
 
             if (isTimeGraph) {
-                isTimeColumn = entry.get('timeStyle').indexOf('BAR') >= 0;
                 isColumnStacked = entry.get('timeStyle').indexOf('STACKED') >= 0;
                 isColumnOverlapped = entry.get('timeStyle').indexOf('OVERLAPPED') >= 0;
             }
@@ -666,15 +734,12 @@ Ext.define('Ung.view.reports.GraphReport', {
                             color: isWidget ? (Ung.dashboardSettings.theme !== 'DARK' ? '#EEE' : '#444') : '#EEE',
                             label: {
                                 text: Ext.Date.format(d, 'Y-m-d'),
-                                rotation: 0,
                                 y: 15,
                                 style: {
                                     fontSize: '12px',
                                     color: '#999'
                                 }
-                                // rotation:
-                            },
-                            zIndex: 900
+                            }
                         });
                     }
                 });
@@ -736,11 +801,12 @@ Ext.define('Ung.view.reports.GraphReport', {
                         grouping: !isColumnOverlapped,
                         groupPadding: isColumnOverlapped ? 0.1 : 0.15,
                         // shadow: !isColumnOverlapped,
-                        dataGrouping: isTimeGraph ? { groupPixelWidth: isColumnOverlapped ? 50 : 50 } : undefined
+                        dataGrouping: isTimeGraph ? 50 : undefined
                     }
                 },
                 xAxis: {
                     visible: !isPie,
+                    minRange: 10 * 60 * 1000, // minzoom = 10 minutes
                     // tickPixelInterval: 50,
                     type: isTimeGraph ? 'datetime' : 'category',
                     crosshair: isTimeGraph ? {

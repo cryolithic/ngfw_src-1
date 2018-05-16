@@ -7,14 +7,11 @@ package com.untangle.app.tunnel_vpn;
 import java.util.List;
 import java.util.LinkedList;
 import java.util.Optional;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.stream.Collectors;
 import java.util.Collections;
 import java.io.InputStream;
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -24,23 +21,22 @@ import org.apache.commons.fileupload.FileItem;
 
 import com.untangle.uvm.UvmContextFactory;
 import com.untangle.uvm.SettingsManager;
-import com.untangle.uvm.SessionMatcher;
 import com.untangle.uvm.ExecManagerResult;
 import com.untangle.uvm.HookCallback;
-import com.untangle.uvm.util.I18nUtil;
 import com.untangle.uvm.app.AppSettings;
 import com.untangle.uvm.app.AppProperties;
-import com.untangle.uvm.app.AppMetric;
 import com.untangle.uvm.app.AppBase;
-import com.untangle.uvm.vnet.Affinity;
-import com.untangle.uvm.vnet.Fitting;
-import com.untangle.uvm.vnet.Protocol;
-import com.untangle.uvm.vnet.AppSession;
 import com.untangle.uvm.vnet.PipelineConnector;
 import com.untangle.uvm.servlet.UploadHandler;
 import com.untangle.uvm.network.NetworkSettings;
 import com.untangle.uvm.network.InterfaceSettings;
 
+/**
+ * The Tunnel VPN application connects to 3rd party VPN tunnel providers.
+ * 
+ * @author mahotz
+ * 
+ */
 public class TunnelVpnApp extends AppBase
 {
     private final Logger logger = Logger.getLogger(getClass());
@@ -56,6 +52,14 @@ public class TunnelVpnApp extends AppBase
 
     private final TunnelVpnNetworkHookCallback networkHookCallback = new TunnelVpnNetworkHookCallback();
 
+    /**
+     * Constructor
+     * 
+     * @param appSettings
+     *        The application settings
+     * @param appProperties
+     *        The application properties
+     */
     public TunnelVpnApp(AppSettings appSettings, AppProperties appProperties)
     {
         super(appSettings, appProperties);
@@ -64,11 +68,22 @@ public class TunnelVpnApp extends AppBase
         tunnelVpnMonitor = new TunnelVpnMonitor(this, tunnelVpnManager);
     }
 
+    /**
+     * Get the application settings
+     * 
+     * @return The application settings
+     */
     public TunnelVpnSettings getSettings()
     {
         return settings;
     }
 
+    /**
+     * Set the application settings
+     * 
+     * @param newSettings
+     *        The new settings
+     */
     public void setSettings(final TunnelVpnSettings newSettings)
     {
         /**
@@ -164,18 +179,35 @@ public class TunnelVpnApp extends AppBase
         }
     }
 
+    /**
+     * Get the list of pipeline connectors
+     * 
+     * @return List of pipeline connectors
+     */
     @Override
     protected PipelineConnector[] getConnectors()
     {
         return this.connectors;
     }
 
+    /**
+     * Called before the application is started
+     * 
+     * @param isPermanentTransition
+     *        Permanent transition flag
+     */
     @Override
     protected void preStart(boolean isPermanentTransition)
     {
         UvmContextFactory.context().hookManager().registerCallback(com.untangle.uvm.HookManager.NETWORK_SETTINGS_CHANGE, this.networkHookCallback);
     }
 
+    /**
+     * Called after the application is started
+     * 
+     * @param isPermanentTransition
+     *        Permanent transition flag
+     */
     @Override
     protected void postStart(boolean isPermanentTransition)
     {
@@ -184,6 +216,12 @@ public class TunnelVpnApp extends AppBase
         this.tunnelVpnMonitor.start();
     }
 
+    /**
+     * Called before the application is stopped
+     * 
+     * @param isPermanentTransition
+     *        Permanent transition flag
+     */
     @Override
     protected void preStop(boolean isPermanentTransition)
     {
@@ -191,12 +229,21 @@ public class TunnelVpnApp extends AppBase
         this.tunnelVpnManager.killProcesses();
     }
 
+    /**
+     * Called after the application is stopped
+     * 
+     * @param isPermanentTransition
+     *        Permanent transition flag
+     */
     @Override
     protected void postStop(boolean isPermanentTransition)
     {
         UvmContextFactory.context().hookManager().unregisterCallback(com.untangle.uvm.HookManager.NETWORK_SETTINGS_CHANGE, this.networkHookCallback);
     }
 
+    /**
+     * Called after the application is destroyed
+     */
     @Override
     protected void postDestroy()
     {
@@ -204,6 +251,9 @@ public class TunnelVpnApp extends AppBase
         removeAllTunnelVirtualInterfaces();
     }
 
+    /**
+     * Called after application initialization
+     */
     @Override
     protected void postInit()
     {
@@ -246,6 +296,9 @@ public class TunnelVpnApp extends AppBase
         }
     }
 
+    /**
+     * Called to initialize application settings
+     */
     public void initializeSettings()
     {
         logger.info("Initializing Settings...");
@@ -255,11 +308,21 @@ public class TunnelVpnApp extends AppBase
         setSettings(settings);
     }
 
+    /**
+     * Called to get a new tunnel ID value when creating a new tunnel
+     * 
+     * @return A tunnel ID value
+     */
     public int getNewTunnelId()
     {
         return this.tunnelVpnManager.getNewTunnelId();
     }
 
+    /**
+     * Get the application log file
+     * 
+     * @return The application log file
+     */
     public String getLogFile()
     {
         File f = new File(TUNNEL_LOG);
@@ -284,6 +347,11 @@ public class TunnelVpnApp extends AppBase
         }
     }
 
+    /**
+     * Create default application settings
+     * 
+     * @return Default settings
+     */
     private TunnelVpnSettings getDefaultSettings()
     {
         logger.info("Creating the default settings...");
@@ -337,6 +405,16 @@ public class TunnelVpnApp extends AppBase
         return settings;
     }
 
+    /**
+     * Imports a new tunnel configuration
+     * 
+     * @param filename
+     *        The name of the file
+     * @param provider
+     *        The tunnel provider
+     * @param tunnelId
+     *        The tunnel ID
+     */
     public void importTunnelConfig(String filename, String provider, int tunnelId)
     {
         this.tunnelVpnManager.importTunnelConfig(filename, provider, tunnelId);
@@ -344,11 +422,22 @@ public class TunnelVpnApp extends AppBase
         if (this.getRunState() == AppSettings.AppState.RUNNING) this.tunnelVpnManager.restartProcesses();
     }
 
+    /**
+     * Called by the UI to get the status of all configured tunnels
+     * 
+     * @return The tunnel status list
+     */
     public LinkedList<TunnelVpnTunnelStatus> getTunnelStatusList()
     {
         return this.tunnelVpnMonitor.getTunnelStatusList();
     }
 
+    /**
+     * Called by the UI to stop and restart a tunnel
+     * 
+     * @param tunnelId
+     *        The tunnel to be restarted
+     */
     public void recycleTunnel(int tunnelId)
     {
         tunnelVpnManager.recycleTunnel(tunnelId);
@@ -359,7 +448,7 @@ public class TunnelVpnApp extends AppBase
      * This finds all the tunnels that do not have corresponding virtual
      * interfaces in the current network settings.
      * 
-     * @returns a list of the tunnels missing virtual interfaces (never null)
+     * @return a list of the tunnels missing virtual interfaces (never null)
      */
     private List<TunnelVpnTunnelSettings> findTunnelsMissingFromNetworkSettings()
     {
@@ -379,10 +468,10 @@ public class TunnelVpnApp extends AppBase
 
     /**
      * This finds all the tunnel virtual interfaces in the current network
-     * settings That do not have corresponding tunnel settings in the tunnel VPN
+     * settings that do not have corresponding tunnel settings in the tunnel VPN
      * settings
      * 
-     * @returns a list of the extra virtual interfaces (never null)
+     * @return a list of the extra virtual interfaces (never null)
      */
     private List<InterfaceSettings> findExtraVirtualInterfaces()
     {
@@ -416,6 +505,9 @@ public class TunnelVpnApp extends AppBase
 
     /**
      * Sync the settings to the filesystem
+     * 
+     * @param enabled
+     *        The application enabled flag
      */
     private void syncToSystem(boolean enabled)
     {
@@ -438,15 +530,17 @@ public class TunnelVpnApp extends AppBase
         if (enabled) insertIptablesRules();
     }
 
+    /**
+     * Looks for and removes files from tunnels that no longer exist
+     */
     private void cleanTunnelSettings()
     {
         String directory = System.getProperty("uvm.settings.dir") + "/tunnel-vpn";
         File file = new File(directory);
-        String list[]  = file.list();
+        String list[] = file.list();
         boolean found;
 
-        for(String name : list)
-        {
+        for (String name : list) {
             // check for a name that starts with our directory prefix
             if (!name.startsWith("tunnel-")) continue;
 
@@ -465,7 +559,7 @@ public class TunnelVpnApp extends AppBase
             found = false;
 
             for (TunnelVpnTunnelSettings tunnelSettings : getSettings().getTunnels()) {
-                if (tunnelSettings.getTunnelId() !=  idValue) continue;
+                if (tunnelSettings.getTunnelId() != idValue) continue;
                 found = true;
                 break;
             }
@@ -478,6 +572,9 @@ public class TunnelVpnApp extends AppBase
         }
     }
 
+    /**
+     * Inserts the iptables rules
+     */
     private void insertIptablesRules()
     {
         /**
@@ -490,6 +587,13 @@ public class TunnelVpnApp extends AppBase
 
     }
 
+    /**
+     * Called when network settings have changed
+     * 
+     * @param settings
+     *        The new network settings
+     * @throws Exception
+     */
     private void networkSettingsEvent(NetworkSettings settings) throws Exception
     {
         // refresh iptables rules in case WAN config has changed
@@ -498,14 +602,32 @@ public class TunnelVpnApp extends AppBase
         if (this.getRunState() == AppSettings.AppState.RUNNING) this.tunnelVpnManager.restartProcesses();
     }
 
+    /**
+     * Handler for uploaded tunnel configuration files
+     */
     private class TunnelUploadHandler implements UploadHandler
     {
+        /**
+         * Get the name of the upload handler
+         * 
+         * @return The name of the upload handler
+         */
         @Override
         public String getName()
         {
             return "tunnel_vpn";
         }
 
+        /**
+         * Handler for uploaded files
+         * 
+         * @param fileItem
+         *        The uploaded file
+         * @param argument
+         *        Upload argument
+         * @return The upload result
+         * @throws Exception
+         */
         @Override
         public ExecManagerResult handleFile(FileItem fileItem, String argument) throws Exception
         {
@@ -572,13 +694,27 @@ public class TunnelVpnApp extends AppBase
         }
     }
 
+    /**
+     * Callback hook for changes to network settings
+     */
     private class TunnelVpnNetworkHookCallback implements HookCallback
     {
+        /**
+         * Gets the name of the callback hook
+         * 
+         * @return The name of the callback hook
+         */
         public String getName()
         {
             return "tunnel-vpn-network-settings-change-hook";
         }
 
+        /**
+         * Callback handler
+         * 
+         * @param args
+         *        The callback arguments
+         */
         public void callback(Object... args)
         {
             Object o = args[0];

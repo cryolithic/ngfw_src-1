@@ -5,35 +5,25 @@ Ext.define('Ung.cmp.AppPanel', {
 
     dockedItems: [{
         xtype: 'toolbar',
-        ui: 'navigation',
+        ui: 'footer',
         dock: 'top',
-        border: false,
-        style: {
-            background: '#333435',
-            zIndex: 9997
-        },
-        defaults: {
-            border: false,
-        },
-        items: Ext.Array.insert(Ext.clone(Util.subNav), 0, [{
+        style: { background: '#D8D8D8' },
+        items: [{
             xtype: 'button',
-            iconCls: 'fa fa-arrow-circle-left fa-lg',
+            iconCls: 'fa fa-arrow-circle-left',
             hrefTarget: '_self',
             bind: {
-                text: 'Back to Apps (<strong>{policyName}</strong>)',
+                text: 'Back to Apps',
                 href: '#apps/{policyId}'
             }
-        }, '-', {
+        }, {
             xtype: 'component',
             padding: '0 5',
-            style: {
-                color: '#CCC'
-            },
             bind: {
-                html: '<img src="/skins/modern-rack/images/admin/apps/{props.name}_17x17.png" style="vertical-align: middle;" width="17" height="17"/> {props.displayName}' +
-                    ' <i class="fa fa-circle {!instance.targetState ? "fa-orange" : (instance.runState === "RUNNING" ? "fa-green" : "fa-gray") }"></i>'
+                html: '<img src="/icons/apps/{props.name}.svg" style="vertical-align: middle;" width="16" height="16"/> <strong>{props.displayName}</strong>' +
+                    ' <i class="fa fa-circle {state.colorCls}"></i>'
             }
-        }])
+        }]
     }, {
         xtype: 'toolbar',
         dock: 'bottom',
@@ -47,7 +37,22 @@ Ext.define('Ung.cmp.AppPanel', {
         }]
     }],
 
-
+    tabBar: {
+        items: [{
+            xtype: 'button',
+            itemId: 'reportsBtn',
+            ui: 'none',
+            margin: '0 5',
+            cls: 'view-reports',
+            text: '<i class="fa fa-area-chart"></i> ' + 'View Reports'.t(),
+            hrefTarget: '_self',
+            hidden: true,
+            bind: {
+                href: '#reports?cat={props.name}',
+                hidden: '{!reportsAppStatus.installed || !reportsAppStatus.enabled || !state.on}'
+            }
+        }]
+    },
 
     listeners: {
         // generic listener for all tabs in Apps, redirection
@@ -85,17 +90,12 @@ Ext.define('Ung.cmp.AppPanel', {
                 });
             });
 
-            var vm = appPanel.getViewModel();
-            // add policy name in the tabbar, needs a small delay for policiestree to be available
-            Ext.defer(function () {
-                try {
-                    var p = Ext.getStore('policiestree').findRecord('policyId', vm.get('policyId'));
-                    vm.set('policyName', p.get('name'));
-                } catch (ex) {
-                    vm.set('policyName', '');
-                }
+            // remove View Reports tab button if App does not have reports (e.g. Reports App)
+            if (!appPanel.down('appreports')) {
+                var rbtn = appPanel.getTabBar().down('#reportsBtn');
+                appPanel.getTabBar().remove(rbtn);
+            }
 
-            }, 500);
         },
 
         removed: function(){

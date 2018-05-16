@@ -5,6 +5,7 @@ import traceback
 import ipaddr
 import socket
 import os
+import subprocess
 
 from jsonrpc import ServiceProxy
 from jsonrpc import JSONRPCException
@@ -15,11 +16,11 @@ import remote_control
 import test_registry
 import global_functions
 
-defaultRackId = 1
+default_policy_id = 1
 app = None
-vpnTunnelFile = "http://10.111.56.29/openvpn-tunnel-vpn-config.zip"
+vpn_tunnel_file = "http://10.111.56.29/openvpn-tunnel-vpn-config.zip"
 
-def setUpTunnelRule(vpn_enabled=True,vpn_ipv6=True,rule_id=50,vpn_tunnel_id=200):
+def create_tunnel_rule(vpn_enabled=True,vpn_ipv6=True,rule_id=50,vpn_tunnel_id=200):
     return {
             "conditions": {
                 "javaClass": "java.util.LinkedList",
@@ -33,7 +34,7 @@ def setUpTunnelRule(vpn_enabled=True,vpn_ipv6=True,rule_id=50,vpn_tunnel_id=200)
             "tunnelId": vpn_tunnel_id
     }
 
-def setUpTunnelProfile(vpn_enabled=True,provider="tunnel-Untangle",vpn_tunnel_id=200):
+def create_tunnel_profile(vpn_enabled=True,provider="tunnel-Untangle",vpn_tunnel_id=200):
     return {
             "allTraffic": False,
             "enabled": vpn_enabled,
@@ -63,7 +64,7 @@ class TunnelVpnTests(unittest2.TestCase):
         global app
         if (uvmContext.appManager().isInstantiated(self.appName())):
             raise Exception('app %s already instantiated' % self.appName())
-        app = uvmContext.appManager().instantiate(self.appName(), defaultRackId)
+        app = uvmContext.appManager().instantiate(self.appName(), default_policy_id)
         app.start()
 
     def setUp(self):
@@ -78,18 +79,18 @@ class TunnelVpnTests(unittest2.TestCase):
         assert(uvmContext.licenseManager().isLicenseValid(self.appName()))
 
     def test_020_createVPNTunnel(self):
-        result = os.system("wget -o /dev/null -t 1 --timeout=3 " + vpnTunnelFile + " -O /tmp/config.zip")
+        result = subprocess.call("wget -o /dev/null -t 1 --timeout=3 " + vpn_tunnel_file + " -O /tmp/config.zip", shell=True)
         if (result != 0):
-            raise unittest2.SkipTest("Unable to download VPN file: " + vpnTunnelFile)
+            raise unittest2.SkipTest("Unable to download VPN file: " + vpn_tunnel_file)
         currentWanIP = remote_control.run_command("wget --timeout=4 -q -O - \"$@\" test.untangle.com/cgi-bin/myipaddress.py",stdout=True)
         if (currentWanIP == ""):
             raise unittest2.SkipTest("Unable to get WAN IP")
-        print "Original WAN IP: " + currentWanIP
+        print("Original WAN IP: " + currentWanIP)
         app.importTunnelConfig("/tmp/config.zip", "Untangle", 200)
 
         appData = app.getSettings()
-        appData['rules']['list'].append(setUpTunnelRule())
-        appData['tunnels']['list'].append(setUpTunnelProfile())
+        appData['rules']['list'].append(create_tunnel_rule())
+        appData['tunnels']['list'].append(create_tunnel_profile())
         app.setSettings(appData)
 
         # wait for vpn tunnel to form
@@ -98,12 +99,23 @@ class TunnelVpnTests(unittest2.TestCase):
         while (not connected and timeout > 0):
             newWanIP = remote_control.run_command("wget --timeout=4 -q -O - \"$@\" test.untangle.com/cgi-bin/myipaddress.py",stdout=True)
             if (currentWanIP != newWanIP):
+                listOfConnections = app.getTunnelStatusList()
+                connectStatus = listOfConnections['list'][0]['stateInfo']
                 connected = True
+                listOfConnections = app.getTunnelStatusList()
+                connectStatus = listOfConnections['list'][0]['stateInfo']
             else:
+                time.sleep(1)
                 timeout-=1
-            
+
+        # remove the added tunnel
+        appData['rules']['list'][:] = []
+        appData['tunnels']['list'][:] = []
+        app.setSettings(appData)
+
         # If VPN tunnel has failed to connect, fail the test,
         assert(connected)
+        assert(connectStatus == "CONNECTED")
 
     @staticmethod
     def finalTearDown(self):

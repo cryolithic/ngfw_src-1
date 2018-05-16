@@ -162,7 +162,7 @@ class JavaDocValidator:
 
         if Debug:
             print("\tvalidating %s" % (self.get_definition()))
-            print self.tree
+            print(self.tree)
         if "documentation" not in self.tree or self.tree["documentation"] is None:
             self.missing = True
             return
@@ -301,8 +301,10 @@ def print_summary_report( file_count, required_count, missing_count, invalid_cou
     print("")
     print("Total files %d, required javadocs %d" % ( file_count, required_count ))
     if required_count > 0:
-        print("Missing \t %4d \t %4.2f%%" % (missing_count, ( float( missing_count ) / required_count * 100) ))
-        print("Invalid \t %4d \t %4.2f%%" % (invalid_count, ( float( invalid_count ) / required_count * 100) ))
+        if missing_count > 0:
+            print("Missing \t %4d \t %4.2f%%" % (missing_count, ( float( missing_count ) / required_count * 100) ))
+        if invalid_count > 0:
+            print("Invalid \t %4d \t %4.2f%%" % (invalid_count, ( float( invalid_count ) / required_count * 100) ))
         print("Valid   \t %4d \t %4.2f%%" % (valid_count, ( float(valid_count) / required_count * 100) ))
     print("")
 
@@ -333,16 +335,18 @@ def print_report(total_only=False):
             current_directory = directory
             if total_only is False:
                 print("\n" + current_directory + "\n" + '=' * len(current_directory) + "\n")
-        if total_only is False:
-            print(file_path)
         total_file_count += 1
         current_file_count += 1
         total_required_count += len(Validators[file_path])
         current_required_count += len(Validators[file_path])
+        show_path = False
         for validator in Validators[file_path]:
             if Type_name is not None and validator.tree["name"] != Type_name:
                 continue
             report = validator.get_report()
+            if total_only is False and validator.valid is not True and show_path is False:
+                print(file_path)
+                show_path = True
             if total_only is False and validator.valid is not True or Show_valid is True:
                 print("\t" +validator.get_definition())
                 print("\t\t" + "\n\t".join(report))

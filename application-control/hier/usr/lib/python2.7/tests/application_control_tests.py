@@ -14,7 +14,7 @@ import remote_control
 import test_registry
 import global_functions
 
-defaultRackId = 1
+default_policy_id = 1
 appSettings = None
 app = None
 
@@ -23,7 +23,7 @@ app = None
 def touchProtoRule( protoGusername, flag = True, block =True ):
     global appSettings,app
     for rec in appSettings['protoRules']['list']:
-        # print "appSettings: " + str(rec)
+        # print("appSettings: " + str(rec))
         if (rec['name'] == protoGusername):
             rec['flag'] = flag
             rec['block'] = block
@@ -88,7 +88,7 @@ class ApplicationControlTests(unittest2.TestCase):
         global appSettings, app
         if (uvmContext.appManager().isInstantiated(self.appName())):
             raise Exception('app %s already instantiated' % self.appName())
-        app = uvmContext.appManager().instantiate(self.appName(), defaultRackId)
+        app = uvmContext.appManager().instantiate(self.appName(), default_policy_id)
         appSettings = app.getSettings()
         # run a few sessions so that the classd daemon starts classifying
         for i in range(2): remote_control.is_online()
@@ -104,7 +104,7 @@ class ApplicationControlTests(unittest2.TestCase):
         assert(uvmContext.licenseManager().isLicenseValid(self.appName()))
 
     def test_012_classdIsRunning(self):
-        result = os.system("ps aux | grep classd | grep -v grep >/dev/null 2>&1")
+        result = subprocess.call("ps aux | grep classd | grep -v grep >/dev/null 2>&1", shell=True)
         assert (result == 0)
 
     def test_020_protoRule_Default_Google(self):
@@ -226,11 +226,13 @@ class ApplicationControlTests(unittest2.TestCase):
         if remote_control.quickTestsOnly:
             raise unittest2.SkipTest('Skipping a time consuming test')
         for i in range(10):
-            print "Test %i" % i
-            result = os.system("/etc/init.d/untangle-classd restart >/dev/null 2>&1")
+            print("Test %i" % i)
+            result = subprocess.call("systemctl restart untangle-classd >/dev/null 2>&1", shell=True)
             assert (result == 0)
             result = remote_control.is_online()
             assert (result == 0)
+            # delay so we don't trigger systemd throttling of 5 restarts in 10 seconds
+            time.sleep(3)
         # give it some time to recover for future tests
         for i in range(5):
             result = remote_control.is_online()

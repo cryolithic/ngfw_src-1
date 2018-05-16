@@ -1,25 +1,36 @@
 /**
  * $Id$
  */
+
 package com.untangle.app.tunnel_vpn;
 
-import java.net.InetAddress;
 import java.util.List;
 import java.util.LinkedList;
+import java.io.Serializable;
+import org.json.JSONObject;
+import org.json.JSONString;
 
+/**
+ * Manages the settings for a tunnel
+ * 
+ * @author mahotz
+ * 
+ */
 @SuppressWarnings("serial")
-public class TunnelVpnTunnelSettings implements java.io.Serializable
+public class TunnelVpnTunnelSettings implements JSONString, Serializable
 {
     private Integer tunnelId = null;
     private boolean enabled = true;
     private String name;
+    private boolean nat = true;
 
     private String provider = null;
     private String username = null;
     private String password = null;
+
+    private Integer boundInterfaceId = null; /* 0 and null mean any interface */
     
-    private boolean allTraffic = false;
-    private List<String> tags = new LinkedList<String>();
+// THIS IS FOR ECLIPSE - @formatter:off
     
     public TunnelVpnTunnelSettings() {}
 
@@ -32,9 +43,6 @@ public class TunnelVpnTunnelSettings implements java.io.Serializable
     public String getName() { return name; }
     public void setName(String name) { this.name = ( name == null ? null : name.replaceAll("\\s","") ); }
 
-    public boolean getAllTraffic() { return allTraffic; }
-    public void setAllTraffic(boolean newValue) { allTraffic = newValue; }
-
     public String getProvider() { return provider; }
     public void setProvider(String newValue) { this.provider = newValue; }
 
@@ -43,7 +51,18 @@ public class TunnelVpnTunnelSettings implements java.io.Serializable
 
     public String getPassword() { return password; }
     public void setPassword(String newValue) { this.password = newValue; }
+
+    public boolean getNat() { return nat; }
+    public void setNat(boolean newValue) { this.nat = newValue; }
+
+    public Integer getBoundInterfaceId() { return this.boundInterfaceId; }
+    public void setBoundInterfaceId( Integer newValue ) { this.boundInterfaceId = newValue; }
     
-    public List<String> getTags() { return tags; }
-    public void setTags(List<String> newValue) { tags = newValue; }
+// THIS IS FOR ECLIPSE - @formatter:on
+
+    public String toJSONString()
+    {
+        org.json.JSONObject jO = new org.json.JSONObject(this);
+        return jO.toString();
+    }
 }

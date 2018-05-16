@@ -1,5 +1,15 @@
 #! /bin/bash
 
+oldVersion=""
+if [ "$1" = "configure" ] ; then
+  # oldVersion will be non-empty if untangle-linux-config has been
+  # configured before
+  oldVersion="$2"
+fi
+
+# remove old conffiles
+rm -f /etc/init.d/untangle-pyconnector /etc/default/pyconnector
+
 # right permissions for log dir
 UVM_LOGDIR="/var/log/uvm"
 /bin/chmod 775 ${UVM_LOGDIR}
@@ -37,53 +47,32 @@ if [ -f /usr/share/untangle/bin/oem-apply.sh ] ; then
     /usr/share/untangle/bin/oem-apply.sh
 fi
 
-# 12.1 upgrade
-sed -e 's/stable-120\s/stable-121 /g' -i /etc/apt/sources.list.d/untangle.list
-sed -e 's/stable-120x\s/stable-121 /g' -i /etc/apt/sources.list.d/untangle.list
+#
+# 14.0 upgrade
+#
 
-# 12.1 remove references to old distros
-sed -e '/\sfocus/d'   -i /etc/apt/sources.list.d/untangle.list
-sed -e '/\spicanto/d' -i /etc/apt/sources.list.d/untangle.list
-sed -e '/\sseagull/d' -i /etc/apt/sources.list.d/untangle.list
-sed -e '/\selectra/d' -i /etc/apt/sources.list.d/untangle.list
-sed -e '/\sthunder/d' -i /etc/apt/sources.list.d/untangle.list
-sed -e '/\shayate/d'  -i /etc/apt/sources.list.d/untangle.list
-sed -e '/\scrypton/d' -i /etc/apt/sources.list.d/untangle.list
+# Point to stable-140
+sed -e 's/stable-132\s/stable-140 /g' -i /etc/apt/sources.list.d/untangle.list
 
-# 12.1 remove old log files
-rm -f /var/log/restart-uvm.log
-rm -f /var/log/uvm/kernel-modules.log
-find /var/log/uvm -name '*crash*' -mtime +30 2>/dev/null | xargs rm -f
+# We no longer use upstream
+sed -e 's/upstream//g' -i /etc/apt/sources.list.d/untangle.list
 
-# 12.1 remove old ntp servers from ntp.conf
-sed -e '/74.123/d' -i  /etc/ntp.conf
+# Remove extra lines created by the stretch installer
+# FIXME: do we want to "echo > /etc/apt/sources.list" instead ?
+sed -e '/^deb cdrom/d' -i /etc/apt/sources.list
 
-# 12.1 upgrade
-if [ -d /var/lib/google-drive ] ; then
-    rm -rf /var/lib/google-drive/*
+# If upgrading from 13.2 - do the conversion
+if echo $oldVersion | grep -q "13\.2" ; then
+    # kill the automatic uvm-restart
+    # We don't want the untangle-vm to launch until after the reboot
+    killall -INT uvm-restart
+    killall uvm-restart
+    killall -9 uvm-restart
+
+    # start the post-upgrade task (will wait on apt to finish)
+    nohup /usr/share/untangle/bin/ut-stretch-post-upgrade.sh >> /var/log/uvm/stretch.log 2>&1 &
 fi
 
-# 12.2 upgrade
-rm -rf /usr/share/untangle/web/reports/data
-rm -rf /usr/lib/python2.7/reports/node
-sed -e 's/stable-121\s/stable-122 /g' -i /etc/apt/sources.list.d/untangle.list
 
-# 13.0 upgrade
-sed -e 's/stable-122\s/stable-130 /g' -i /etc/apt/sources.list.d/untangle.list
-rm -rf /usr/share/untangle/lib/untangle-node-idps
-rm -rf /usr/share/untangle/lib/untangle-node-ips
-rm -rf /usr/share/untangle/lib/untangle-node-web-filter-lite
-rm -f /var/log/uvm/node*
-
-# 13.1 upgrade
-sed -e 's/stable-130\s/stable-131 /g' -i /etc/apt/sources.list.d/untangle.list
-
-# 13.2 upgrade
-sed -e 's/stable-131\s/stable-132 /g' -i /etc/apt/sources.list.d/untangle.list
-sed -e 's/upstream//g' -i /etc/apt/sources.list.d/untangle.list
-
-# 14.0 upgrade
-sed -e 's/stable-132\s/stable-140 /g' -i /etc/apt/sources.list.d/untangle.list
-sed -e 's/upstream//g' -i /etc/apt/sources.list.d/untangle.list
 
 exit 0

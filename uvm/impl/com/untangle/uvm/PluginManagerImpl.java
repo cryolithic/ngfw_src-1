@@ -5,13 +5,10 @@ package com.untangle.uvm;
 
 import java.io.File;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ArrayList;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
 
@@ -70,6 +67,7 @@ public class PluginManagerImpl implements PluginManager
             Files.walk(Paths.get(pathStr))
                 .filter(Files::isRegularFile)
                 .filter(path -> !path.toString().contains("$"))
+                .filter(path -> path.toString().contains("Plugin"))
                 .forEach(path -> {
                         String name = path.toString();
                         name = name.substring(0, name.lastIndexOf('.')); // remove file extension

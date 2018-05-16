@@ -15,6 +15,7 @@ import calendar
 import Image
 from StringIO import StringIO
 from datetime import datetime
+from datetime import timedelta
 from jsonrpc import ServiceProxy
 from jsonrpc import JSONRPCException
 from uvm import Manager
@@ -161,7 +162,7 @@ class ReportsTests(unittest2.TestCase):
         global app, orig_settings, test_email_address, can_relay, can_syslog, syslog_server_host, web_app
         if (uvmContext.appManager().isInstantiated(self.appName())):
             # report app is normally installed.
-            # print "App %s already installed" % self.appName()
+            # print("App %s already installed" % self.appName())
             # raise Exception('app %s already instantiated' % self.appName())
             app = uvmContext.appManager().app(self.appName())
         else:
@@ -188,8 +189,7 @@ class ReportsTests(unittest2.TestCase):
                     can_syslog = True
                
     def setUp(self):
-        print
-                
+        print(                )
     # verify client is online
     def test_010_client_is_online(self):
         result = remote_control.is_online()
@@ -198,17 +198,13 @@ class ReportsTests(unittest2.TestCase):
     def test_011_license_valid(self):
         assert(uvmContext.licenseManager().isLicenseValid(self.appName()))
 
-    # FIXME
-    # Syslog settings now live in config > events
-    # I'm not sure why this test passes, since the syslog functionality has been removed from reports
-    # FIXME
     def test_040_remote_syslog(self):
         if (not can_syslog):
             raise unittest2.SkipTest('Unable to syslog through ' + syslog_server_host)
 
         firewall_app = None
         if (uvmContext.appManager().isInstantiated("firewall")):
-            print "App %s already installed" % "firewall"
+            print("App %s already installed" % "firewall")
             firewall_app = uvmContext.appManager().app("firewall")
         else:
             firewall_app = uvmContext.appManager().instantiate("firewall", default_policy_id)
@@ -223,15 +219,21 @@ class ReportsTests(unittest2.TestCase):
             if rule['enabled'] and rule['block']:
                 targetRuleId = rule['ruleId']
                 break
-        # Setup syslog to send events to syslog host
-        newSyslogSettings = app.getSettings()
-        newSyslogSettings["syslogEnabled"] = True
-        newSyslogSettings["syslogPort"] = 514
-        newSyslogSettings["syslogProtocol"] = "UDP"
-        newSyslogSettings["syslogHost"] = syslog_server_host
-        app.setSettings(newSyslogSettings)
+        # Setup syslog to send events to syslog host in /config/events/syslog
+        syslogSettings = uvmContext.eventManager().getSettings()
+        syslogSettings["syslogEnabled"] = True
+        syslogSettings["syslogPort"] = 514
+        syslogSettings["syslogProtocol"] = "UDP"
+        syslogSettings["syslogHost"] = syslog_server_host
+        uvmContext.eventManager().setSettings( syslogSettings )
 
         # create some traffic (blocked by firewall and thus create a syslog event)
+        exactly_now = datetime.now()
+        exactly_now_minus1 = datetime.now() - timedelta(minutes=1)
+        exactly_now_plus1 = datetime.now() + timedelta(minutes=1)
+        timestamp = exactly_now.strftime('%Y-%m-%d %H:%M')
+        timestamp_minus1 = exactly_now_minus1.strftime('%Y-%m-%d %H:%M')
+        timestamp_now_plus1 = exactly_now_plus1.strftime('%Y-%m-%d %H:%M')
         result = remote_control.is_online(tries=1)
         # flush out events
         app.flushEvents()
@@ -249,24 +251,43 @@ class ReportsTests(unittest2.TestCase):
         # parse the output and look for a rule that matches the expected values
         tries = 5
         found_count = 0
-        strings_to_find = ['\"blocked\":true',str('\"ruleId\":%i' % targetRuleId)]
-        while (tries > 0 and found_count < 2):
+        timestamp_variations  = [str('\"timeStamp\":\"%s' % timestamp_minus1),str('\"timeStamp\":\"%s' % timestamp_now_plus1)]
+        strings_to_find = ['\"blocked\":true',str('\"ruleId\":%i' % targetRuleId),str('\"timeStamp\":\"%s' % timestamp)]
+        num_string_find = len(strings_to_find)
+        while (tries > 0 and found_count < num_string_find):
             # get syslog results on server
-            rsyslogResult = remote_control.run_command("sudo tail -n 200 /var/log/localhost/localhost.log | grep 'FirewallEvent'", host=syslog_server_host, stdout=True)
+            rsyslogResult = remote_control.run_command("sudo tail -n 200 /var/log/syslog | grep 'FirewallEvent'", host=syslog_server_host, stdout=True)
             tries -= 1
             for line in rsyslogResult.splitlines():
-                print "\nchecking line: %s " % line
+                print("\nchecking line: %s " % line)
+                found_count = 0
                 for string in strings_to_find:
                     if not string in line:
-                        print "missing: %s" % string
-                        continue
+                        print("missing: %s" % string)
+                        if ('timeStamp' in string):
+                            # Allow +/- one minute in timestamp
+                            if (timestamp_variations [0] in line) or (timestamp_variations [1] in line):
+                                print("found: time with varation %s or %s" % (timestamp_variations [0],timestamp_variations [1]))
+                                found_count += 1
+                            else:
+                                break
+                        else:
+                            # continue
+                            break
                     else:
                         found_count += 1
-                        print "found: %s" % string
-                break
+                        print("found: %s" % string)
+                # break if all the strings have been found.
+                if found_count == num_string_find:
+                    break
             time.sleep(2)
+
+        # Disable syslog
+        syslogSettings = uvmContext.eventManager().getSettings()
+        syslogSettings["syslogEnabled"] = False
+        uvmContext.eventManager().setSettings( syslogSettings )
             
-        assert(found_count == len(strings_to_find))
+        assert(found_count == num_string_find)
 
     def test_050_export_report_events(self):
         """
@@ -274,7 +295,7 @@ class ReportsTests(unittest2.TestCase):
         """
         # Delete any old csv file if it exists
         csv_tmp = "/tmp/test_50_export_report_events.csv"
-        subprocess.call(('rm %s' % csv_tmp), shell=True)
+        subprocess.call(('/bin/rm -f %s' % csv_tmp), shell=True)
 
         remote_control.run_command("wget -q -O /dev/null http://test.untangle.com")
         remote_control.run_command("wget -q -O /dev/null http://www.untangle.com")
@@ -296,11 +317,11 @@ class ReportsTests(unittest2.TestCase):
         post_data += "&arg4=time_stamp,c_client_addr,s_server_addr,s_server_port,username,hostname,host,uri,web_filter_blocked,web_filter_flagged,web_filter_reason,web_filter_category"
         post_data += "&arg5=" + str(an_hour_ago_epoch)  # epoch start time
         post_data += "&arg6=" + str(current_epoch)  # epach end time
-        # print post_data
+        # print(post_data)
         
         subprocess.call(("wget -q -O %s --post-data='%s' http://localhost/admin/download" % (csv_tmp,post_data)), shell=True)
         result = subprocess.check_output('wc -l /tmp/test_50_export_report_events.csv', shell=True)
-        print "Result of wc on %s : %s" % (csv_tmp,str(result))
+        print("Result of wc on %s : %s" % (csv_tmp,str(result)))
         assert(result > 3)
 
     def test_100_email_report_admin(self):
@@ -346,11 +367,11 @@ class ReportsTests(unittest2.TestCase):
 
         ## Verify that all images are intact.
         # copy mail from remote client
-        os.system("scp -q -i %s testshell@%s:/tmp/test_100_email_report_admin_file /tmp/" % (remote_control.hostKeyFile, remote_control.clientIP))
+        subprocess.call("scp -q -i %s testshell@%s:/tmp/test_100_email_report_admin_file /tmp/" % (remote_control.hostKeyFile, remote_control.clientIP), shell=True)
         fp = open("/tmp/test_100_email_report_admin_file")
         email_string = fp.read()
         fp.close()
-        os.system("rm /tmp/test_100_email_report_admin_file")
+        subprocess.call("rm /tmp/test_100_email_report_admin_file", shell=True)
         # Delete the first line as it is blank and throws off the parser
         email_string = '\n'.join(email_string.split('\n')[1:])
         msg = email.message_from_string(email_string)
@@ -459,11 +480,11 @@ class ReportsTests(unittest2.TestCase):
 
         # Verify that all images are less than 350x350.
         # copy mail from remote client
-        os.system("scp -q -i %s testshell@%s:/tmp/test_102_email_admin_override_custom_report_mobile_file /tmp/" % (remote_control.hostKeyFile, remote_control.clientIP))
+        subprocess.call("scp -q -i %s testshell@%s:/tmp/test_102_email_admin_override_custom_report_mobile_file /tmp/" % (remote_control.hostKeyFile, remote_control.clientIP), shell=True)
         fp = open("/tmp/test_102_email_admin_override_custom_report_mobile_file")
         email_string = fp.read()
         fp.close()
-        os.system("rm /tmp/test_102_email_admin_override_custom_report_mobile_file")
+        subprocess.call("rm /tmp/test_102_email_admin_override_custom_report_mobile_file", shell=True)
         # Delete the first line as it is blank and throws off the parser
         email_string = '\n'.join(email_string.split('\n')[1:])
         msg = email.message_from_string(email_string)
@@ -471,13 +492,13 @@ class ReportsTests(unittest2.TestCase):
         mime_content_ids = []
         for part in msg.walk():
             if part.get_content_maintype() == "image":
-                # print "Image found"
+                # print("Image found")
                 for index, key in enumerate(part.keys()):
                     if key == "Content-ID":
                         email_image = part.get_payload(decode=True)
                         im = Image.open(StringIO(email_image))
                         (image_width,image_height) = im.size
-                        print "Image width: %d height: %d" % (image_width, image_height)
+                        print("Image width: %d height: %d" % (image_width, image_height))
                         assert(image_width < 350 and image_height < 350)
 
     def test_103_email_report_verify_apps(self):
@@ -510,7 +531,7 @@ class ReportsTests(unittest2.TestCase):
         apps = []
         for name in ["firewall", "web-filter", "virus-blocker", "spam-blocker", "phish-blocker", "ad-blocker", "web-cache", "bandwidth-control", "application-control", "ssl-inspector", "captive-portal", "web-monitor", "virus-blocker-lite", "spam-blocker-lite", "application-control-lite", "policy-manager", "directory-connector", "wan-failover", "wan-balancer", "configuration-backup", "intrusion-prevention", "ipsec-vpn", "openvpn"]:
             if (uvmContext.appManager().isInstantiated(name)):
-                print "App %s already installed" % name
+                print("App %s already installed" % name)
             else:
                 apps.append( uvmContext.appManager().instantiate(name, default_policy_id) )
             
@@ -550,11 +571,11 @@ class ReportsTests(unittest2.TestCase):
         settings["reportsUsers"]["list"].append(create_reports_user(profile_email='test', access=True))  # password = passwd
         app.setSettings(settings)
         adminURL = global_functions.get_http_url()
-        print "URL %s" % adminURL
-        resultLoginPage = os.system("wget -q -O - " + adminURL + "reports 2>&1 | grep -q Login")
+        print("URL %s" % adminURL)
+        resultLoginPage = subprocess.call("wget -q -O - " + adminURL + "reports 2>&1 | grep -q Login", shell=True)
         assert (resultLoginPage == 0)
         
-        resultLoginPage = os.system("wget -q -O - " + adminURL + '"auth/login?url=/reports&realm=Reports&username=test&password=passwd" 2>&1 | grep -q Report')
+        resultLoginPage = subprocess.call("wget -q -O - " + adminURL + '"auth/login?url=/reports&realm=Reports&username=test&password=passwd" 2>&1 | grep -q Report', shell=True)
         assert (resultLoginPage == 0)
         
     @staticmethod

@@ -39,6 +39,8 @@ Ext.define('Ung.util.Renderer', {
     networkWidth: 120,
     // Port
     portWidth: 70,
+    // Network prefix
+    prefixWidth: 50,
     // Priority
     prioritytWidth: 70,
     // Protocol
@@ -95,8 +97,11 @@ Ext.define('Ung.util.Renderer', {
         return Math.ceil(Ext.getBody().getViewSize().width / divisor) - 1;
     },
 
-    timestampOffset: (new Date().getTimezoneOffset() * 60000) + rpc.timeZoneOffset,
+    timestampOffset: null,
     timestamp: function (value) {
+        if(Renderer.timestampOffset === null){
+            Renderer.timestampOffset =  (new Date().getTimezoneOffset() * 60000) + rpc.timeZoneOffset;
+        }
         if (!value) { return ''; }
         if ((typeof(value) === 'object') && value.time) { value = value.time; }
         if(value < 2696400000){ value *= 1000; }
@@ -105,15 +110,21 @@ Ext.define('Ung.util.Renderer', {
         return Ext.util.Format.date(date, 'timestamp_fmt'.t());
     },
 
+    interfaceMap: null,
+    interfaceLastUpdated: null,
+    interfaceMaxAge: 30 * 1000,
     interface: function (value) {
-        if (!rpc.reportsManager) {
+        if (!Rpc.exists('rpc.reportsManager')) {
             return value.toString();
         }
-        if (!Ung.util.Renderer.interfaceMap) {
-            // this.buildInterfaceMap();
+        var currentTime = new Date().getTime();
+        if (Ung.util.Renderer.interfaceMap === null ||
+            Ung.util.Renderer.interfaceLastUpdated === null ||
+            ( ( Ung.util.Renderer.interfaceLastUpdated + Ung.util.Renderer.interfaceMaxAge ) < currentTime ) ){
             var interfacesList = [], i;
+
             try {
-                interfacesList = rpc.reportsManager.getInterfacesInfo().list;
+                interfacesList = Rpc.directData('rpc.reportsManager.getInterfacesInfo').list;
             } catch (ex) {
                 console.log(ex);
             }
@@ -122,6 +133,7 @@ Ext.define('Ung.util.Renderer', {
             for (i = 0; i < interfacesList.length; i += 1) {
                 Ung.util.Renderer.interfaceMap[interfacesList[i].interfaceId] = interfacesList[i].name + " [" + interfacesList[i].interfaceId + "]";
             }
+            Ung.util.Renderer.interfaceLastUpdated = currentTime;
         }
         return value ? Ung.util.Renderer.interfaceMap[value] || value.toString() : '';
     },
@@ -242,10 +254,11 @@ Ext.define('Ung.util.Renderer', {
 
     elapsedTime: function( value ){
         var total = parseInt(value / 1000,10);
+        var days = (parseInt(total / (3600 * 24),10));
         var hours = (parseInt(total / 3600,10) % 24);
         var minutes = (parseInt(total / 60,10) % 60);
         var seconds = parseInt(total % 60,10);
-        var result = (hours < 10 ? "0" + hours : hours) + ":" + (minutes < 10 ? "0" + minutes : minutes) + ":" + (seconds  < 10 ? "0" + seconds : seconds);
+        var result = (days > 0 ? ( days < 10 ? '0' + days : days) + ':' : '' ) + (hours < 10 ? "0" + hours : hours) + ":" + (minutes < 10 ? "0" + minutes : minutes) + ":" + (seconds  < 10 ? "0" + seconds : seconds);
         return result;
     },
 

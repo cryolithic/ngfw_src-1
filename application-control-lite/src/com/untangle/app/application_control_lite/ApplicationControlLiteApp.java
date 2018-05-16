@@ -4,11 +4,8 @@
 package com.untangle.app.application_control_lite;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
-import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
@@ -142,7 +139,7 @@ public class ApplicationControlLiteApp extends AppBase
      */
     public void reconfigure()
     {
-        HashSet<ApplicationControlLitePattern> enabledPatternsSet = new HashSet<ApplicationControlLitePattern>();
+        HashSet<ApplicationControlLitePattern> enabledPatternsSet = new HashSet<>();
 
         logger.info("Reconfigure()");
 

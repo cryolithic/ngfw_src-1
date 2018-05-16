@@ -9,13 +9,6 @@ Ext.define('Ung.view.apps.SimpleItem', {
 
     viewModel: {
         formulas: {
-            stateCss: function (get) {
-                if (get('state') !== get('targetState')) { return 'bad'; }
-                else {
-                    if (get('state') === 'RUNNING') { return 'running'; }
-                    else { return ''; }
-                }
-            },
             html: function (get) {
                 var html = '';
                 if (get('parentPolicy') || get('installing')) {
@@ -24,12 +17,12 @@ Ext.define('Ung.view.apps.SimpleItem', {
                     html += '<a href="' + get('route') + '" class="app-item">';
                 }
                 if (get('app.hasPowerButton')) {
-                    html += '<span class="state ' + get('stateCss') + '"><i class="fa fa-power-off"></i></span>';
+                    html += '<span class="state ' + get('powerCls') + '"><i class="fa fa-power-off"></i></span>';
                 }
                 if (get('licenseMessage')) {
                     html += '<span class="license">' + get('licenseMessage') +  '</span>';
                 }
-                html += '<img src="' + '/skins/modern-rack/images/admin/apps/' + get('app.name') + '_80x80.png" width=80 height=80/>' +
+                html += '<img src="' + '/icons/apps/' + get('app.name') + '.svg" width=80 height=80/>' +
                         '<span class="app-name">' + get('app.displayName') + '</span>';
 
                 if (get('parentPolicy')) {

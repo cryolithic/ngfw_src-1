@@ -7,14 +7,12 @@ import java.net.InetAddress;
 import java.util.List;
 import java.util.LinkedList;
 
-import org.json.JSONString;
 import org.apache.log4j.Logger;
 
 import com.untangle.uvm.AdminSettings;
 import com.untangle.uvm.AdminUserSettings;
 import com.untangle.uvm.SettingsManager;
 import com.untangle.uvm.PasswordUtil;
-import com.untangle.uvm.UvmContext;
 import com.untangle.uvm.UvmContextFactory;
 import com.untangle.uvm.app.AppSettings;
 import com.untangle.uvm.app.AppProperties;
@@ -178,7 +176,7 @@ public abstract class WebFilterBase extends AppBase implements WebFilter
             logger.debug("no BlockDetails for nonce");
             return false;
         } else if (global) {
-            String site = bd.getWhitelistHost();
+            String site = bd.getUnblockHost();
             if (null == site) {
                 logger.warn("cannot unblock null host");
                 return false;
@@ -191,7 +189,7 @@ public abstract class WebFilterBase extends AppBase implements WebFilter
                 return true;
             }
         } else {
-            String site = bd.getWhitelistHost();
+            String site = bd.getUnblockHost();
             if (null == site) {
                 logger.warn("cannot unblock null host");
                 return false;

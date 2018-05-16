@@ -5,16 +5,11 @@
 package com.untangle.app.spam_blocker;
 
 import org.apache.log4j.Logger;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
 
-import com.untangle.uvm.app.License;
 import com.untangle.app.spam_blocker.SpamBlockerBaseApp;
 import com.untangle.app.spam_blocker.SpamSettings;
 import com.untangle.uvm.UvmContextFactory;
 import com.untangle.uvm.SettingsManager;
-import com.untangle.uvm.DaemonManager;
 
 public class SpamBlockerApp extends SpamBlockerBaseApp
 {
@@ -78,8 +73,10 @@ public class SpamBlockerApp extends SpamBlockerBaseApp
 
         // try to download spamassassin sigs if they do not exist
         try {
-            if ( ! (new java.io.File("/var/lib/spamassassin/3.004000/updates_spamassassin_org.cf")).exists() ) {
-                UvmContextFactory.context().execManager().exec("nohup sleep 120 && /etc/cron.daily/spamassassin >/dev/null 2>&1 &");
+            if ( ! (new java.io.File("/var/lib/spamassassin/3.004001/updates_spamassassin_org.cf")).exists() ) {
+                logger.info("Signatures not found! Forcing Asynchronous update...");
+                UvmContextFactory.context().execManager().execEvilProcess("/etc/cron.daily/spamassassin");
+                // Do not wait on process to finish. It can take a long time. Just continue
             }
         } catch (Exception e) {
             logger.warn("Exception",e);

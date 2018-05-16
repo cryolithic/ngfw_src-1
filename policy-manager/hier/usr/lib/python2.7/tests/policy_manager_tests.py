@@ -16,7 +16,7 @@ import remote_control
 import test_registry
 import global_functions
 
-defaultRackId = 1
+default_policy_id = 1
 appData = None
 app = None
 secondRackId = None
@@ -139,7 +139,7 @@ class PolicyManagerTests(unittest2.TestCase):
         global appData, app
         if (uvmContext.appManager().isInstantiated(self.appName())):
             raise Exception('app %s already instantiated' % self.appName())
-        app = uvmContext.appManager().instantiate(self.appName(), defaultRackId)
+        app = uvmContext.appManager().instantiate(self.appName(), default_policy_id)
         appData = app.getSettings()
         remote_control.run_command("rm -f ./authpost\?*")
 
@@ -188,7 +188,7 @@ class PolicyManagerTests(unittest2.TestCase):
     # verify client is online
     def test_023_childShouldNotEffectParent(self):
         # add a child that blocks everything
-        blockRackId = addRack(name="Block Rack", parentId=defaultRackId)
+        blockRackId = addRack(name="Block Rack", parentId=default_policy_id)
         blockRackFirewall = uvmContext.appManager().instantiate("firewall", blockRackId)
         assert (blockRackFirewall != None)
         # add a block rule for the client IP
@@ -271,14 +271,14 @@ class PolicyManagerTests(unittest2.TestCase):
         rules["list"].append(newRule)
         secondRackWebfilter.setBlockedUrls(rules)
         # verify traffic is now blocked (third rack inherits web filter from second rack)
-        result = remote_control.run_command("wget -q -O - http://test.untangle.com/test/testPage1.html 2>&1 | grep -q blockpage")
+        result = remote_control.run_command("wget -4 -t 2 --timeout=5 -q -O - http://test.untangle.com/test/testPage1.html 2>&1 | grep -q blockpage")
         assert (result == 0)
 
     # direct traffic to second rack after local authentication
     def test_040_localCaptivePortalToSecondRack(self):
         global defaultRackCaptivePortal
         remote_control.run_command("rm -f /tmp/policy_test_040*")
-        defaultRackCaptivePortal = uvmContext.appManager().instantiate("captive-portal", defaultRackId)
+        defaultRackCaptivePortal = uvmContext.appManager().instantiate("captive-portal", default_policy_id)
         assert (defaultRackCaptivePortal != None)
         defaultRackCaptivePortalData = defaultRackCaptivePortal.getSettings()
         # turn default capture rule on and basic login
@@ -295,7 +295,7 @@ class PolicyManagerTests(unittest2.TestCase):
         userHost['usernameCaptivePortal'] = ""
         uvmContext.hostTable().setHostTableEntry(remote_control.clientIP,userHost)
         # userHost = uvmContext.hostTable().getHostTableEntry(remote_control.clientIP)
-        # print userHost
+        # print(userHost)
         nukeRules()
         appendRule(createPolicySingleConditionRule("USERNAME","[authenticated]", secondRackId))
         
@@ -309,9 +309,9 @@ class PolicyManagerTests(unittest2.TestCase):
         ipfind = remote_control.run_command("grep 'Location' /tmp/policy_test_040.log",stdout=True)
         ip = re.findall( r'[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}(?:[0-9:]{0,6})', ipfind )
         captureIP = ip[0]
-        print 'Capture IP address is %s' % captureIP
+        print('Capture IP address is %s' % captureIP)
         appid = str(defaultRackCaptivePortal.getAppSettings()["id"])
-        # print 'appid is %s' % appid  # debug line
+        # print('appid is %s' % appid  # debug line)
         result = remote_control.run_command("wget -q -O /dev/null -t 2 --timeout=5   \'http://" + captureIP + "/capture/handler.py/authpost?username=test20&password=passwd&nonce=9abd7f2eb5ecd82b&method=GET&appid=" + appid + "&host=" + captureIP + "&uri=/\'")
         assert (result == 0)
         # verify the username is assigned to the IP

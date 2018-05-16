@@ -3,14 +3,8 @@ Ext.define('Ung.view.reports.EventReport', {
     alias: 'widget.eventreport',
 
     viewModel: {
-        data: { eventsData: [], propsData: [] },
+        data: { propsData: [] },
         stores: {
-            events: {
-                data: '{eventsData}',
-                listeners: {
-                    datachanged: 'onDataChanged'
-                }
-            },
             props: {
                 data: '{propsData}'
             }
@@ -36,7 +30,7 @@ Ext.define('Ung.view.reports.EventReport', {
         itemId: 'eventsGrid',
         reference: 'eventsGrid',
         region: 'center',
-        bind: '{events}',
+        store: { data: [] },
         plugins: ['gridfilters'],
         selModel: {
             type: 'rowmodel'
@@ -81,13 +75,21 @@ Ext.define('Ung.view.reports.EventReport', {
             // find and set the widget component if report is rendered inside a widget
             view.setWidget(view.up('reportwidget'));
 
+            // add store datachange listener here, as it won't work in view definition
+            view.down('grid').getStore().on('datachanged', function () { me.onDataChanged(); } );
+
             // hide property grid if rendered inside widget
             if (view.getWidget() || view.up('new-widget')) {
                 view.down('unpropertygrid').hide();
             }
 
             vm.bind('{entry}', function (entry) {
-                if (!entry || entry.get('type') !== 'EVENT_LIST') { return; }
+                if(Util.isDestroyed(me, view)){
+                    return;
+                }
+                if (!entry || entry.get('type') !== 'EVENT_LIST') { 
+                    return; 
+                }
 
                 // if rendered as widget, add to dashboard queue
                 if (view.getWidget()) {
@@ -164,7 +166,7 @@ Ext.define('Ung.view.reports.EventReport', {
 
         onDeactivate: function () {
             this.modFields = { uniqueId: null };
-            this.getViewModel().set('eventsData', []);
+            this.getView().down('grid').getStore().loadData([]);
             this.getView().down('grid').getSelectionModel().deselectAll();
         },
 
@@ -178,7 +180,7 @@ Ext.define('Ung.view.reports.EventReport', {
             if (!entry) { return; }
 
             if (reset) {
-                vm.set('eventsData', []);
+                me.getView().down('grid').getStore().loadData([]);
                 me.setupGrid();
             }
 
@@ -195,36 +197,45 @@ Ext.define('Ung.view.reports.EventReport', {
                 endDate = null;
             } else {
                 // if it's a report, convert UI client start date to server date
-                startDate = Util.clientToServerDate(vm.get('f_startdate'));
-                endDate = Util.clientToServerDate(vm.get('f_enddate'));
+                startDate = Util.clientToServerDate(vm.get('time.range.since'));
+                endDate = Util.clientToServerDate(vm.get('time.range.until'));
             }
 
             me.getView().setLoading(true);
             if (reps) { reps.getViewModel().set('fetching', true); }
 
             Rpc.asyncData('rpc.reportsManager.getEventsForDateRangeResultSet',
-                            entry.getData(), // entry
-                            vm.get('globalConditions'), // etra conditions
-                            limit,
-                            startDate, // start date
-                            endDate) // end date
+                entry.getData(), // entry
+                vm.get('query.conditions'), // global conditions
+                limit,
+                startDate,
+                endDate)
                 .then(function(result) {
-                    if (!me.getView()) { return; }
+                    if(Util.isDestroyed(me)){
+                        return;
+                    }
                     me.getView().setLoading(false);
-                    if (reps) { reps.getViewModel().set('fetching', false); }
+                    if (reps) { 
+                        reps.getViewModel().set('fetching', false); 
+                    }
                     me.loadResultSet(result);
-
-                    if (cb) { cb(); }
                 })
                 .always(function () { // NGFW-11467
-                    if (!me.getView()) { return; }
+                    if(Util.isDestroyed(me)){
+                        return;
+                    }
+                    if (cb) { 
+                        cb(); 
+                    }
                     me.getView().setLoading(false);
-                    if (reps) { reps.getViewModel().set('fetching', false); }
+                    if (reps) { 
+                        reps.getViewModel().set('fetching', false); 
+                    }
                 });
         },
 
         loadResultSet: function (reader) {
-            var me = this, vm = me.getViewModel(), grid = me.getView().down('grid');
+            var me = this, grid = me.getView().down('grid');
 
             // this.getView().setLoading(true);
             grid.getStore().setFields( me.tableConfig.fields );
@@ -241,7 +252,7 @@ Ext.define('Ung.view.reports.EventReport', {
                 break;
             }
             reader.closeConnection();
-            vm.set('eventsData', eventData);
+            grid.getStore().loadData(eventData);
         },
 
         onEventSelect: function (el, record) {

@@ -12,11 +12,24 @@ Ext.define('Ung.apps.directory-connector.MainController', {
 
     getSettings: function () {
         var me = this, v = this.getView(), vm = this.getViewModel();
+
         v.setLoading(true);
-        v.appManager.getSettings(function (result, ex) {
-            v.setLoading(false);
-            if (ex) { Util.handleException(ex); return; }
+        Rpc.asyncData(v.appManager, 'getSettings')
+        .then( function(result){
+            if(Util.isDestroyed(v, vm)){
+                return;
+            }
+
             vm.set('settings', result);
+
+            vm.set('panel.saveDisabled', false);
+            v.setLoading(false);
+        },function(ex){
+            if(!Util.isDestroyed(v, vm)){
+                vm.set('panel.saveDisabled', true);
+                v.setLoading(false);
+            }
+            Util.handleException(ex);
         });
 
         var googleDrive = new Ung.cmp.GoogleDrive();
@@ -52,13 +65,25 @@ Ext.define('Ung.apps.directory-connector.MainController', {
             }
         });
 
-        v.appManager.setSettings(function (result, ex) {
-            v.setLoading(false);
-            if (ex) { Util.handleException(ex); return; }
+        v.setLoading(true);
+        Rpc.asyncData(v.appManager, 'setSettings', vm.get('settings'))
+        .then(function(result){
+            if(Util.isDestroyed(v, vm)){
+                return;
+            }
             Util.successToast('Settings saved');
+            vm.set('panel.saveDisabled', false);
+            v.setLoading(false);
+
             me.getSettings();
             Ext.fireEvent('resetfields', v);
-        }, vm.get('settings'));
+        }, function(ex) {
+            if(!Util.isDestroyed(v, vm)){
+                vm.set('panel.saveDisabled', true);
+                v.setLoading(false);
+            }
+            Util.handleException(ex);
+        });
     },
 
     downloadUserApiScript: function(){
@@ -66,7 +91,7 @@ Ext.define('Ung.apps.directory-connector.MainController', {
     },
 
     portChanger: function(elem){
-        var me = this, v = this.getView(), vm = this.getViewModel();
+        var vm = this.getViewModel();
 
         var secureValue = elem.getValue();
         var currentPortValue = vm.get("settings.activeDirectorySettings.LDAPPort");
@@ -81,39 +106,13 @@ Ext.define('Ung.apps.directory-connector.MainController', {
         }
     },
 
-    rpc: {},
-
-    getActiveDirectoryManager: function(forceReload) {
-        var me = this, v = this.getView(), vm = this.getViewModel();
-        if (forceReload || this.rpc.activeDirectoryManager === undefined) {
-            try {
-                this.rpc.activeDirectoryManager = v.appManager.getActiveDirectoryManager();
-            } catch (e) {
-                Util.handleException(e);
-            }
-        }
-        return this.rpc.activeDirectoryManager;
-    },
-
-    getRadiusManager: function(forceReload) {
-        var me = this, v = this.getView(), vm = this.getViewModel();
-        if (forceReload || this.rpc.radiusManager === undefined) {
-            try {
-                this.rpc.radiusManager = v.appManager.getRadiusManager();
-            } catch (e) {
-                Util.handleException(e);
-            }
-        }
-        return this.rpc.radiusManager;
-    },
-
     closeWindow: function (button) {
         button.up('window').close();
     },
 
 
     activeDirectoryUsers: function(domain){
-        var me = this, v = this.getView(), vm = this.getViewModel();
+        var v = this.getView();
 
         if(typeof(domain) == "object"){
             domain = null;
@@ -124,18 +123,25 @@ Ext.define('Ung.apps.directory-connector.MainController', {
             xtype: 'app-directory-connector-activedirectoryusers',
             title: domain ? domain + ' ' + 'Users'.t(): 'All Users'.t()
         });
-        this.getActiveDirectoryManager().getUsers( Ext.bind(function( result, exception ) {
-            if (exception) { Util.handleException(exception); return; }
+
+        Rpc.asyncData( v.appManager.getActiveDirectoryManager(), 'getUsers', domain)
+        .then(function(result){
+            if(Util.isDestroyed(v, dialog)){
+                return;
+            }
             dialog.show();
             dialog.down("[name=mapGrid]").getStore().loadData(result);
             Ext.MessageBox.close();
             dialog.down('ungridstatus').fireEvent('update');
-        }, this), domain);
+        }, function(ex){
+            Ext.MessageBox.close();
+            Util.handleException(ex);
+        });
 
     },
 
     activeDirectoryGroupMap: function(domain){
-        var me = this, v = this.getView(), vm = this.getViewModel();
+        var v = this.getView();
 
         if(typeof(domain) == "object"){
             domain = null;
@@ -146,37 +152,49 @@ Ext.define('Ung.apps.directory-connector.MainController', {
             xtype: 'app-directory-connector-activedirectorygroups',
             title: 'All Groups'.t()
         });
-        this.getActiveDirectoryManager().getUserGroupMap( Ext.bind(function(result, exception) {
-            if (exception) { Util.handleException(ex); return; }
+
+        Rpc.asyncData( v.appManager.getActiveDirectoryManager(), 'getUserGroupMap', domain)
+        .then(function(result){
+            if(Util.isDestroyed(v, dialog)){
+                return;
+            }
             dialog.show();
             dialog.down("[name=mapGrid]").getStore().loadData(result);
             Ext.MessageBox.close();
             dialog.down('ungridstatus').fireEvent('update');
-        },this), domain);
+        }, function(ex){
+            Ext.MessageBox.close();
+            Util.handleException(ex);
+        });
 
     },
 
     activeDirectoryGroupRefreshCache: function(){
-        var me = this, v = this.getView(), vm = this.getViewModel();
         Ext.MessageBox.wait( "Refreshing Group Cache...".t(), "Refresh Group Cache".t());
-        v.appManager.refreshGroupCache(Ext.bind(function(result, exception) {
-            if (exception) { Util.handleException(ex); return; }
+        Rpc.asyncData( this.getView().appManager, 'refreshGroupCache')
+        .then(function(result){
             Ext.MessageBox.close();
-        }, this));
+        }, function(ex){
+            Ext.MessageBox.close();
+            Util.handleException(ex);
+        });
     },
 
     radiusTest: function(){
-        var me = this, v = this.getView(), vm = this.getViewModel();
+        var v = this.getView(), vm = this.getViewModel();
 
         Ext.MessageBox.wait( "Testing RADIUS...".t(), "RADIUS Test".t());
         var username = v.down('textfield[name=radiusTestUsername]').getValue();
         var password = v.down('textfield[name=radiusTestPassword]').getValue();
 
-        var message = this.getRadiusManager().getRadiusStatusForSettings( Ext.bind(function(result, exception) {
-            if (exception) { Util.handleException(ex); return; }
+        Rpc.asyncData( v.appManager.getRadiusManager(), 'getRadiusStatusForSettings', vm.get('settings'), username, password )
+        .then(function(result){
             var message = result.t();
             Ext.MessageBox.alert("RADIUS Test".t(), message);
-        }, this), vm.get('settings'), username, password);
+        }, function(ex){
+            Ext.MessageBox.close();
+            Util.handleException(ex);
+        });
     },
 
     googleRefreshTaskBuild: function() {
@@ -208,8 +226,11 @@ Ext.define('Ung.apps.directory-connector.MainController', {
                 this.started = false;
             },
             run: Ext.bind(function () {
-                var me = this, v = this.getView(), vm = this.getViewModel();
+                var me = this, v = this.getView();
                 if(!me || !v.rendered) {
+                    return;
+                }
+                if(Util.isDestroyed(me, v)){
                     return;
                 }
                 me.refreshGoogleTask.count++;
@@ -219,32 +240,36 @@ Ext.define('Ung.apps.directory-connector.MainController', {
                     return;
                 }
 
-                v.appManager.getGoogleManager().isGoogleDriveConnected(Ext.bind(function(result, exception) {
-                    if (exception) { Util.handleException(ex); return; }
+                Rpc.asyncData( v.appManager.getGoogleManager(), 'isGoogleDriveConnected')
+                .then(function(result){
+                    if(Util.isDestroyed(me, v)){
+                        return;
+                    }
                     var isConnected = result;
 
                     v.down('[name=fieldsetDriveEnabled]').setVisible(isConnected);
                     v.down('[name=fieldsetDriveDisabled]').setVisible(!isConnected);
 
                     if ( isConnected ){
-                        this.refreshGoogleTask.stop();
+                        me.refreshGoogleTask.stop();
                         return;
                     }
-                }, me));
+                }, function(ex){
+                    Util.handleException(ex);
+                });
 
             },this)
         };
     },
 
     googleDriveConfigure: function(){
-        var me = this, v = this.getView(), vm = this.getViewModel();
-        me.refreshGoogleTask.start();
-        window.open(v.appManager.getGoogleManager().getAuthorizationUrl(window.location.protocol, window.location.host));
+        this.refreshGoogleTask.start();
+        window.open(Rpc.directData(this.getView().appManager.getGoogleManager(), 'getAuthorizationUrl', window.location.protocol, window.location.host));
     },
 
     googleDriveDisconnect: function(){
         var me = this, v = this.getView(), vm = this.getViewModel();
-        v.appManager.getGoogleManager().disconnectGoogleDrive();
+        Rpc.directData(v.appManager.getGoogleManager(), 'disconnectGoogleDrive');
         me.refreshGoogleTask.run();
         vm.set('settings.googleSettings.authenticationEnabled', false);
     }
@@ -288,23 +313,24 @@ Ext.define('Ung.apps.directory-connector.ActiveDirectoryServerGridController', {
     },
 
     serverTest: function( element, rowIndex, columnIndex, column, pos, record){
-        var me = this, v = this.getView(), vm = this.getViewModel();
+        var v = this.getView();
 
         Ext.MessageBox.wait( record.data.domain + "<br/><br/>" + "Testing...".t(), "Active Directory Test".t());
-        v.up('[itemId=appCard]').getController().getActiveDirectoryManager().getStatusForSettings( Ext.bind(function(result, exception) {
-            if (exception) { Util.handleException(ex); return; }
+        Rpc.asyncData( v.up('[itemId=appCard]').appManager.getActiveDirectoryManager(), 'getStatusForSettings', record.data)
+        .then(function(result){
             Ext.WindowManager.bringToFront(Ext.MessageBox.alert( "Active Directory Test".t(), record.data.domain + "<br/><br/>" + result.t() ));
-        }, this), record.data);
+        }, function(ex){
+            Ext.MessageBox.close();
+            Util.handleException(ex);
+        });
     },
 
     serverUsers: function( element, rowIndex, columnIndex, column, pos, record){
-        var me = this, v = this.getView(), vm = this.getViewModel();
-        v.up('[itemId=appCard]').getController().activeDirectoryUsers(record.get('domain'));
+        this.getView().up('[itemId=appCard]').getController().activeDirectoryUsers(record.get('domain'));
     },
 
     serverGroupMap: function( element, rowIndex, columnIndex, column, pos, record){
-        var me = this, v = this.getView(), vm = this.getViewModel();
-        v.up('[itemId=appCard]').getController().activeDirectoryGroupMap(record.get('domain'));
+        this.getView().up('[itemId=appCard]').getController().activeDirectoryGroupMap(record.get('domain'));
     }
 
 });
@@ -322,7 +348,7 @@ Ext.define('Ung.apps.directory-connector.cmp.ActiveDirectoryServerRecordEditorCo
     alias: 'controller.unactivedirectoryserverrecordeditorcontroller',
 
     onApply: function () {
-        var me = this, v = this.getView(), vm = this.getViewModel();
+        var v = this.getView(), vm = this.getViewModel();
 
         if (!this.action) {
             for (var fieldName in vm.get('record').modified) {

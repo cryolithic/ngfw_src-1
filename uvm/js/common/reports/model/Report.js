@@ -50,23 +50,23 @@ Ext.define ('Ung.model.Report', {
         {
             name: 'slug',
             calculate: function (entry) {
+                var slug = '';
                 if (entry.title) {
-                    return entry.title.replace(/\s+/g, '-').toLowerCase();
+                    slug = Util.urlEncode(entry.title);
                 }
-                return '';
+                return slug;
             }
         },
         {
             name: 'categorySlug',
             calculate: function (entry) {
-                return entry.category.replace(/ /g, '-').toLowerCase();
+                return Util.urlEncode(entry.category);
             }
         },
         {
             name: 'url',
             calculate: function (entry) {
-                // return entry.category.replace(/ /g, '').toLowerCase() + '/' + entry.uniqueId;
-                return entry.category.replace(/ /g, '-').toLowerCase() + '/' + entry.slug;
+                return 'cat=' + entry.categorySlug + '&rep=' + entry.slug;
             }
         },
         {

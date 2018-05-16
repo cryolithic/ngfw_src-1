@@ -19,16 +19,12 @@ import remote_control
 import test_registry
 import global_functions
 
-defaultRackId = 1
+default_policy_id = 1
 appData = None
 app = None
 appDataAD = None
 appAD = None
 appWeb = None
-AD_ADMIN = "ATSadmin"
-AD_PASSWORD = "passwd"
-AD_DOMAIN = "adtest.adtesting.int"
-AD_USER = "user_28004"
 localUserName = 'test20'
 adUserName = 'atsadmin'
 captureIP = None
@@ -119,7 +115,7 @@ def createDirectoryConnectorSettings(ldap_secure=False):
     return {
         "apiEnabled": True,
         "activeDirectorySettings": {
-            "LDAPHost": global_functions.adServer,
+            "LDAPHost": global_functions.ad_server,
             "LDAPSecure": ldap_secure,
             "LDAPPort": ldap_port,
             "OUFilter": "",
@@ -127,15 +123,15 @@ def createDirectoryConnectorSettings(ldap_secure=False):
                 "javaClass": "java.util.LinkedList",
                 "list": []
             },
-            "domain": AD_DOMAIN,
+            "domain": global_functions.ad_domain,
             "javaClass": "com.untangle.app.directory_connector.ActiveDirectorySettings",
-            "superuser": AD_ADMIN,
-            "superuserPass": AD_PASSWORD,
+            "superuser": global_functions.ad_admin,
+            "superuserPass": global_functions.ad_password,
             "enabled": True,
             "servers": {
                 "javaClass": "java.util.LinkedList",
                 "list": [{
-                    "LDAPHost": global_functions.adServer,
+                    "LDAPHost": global_functions.ad_server,
                     "LDAPSecure": ldap_secure,
                     "LDAPPort": ldap_port,
                     "OUFilter": "",
@@ -143,11 +139,11 @@ def createDirectoryConnectorSettings(ldap_secure=False):
                         "javaClass": "java.util.LinkedList",
                         "list": []
                     },
-                    "domain": AD_DOMAIN,
+                    "domain": global_functions.ad_domain,
                     "enabled": True,
                     "javaClass": "com.untangle.app.directory_connector.ActiveDirectoryServer",
-                    "superuser": AD_ADMIN,
-                    "superuserPass": AD_PASSWORD
+                    "superuser": global_functions.ad_admin,
+                    "superuserPass": global_functions.ad_password
                 }]
             }
         },
@@ -156,7 +152,7 @@ def createDirectoryConnectorSettings(ldap_secure=False):
             "enabled": False,
             "authenticationMethod": "PAP",
             "javaClass": "com.untangle.app.directory_connector.RadiusSettings",
-            "server": global_functions.radiusServer,
+            "server": global_functions.radius_server,
             "sharedSecret": "mysharedsecret"
         },
         "googleSettings": {
@@ -178,16 +174,16 @@ def createRadiusSettings():
             },
             "domain": "adtest.metaloft.com",
             "javaClass": "com.untangle.app.directory_connector.ActiveDirectorySettings",
-            "LDAPHost": global_functions.adServer,
-            "superuser": AD_ADMIN
+            "LDAPHost": global_functions.ad_server,
+            "superuser": global_functions.ad_admin
         },
         "radiusSettings": {
             "port": 1812,
             "enabled": True,
             "authenticationMethod": "PAP",
             "javaClass": "com.untangle.app.directory_connector.RadiusSettings",
-            "server": global_functions.radiusServer,
-            "sharedSecret": "chakas"
+            "server": global_functions.radius_server,
+            "sharedSecret": global_functions.radius_server_password
         },
         "googleSettings": {
             "javaClass": "com.untangle.app.directory_connector.GoogleSettings"
@@ -202,8 +198,8 @@ def findNameInHostTable (hostname='test'):
     sessionList = hostList['list']
     # find session generated with netcat in session table.
     for i in range(len(sessionList)):
-        print sessionList[i]
-        # print "------------------------------"
+        print(sessionList[i])
+        # print("------------------------------")
         if (sessionList[i]['address'] == remote_control.clientIP) and (sessionList[i]['username'] == hostname):
             foundTestSession = True
             break
@@ -248,22 +244,22 @@ class CaptivePortalTests(unittest2.TestCase):
     def initialSetUp(self):
         global appData, app, appDataRD, appDataAD, appAD, appWeb, adResult, radiusResult, test_untangle_com_ip, captureIP
         if (uvmContext.appManager().isInstantiated(self.appName())):
-            print "ERROR: App %s already installed" % self.appName()
+            print("ERROR: App %s already installed" % self.appName())
             raise unittest2.SkipTest('app %s already instantiated' % self.appName())
-        app = uvmContext.appManager().instantiate(self.appName(), defaultRackId)
+        app = uvmContext.appManager().instantiate(self.appName(), default_policy_id)
         appData = app.getSettings()
         if (uvmContext.appManager().isInstantiated(self.appNameAD())):
-            print "ERROR: App %s already installed" % self.appNameAD()
+            print("ERROR: App %s already installed" % self.appNameAD())
             raise unittest2.SkipTest('app %s already instantiated' % self.appName())
-        appAD = uvmContext.appManager().instantiate(self.appNameAD(), defaultRackId)
+        appAD = uvmContext.appManager().instantiate(self.appNameAD(), default_policy_id)
         appDataAD = appAD.getSettings().get('activeDirectorySettings')
         appDataRD = appAD.getSettings().get('radiusSettings')
         if (uvmContext.appManager().isInstantiated(self.appNameWeb())):
-            print "ERROR: App %s already installed" % self.appNameWeb()
+            print("ERROR: App %s already installed" % self.appNameWeb())
             raise unittest2.SkipTest('app %s already instantiated' % self.appNameWeb())
-        appWeb = uvmContext.appManager().instantiate(self.appNameWeb(), defaultRackId)
-        adResult = subprocess.call(["ping","-c","1",global_functions.adServer],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        radiusResult = subprocess.call(["ping","-c","1",global_functions.radiusServer],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        appWeb = uvmContext.appManager().instantiate(self.appNameWeb(), default_policy_id)
+        adResult = subprocess.call(["ping","-c","1",global_functions.ad_server],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        radiusResult = subprocess.call(["ping","-c","1",global_functions.radius_server],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         # Create local directory user 'test20'
         uvmContext.localDirectory().setUsers(createLocalDirectoryUser())
         # Get the IP address of test.untangle.com
@@ -353,7 +349,7 @@ class CaptivePortalTests(unittest2.TestCase):
 
         # Verify anonymous works
         appid = str(app.getAppSettings()["id"])
-        print 'appid is %s' % appid  # debug line
+        print('appid is %s' % appid)  # debug line
         result = remote_control.run_command("wget -O /tmp/capture_test_023a.out  \'" + global_functions.get_http_url() + "capture/handler.py/infopost?method=GET&nonce=9abd7f2eb5ecd82b&method=GET&appid=" + appid + "&agree=agree&submit=Continue&host=test.untangle.com&uri=/\'")
         assert (result == 0)
         search = remote_control.run_command("grep -q 'Hi!' /tmp/capture_test_023a.out")
@@ -385,7 +381,7 @@ class CaptivePortalTests(unittest2.TestCase):
 
         # Verify anonymous works
         appid = str(app.getAppSettings()["id"])
-        print 'appid is %s' % appid  # debug line
+        print('appid is %s' % appid)  # debug line
         result = remote_control.run_command("wget -O /tmp/capture_test_024a.out  \'" + global_functions.get_http_url() + "/capture/handler.py/infopost?method=GET&nonce=9abd7f2eb5ecd82b&method=GET&appid=" + appid + "&agree=agree&submit=Continue&host=test.untangle.com&uri=/\'")
         assert (result == 0)
         search = remote_control.run_command("grep -q 'Hi!' /tmp/capture_test_024a.out")
@@ -419,7 +415,7 @@ class CaptivePortalTests(unittest2.TestCase):
 
         # Verify anonymous works
         appid = str(app.getAppSettings()["id"])
-        print 'appid is %s' % appid  # debug line
+        print('appid is %s' % appid ) # debug line
         result = remote_control.run_command("curl -s --connect-timeout 10 -L -o /tmp/capture_test_025a.out --insecure  \'" + global_functions.get_http_url() + "/capture/handler.py/infopost?method=GET&nonce=9abd7f2eb5ecd82b&method=GET&appid=" + appid + "&agree=agree&submit=Continue&host=test.untangle.com&uri=/\'")
         assert (result == 0)
         search = remote_control.run_command("grep -q 'Hi!' /tmp/capture_test_025a.out")
@@ -487,7 +483,7 @@ class CaptivePortalTests(unittest2.TestCase):
 
         # check if local directory login and password
         appid = str(app.getAppSettings()["id"])
-        # print 'appid is %s' % appid  # debug line
+        # print('appid is %s' % appid  # debug line)
         result = remote_control.run_command("wget -O /tmp/capture_test_030a.out  \'" + global_functions.get_http_url() + "/capture/handler.py/authpost?username=" + localUserName + "&password=passwd&nonce=9abd7f2eb5ecd82b&method=GET&appid=" + appid + "&host=test.untangle.com&uri=/\'")
         assert (result == 0)
         search = remote_control.run_command("grep -q 'Hi!' /tmp/capture_test_030a.out")
@@ -523,7 +519,7 @@ class CaptivePortalTests(unittest2.TestCase):
 
         # check if local directory login and password
         appid = str(app.getAppSettings()["id"])
-        # print 'appid is %s' % appid  # debug line
+        # print('appid is %s' % appid  # debug line)
         result = remote_control.run_command("wget -O /tmp/capture_test_030a.out  \'" + global_functions.get_http_url() + "/capture/handler.py/authpost?username=" + localUserName + "&password=passwd&nonce=9abd7f2eb5ecd82b&method=GET&appid=" + appid + "&host=test.untangle.com&uri=/\'")
         assert (result == 0)
         search = remote_control.run_command("grep -q 'Hi!' /tmp/capture_test_030a.out")
@@ -546,7 +542,7 @@ class CaptivePortalTests(unittest2.TestCase):
             raise unittest2.SkipTest("No AD server available")
         # Configure AD settings
         testResultString = appAD.getActiveDirectoryManager().getStatusForSettings(createDirectoryConnectorSettings(ldap_secure=False)["activeDirectorySettings"]["servers"]["list"][0])
-        # print 'testResultString %s' % testResultString  # debug line
+        # print('testResultString %s' % testResultString  # debug line)
         appAD.setSettings(createDirectoryConnectorSettings())
         assert ("success" in testResultString)
         # Create Internal NIC capture rule with basic AD login page
@@ -565,7 +561,7 @@ class CaptivePortalTests(unittest2.TestCase):
 
         # check if AD login and password
         appid = str(app.getAppSettings()["id"])
-        # print 'appid is %s' % appid  # debug line
+        # print('appid is %s' % appid  # debug line)
         result = remote_control.run_command("wget -O /tmp/capture_test_035a.out  \'" + global_functions.get_http_url() + "/capture/handler.py/authpost?username=" + adUserName + "&password=passwd&nonce=9abd7f2eb5ecd82b&method=GET&appid=" + appid + "&host=test.untangle.com&uri=/\'")
         assert (result == 0)
         search = remote_control.run_command("grep -q 'Hi!' /tmp/capture_test_035a.out")
@@ -620,7 +616,7 @@ class CaptivePortalTests(unittest2.TestCase):
                 break
             else:
                 attempts += 1
-        print 'testResultString %s attempts %s' % (testResultString, attempts) # debug line
+        print('testResultString %s attempts %s' % (testResultString, attempts) ) # debug line
         assert ("success" in testResultString)
         # Create Internal NIC capture rule with basic AD login page
         appData['captureRules']['list'] = []
@@ -638,7 +634,7 @@ class CaptivePortalTests(unittest2.TestCase):
 
         # check if RADIUS login and password
         appid = str(app.getAppSettings()["id"])
-        # print 'appid is %s' % appid  # debug line
+        # print('appid is %s' % appid  # debug line)
         result = remote_control.run_command("wget -O /tmp/capture_test_040a.out  \'" + global_functions.get_http_url() + "/capture/handler.py/authpost?username=normal&password=passwd&nonce=9abd7f2eb5ecd82b&method=GET&appid=" + appid + "&host=test.untangle.com&uri=/\'",stdout=True)
         search = remote_control.run_command("grep -q 'Hi!' /tmp/capture_test_040a.out")
         assert (search == 0)
@@ -652,7 +648,7 @@ class CaptivePortalTests(unittest2.TestCase):
 
         # check if RADIUS login and password a second time.
         appid = str(app.getAppSettings()["id"])
-        # print 'appid is %s' % appid  # debug line
+        # print('appid is %s' % appid  # debug line)
         result = remote_control.run_command("wget -O /tmp/capture_test_040c.out  \'" + global_functions.get_http_url() + "/capture/handler.py/authpost?username=normal&password=passwd&nonce=9abd7f2eb5ecd82b&method=GET&appid=" + appid + "&host=test.untangle.com&uri=/\'",stdout=True)
         search = remote_control.run_command("grep -q 'Hi!' /tmp/capture_test_040c.out")
         assert (search == 0)
@@ -777,7 +773,7 @@ class CaptivePortalTests(unittest2.TestCase):
         # Save the cookie file since it is used in the next test.
         remote_control.run_command("cp " + cookie_file_name + " " + savedCookieFileName)
         second_difference = int(remote_control.run_command("expr $(date +%s) - " + cookie_expires,stdout=True))
-        print "second_difference: %i cookie_timeout: %i" %(second_difference, cookie_timeout)
+        print("second_difference: %i cookie_timeout: %i" %(second_difference, cookie_timeout))
         assert(second_difference > cookie_timeout)
 
     def test_052_cookieDisabled(self):
@@ -835,7 +831,7 @@ class CaptivePortalTests(unittest2.TestCase):
 
         # check if local directory login and password
         appid = str(app.getAppSettings()["id"])
-        # print 'appid is %s' % appid  # debug line
+        # print('appid is %s' % appid  # debug line)
         result = remote_control.run_command("wget -O /tmp/capture_test_060a.out  \'" + global_functions.get_http_url() + "/capture/handler.py/authpost?username=" + localUserName + "&password=passwd&nonce=9abd7f2eb5ecd82b&method=GET&appid=" + appid + "&host=test.untangle.com&uri=/\'")
         assert (result == 0)
         search = remote_control.run_command("grep -q 'Hi!' /tmp/capture_test_060a.out")
@@ -878,7 +874,7 @@ class CaptivePortalTests(unittest2.TestCase):
 
         # check if local directory login and password
         appid = str(app.getAppSettings()["id"])
-        # print 'appid is %s' % appid  # debug line
+        # print('appid is %s' % appid  # debug line)
         result = remote_control.run_command("wget -O /tmp/capture_test_070c.out  \'" + global_functions.get_http_url() + "/capture/handler.py/authpost?username=" + localUserName + "&password=passwd&nonce=9abd7f2eb5ecd82b&method=GET&appid=" + appid + "&host=test.untangle.com&uri=/\'")
         assert (result == 0)
         search = remote_control.run_command("grep -q 'Hi!' /tmp/capture_test_070c.out")

@@ -18,13 +18,20 @@ import json
 
 from uvm import Uvm
 
-officeNetworks = ('10.111.0.0/16','10.112.0.0/16');
-iperfServers = [('10.111.0.0/16','10.111.5.20'), # Office network
+officeNetworks = ('10.111.0.0/16','10.112.0.0/16')
+iperfServers = [('10.111.0.0/16','10.111.56.23'), # Office network
                 #('10.112.0.0/16','10.112.56.44')
                 ] # ATS VM
 iperfServer = ""
-radiusServer = "10.111.56.28"
-adServer = "10.111.56.46"
+radius_server = "10.111.56.28"
+radius_server_password = "chakas"
+radius_user = "normal"
+radius_password = "passwd"
+ad_server = "10.111.56.46"
+ad_admin = "ATSadmin"
+ad_password = "passwd"
+ad_domain = "adtest.adtesting.int"
+ad_user = "user_28004"
 
 # special Untangle box configured as a OpenVPN server
 vpnServerVpnIP = "10.111.56.96"
@@ -32,20 +39,26 @@ vpnServerVpnIP = "10.111.56.96"
 # special box within vpnServerVpnIP's network
 vpnServerVpnLanIP = "192.168.235.96"
 
+# special Untangle box configured as a OpenVPN server with User/Pass authentication enabled
+vpnServerUserPassVpnIP = "10.111.56.91"
+
+# special box within vpnServerUserPassVpnIP's network
+vpnServerUserPassVpnLanIP = "192.168.235.91"
+
 # special box with testshell in the sudoer group  - used to connect to vpn as client
-vpnClientVpnIP = "10.111.5.20"  
+vpnClientVpnIP = "10.111.56.23"  
 
 testServerHost = 'test.untangle.com'
 testServerIp = socket.gethostbyname(testServerHost)
 ftpServer = socket.gethostbyname(testServerHost)
 
 # Servers running remote syslog
-listSyslogServer = '10.111.5.20'
+listSyslogServer = '10.111.56.23'
 
 accountFileServer = "10.111.56.29"
 accountFile = "/tmp/account_login.json"
 
-uvmContext = Uvm().getUvmContext(timeout=120)
+uvmContext = Uvm().getUvmContext(timeout=240)
 uvmContextLongTimeout = Uvm().getUvmContext(timeout=300)
 prefix = "@PREFIX@"
 
@@ -57,7 +70,7 @@ def get_public_ip_address(base_URL="test.untangle.com",extra_options="",localcal
     while result == "" and timeout > 0:
         timeout -= 1
         if localcall:
-            result = subprocess.check_output("wget --timeout=4 " + extra_options + " -q -O - \"$@\" test.untangle.com/cgi-bin/myipaddress.py", shell=True)
+            result = subprocess.check_output("wget --timeout=4 " + extra_options + " -q -O - \"$@\" " + base_URL + "/cgi-bin/myipaddress.py", shell=True)
         else:
             result = remote_control.run_command("wget --timeout=4 " + extra_options + " -q -O - \"$@\" " + base_URL + "/cgi-bin/myipaddress.py",stdout=True)
     return result
@@ -71,22 +84,22 @@ def verify_iperf_configuration(wanIP):
             iperfServer = iperfServerSet[1]
             break
     if iperfServer == "":
-        print "No iperf server in the same network"
+        print("No iperf server in the same network")
         return False
     # Check to see if iperf endpoint is reachable
     iperfServerReachable = subprocess.call(["ping -c 1 " + iperfServer + " >/dev/null 2>&1"],shell=True,stdout=None,stderr=None)
     if iperfServerReachable != 0:
-        print "iperf Server is unreachable."
+        print("iperf Server is unreachable.")
         return False
     # Check to see if some other test is using iperf for UDP testing
     iperfRunning = remote_control.run_command("pidof iperf", host=iperfServer)
     if iperfRunning == 0:
-        print "iperf is already running on server."
+        print("iperf is already running on server.")
         return False
     # Check that the client has iperf
     clientHasIperf = remote_control.run_command("test -x /usr/bin/iperf")
     if clientHasIperf != 0:
-        print "iperf not installed on client."
+        print("iperf not installed on client.")
         return False
     return True
 
@@ -113,8 +126,15 @@ def get_udp_download_speed( receiverIP, senderIP, targetIP=None, targetRate=None
             break
         else:
             iperf_tries -= 1
-    # kill iperf receiver    
-    remote_control.run_command("pkill iperf", host=receiverIP)
+
+    # kill iperf receiver and verify
+    iperfRunning = 0
+    timeout = 60
+    while iperfRunning == 0 and timeout > 0:
+        timeout -= 1
+        remote_control.run_command("pkill iperf", host=receiverIP)
+        time.sleep(1)
+        iperfRunning = remote_control.run_command("pidof iperf", host=receiverIP)
 
     lines = report.split("\n")
     udp_speed = None
@@ -128,10 +148,18 @@ def get_udp_download_speed( receiverIP, senderIP, targetIP=None, targetRate=None
             break
     return udp_speed
 
-def get_download_speed():
+def get_download_speed(download_server="",meg=20):
     try:
         # Download file and record the average speed in which the file was download
-        result = remote_control.run_command("wget -t 3 --timeout=60 -O /dev/null -o /dev/stdout http://test.untangle.com/5MB.zip 2>&1 | tail -2", stdout=True)
+        # As a default use the office web server if available
+        if download_server == "":
+            accountFileServerPing = subprocess.call(["ping","-c","1",accountFileServer],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            if accountFileServerPing != 0:
+                download_server = testServerHost
+            else:
+                # Use QA web server in the office for more reliable results
+                download_server = accountFileServer
+        result = remote_control.run_command("wget -t 3 --timeout=60 -O /dev/null -o /dev/stdout http://" + download_server + "/%iMB.zip 2>&1 | tail -2"%meg, stdout=True)
         match = re.search(r'([0-9.]+) [KM]B\/s', result)
         bandwidth_speed =  match.group(1)
         # cast string to float for comparsion.
@@ -139,7 +167,7 @@ def get_download_speed():
         # adjust value if MB or KB
         if "MB/s" in result:
             bandwidth_speed *= 1000
-        # print "bandwidth_speed <%s>" % bandwidth_speed
+        # print("bandwidth_speed <%s>" % bandwidth_speed)
         return bandwidth_speed
     except Exception,e:
         return None
@@ -147,7 +175,7 @@ def get_download_speed():
 def get_events( eventEntryCategory, eventEntryTitle, conditions, limit ):
     reports = uvmContextLongTimeout.appManager().app("reports")
     if reports == None:
-        print "WARNING: reports app not found"
+        print("WARNING: reports app not found")
         return None
 
     reports.flushEvents()
@@ -156,7 +184,7 @@ def get_events( eventEntryCategory, eventEntryTitle, conditions, limit ):
 
     reportEntry = reportsManager.getReportEntry( eventEntryCategory, eventEntryTitle )
     if reportEntry == None:
-        print "WARNING: Event entry not found: %s %s" % (eventEntryCategory, eventEntryTitle)
+        print("WARNING: Event entry not found: %s %s" % (eventEntryCategory, eventEntryTitle))
         return None
 
     events = reportsManager.getEvents( reportEntry, conditions, limit )
@@ -173,19 +201,19 @@ def find_event( events, num_events, *args, **kwargs):
     if num_events == 0:
         return None
     if len(events) == 0:
-        print "No events in list"
+        print("No events in list")
         return None
     if kwargs.get('min_date') == None:
         min_date = test_start_time
     else:
         min_date = kwargs.get('min_date')
     if (len(args) % 2) != 0:
-        print "Invalid argument length"
+        print("Invalid argument length")
         return None
     num_checked = 0
     while num_checked < num_events:
         if len(events) <= num_checked:
-            print "failed to find event checked: %i total: %i" % (num_checked, len(events)) 
+            print("failed to find event checked: %i total: %i" % (num_checked, len(events)) )
             break
         event = events[num_checked]
         num_checked += 1
@@ -200,7 +228,7 @@ def find_event( events, num_events, *args, **kwargs):
             else:
                 ts = datetime.datetime.fromtimestamp((time_stamp['time']/1000)+1)#round up
             if ts < min_date:
-                print "ignoring old event: %s < %s " % (ts.isoformat(),min_date.isoformat())
+                print("ignoring old event: %s < %s " % (ts.isoformat(),min_date.isoformat()))
                 continue
 
         # check each expected value
@@ -218,9 +246,9 @@ def find_event( events, num_events, *args, **kwargs):
                     alternateValue = 1
                 else:
                     alternateValue = 0
-            #print "key %s expectedValue %s actualValue %s " % ( key, str(expectedValue), str(actualValue) )
+            print("key %s expectedValue %s actualValue %s " % ( key, str(expectedValue), str(actualValue) ))
             if str(expectedValue) != str(actualValue) and str(alternateValue) != str(actualValue):
-                print "mismatch event[%s] expectedValue %s != actualValue %s " % ( key, str(expectedValue), str(actualValue) )
+                print("mismatch event[%s] expectedValue %s != actualValue %s " % ( key, str(expectedValue), str(actualValue) ))
                 allMatched = False
                 break
 
@@ -235,7 +263,6 @@ def is_in_office_network(wanIP):
     for officeNetworkTest in officeNetworks:
         if ipaddr.IPv4Address(wanIP) in ipaddr.IPv4Network(officeNetworkTest):
             return True
-            break
     return False
 
 def is_bridged(wanIP):
@@ -260,19 +287,19 @@ def send_test_email(mailhost=testServerHost):
     try:
        smtpObj = smtplib.SMTP(mailhost)
        smtpObj.sendmail(sender, receivers, message)
-       print "Successfully sent email through " + mailhost
+       print("Successfully sent email through " + mailhost)
        return 1
     except smtplib.SMTPException, e:
-       print "Error: unable to send email through " + mailhost + " " + str(e)
+       print("Error: unable to send email through " + mailhost + " " + str(e))
        return 0
 
 def get_app_metric_value(app, label):
     metric = app.getMetric(label)
     if metric == None:
-        print "Missing metric: %s"%str(label) 
+        print("Missing metric: %s"%str(label) )
         return 0
     if metric.get('value') == None:
-        print "Missing metric value: %s"%str(label) 
+        print("Missing metric value: %s"%str(label) )
         return 0
     return metric.get('value')
 
@@ -376,7 +403,7 @@ def host_tags_add(str):
 def host_tags_clear():
     entry = uvmContext.hostTable().getHostTableEntry( remote_control.clientIP )
     for t in entry['tags']['list']:
-        t['expirationTime'] = 1; #expire 1970
+        t['expirationTime'] = 1 #expire 1970
     uvmContext.hostTable().setHostTableEntry( remote_control.clientIP, entry )
     uvmContext.hostTable().cleanup()
     
@@ -420,7 +447,7 @@ def random_email(length=10):
    return ''.join(random.choice(string.lowercase) for i in range(length)) + "@" + testServerHost
     
 def __get_ip_address(ifname):
-    print "ifname <%s>" % ifname
+    print("ifname <%s>" % ifname)
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         ifaddr = socket.inet_ntoa(fcntl.ioctl(

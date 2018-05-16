@@ -5,11 +5,6 @@ package com.untangle.uvm;
 
 import java.util.TimerTask;
 import java.util.Timer;
-import java.util.concurrent.ConcurrentHashMap;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.io.DataOutputStream;
-import java.io.DataInputStream;
 import java.io.File;
 
 import org.apache.log4j.Logger;
@@ -121,8 +116,11 @@ public class HostsFileManagerImpl extends TimerTask implements HostsFileManager
         if (logger.isDebugEnabled()) logger.debug("Scanning interface status files");
 
         try {
-            File devFilePath = new File("/var/lib/untangle-interface-status");
+            File devFilePath = new File("/var/lib/interface-status");
             File[] devFileList = devFilePath.listFiles();
+
+            // if the directory doesn't exist we are finished
+            if (devFileList == null) return;
 
             for (int i = 0; i < devFileList.length; i++) {
                 if (devFileList[i].lastModified() > latestTimestamp) {

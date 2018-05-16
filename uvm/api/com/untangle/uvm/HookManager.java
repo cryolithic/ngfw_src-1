@@ -3,8 +3,6 @@
  */
 package com.untangle.uvm;
 
-import java.io.File;
-
 public interface HookManager
 {
     public static String SETTINGS_CHANGE = "settings-change";
@@ -36,4 +34,6 @@ public interface HookManager
     public boolean unregisterCallback( String groupName, HookCallback callback );
 
     public int callCallbacks( String hookName, Object... arguments );
+
+    public int callCallbacksSynchronous( String hookName, Object... arguments );
 }

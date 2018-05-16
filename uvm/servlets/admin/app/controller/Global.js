@@ -31,7 +31,6 @@ Ext.define('Ung.controller.Global', {
         'Conditions',
         'Countries',
         'Categories',
-        'UnavailableApps',
         'Rule',
 
         'ReportsTree',
@@ -39,9 +38,16 @@ Ext.define('Ung.controller.Global', {
     ],
 
     listen: {
+        controller: {
+            '#': {
+                unmatchedroute: 'onUnmatchedRoute'
+            }
+        },
         global: {
-            appinstall: 'onAppInstall',
-            resetfields: 'onResetFields' // used to reset the fields after saving the settings
+            appinstall: 'onAppAction',
+            appremove: 'onAppAction',
+            resetfields: 'onResetFields', // used to reset the fields after saving the settings
+            invalidquery: 'onUnmatchedRoute'
         }
     },
 
@@ -50,13 +56,28 @@ Ext.define('Ung.controller.Global', {
     config: {
         refs: {
             mainView: '#main',
-            dashboardView: '#dashboard',
+            dashboardView: '#dashboardMain',
             appsView: '#apps',
             reportsView: '#reports',
         },
 
         routes: {
-            '': { before: 'detectChanges', action: 'onDashboard' },
+            '': { before: 'detectChanges', action: 'onRoute' },
+            'dashboard:params': {
+                before: 'detectChanges',
+                action: 'onRoute',
+                conditions: {
+                    ':params' : '(.*)'
+                }
+            },
+            'reports:params': {
+                before: 'detectChanges',
+                action: 'onRoute',
+                conditions: {
+                    ':params' : '(.*)'
+                }
+            },
+
             'apps': { before: 'detectChanges', action: 'onApps' },
             'apps/:policyId': { before: 'detectChanges', action: 'onApps' },
             'apps/:policyId/:app': { before: 'detectChanges', action: 'onApps' },
@@ -70,37 +91,34 @@ Ext.define('Ung.controller.Global', {
             'config/:configName': { before: 'detectChanges', action: 'onConfig' },
             'config/:configName/:configView': 'onConfig',
             'config/:configName/:configView/:subView': 'onConfig',
-            'reports': { before: 'detectChanges', action: 'onReports' },
-            'reports/create': { before: 'detectChanges', action: 'onReports' },
-            'reports/:category': { before: 'detectChanges', action: 'onReports' },
-            'reports/:category/:entry': { before: 'detectChanges', action: 'onReports', conditions: { ':entry': '(.*)' } },
+            'config/:configName/:configView/:subView/:subView': 'onConfig',
+            'config/:configName/:configView/:subView/:subView/:subView': 'onConfig',
+
             'sessions': { before: 'detectChanges', action: 'onSessions' },
             'sessions/:params': {
                 action: 'onSessions',
                 conditions: {
-                    ':params' : '([0-9a-zA-Z.\?\&=\-]+)'
+                    ':params' : '([0-9a-zA-Z.?&=-]+)'
                 }
             },
             'hosts': { before: 'detectChanges', action: 'onHosts' },
             'hosts/:params': {
                 action: 'onHosts',
                 conditions: {
-                    ':params' : '([0-9a-zA-Z.\?\&=\-]+)'
+                    ':params' : '([0-9a-zA-Z.?&=-]+)'
                 }
             },
             'devices': { before: 'detectChanges', action: 'onDevices' },
             'devices/:params': {
                 action: 'onDevices',
                 conditions: {
-                    ':params' : '([0-9a-zA-Z.\?\&=\-]+)'
+                    ':params' : '([0-9a-zA-Z.?&=-]+)'
                 }
             },
             'users': { before: 'detectChanges', action: 'onUsers' },
             'expert': 'setExpertMode',
             'noexpert': 'setNoExpertMode'
-        },
-
-        reportsEnabled: true
+        }
     },
 
     detectChanges: function () {
@@ -128,13 +146,13 @@ Ext.define('Ung.controller.Global', {
 
         if (dirtyFields || dirtyGrids) {
             Ext.MessageBox.confirm('Warning'.t(), 'There are unsaved settings which will be lost. Do you want to continue?'.t(),
-            function(btn) {
-                if (btn === 'yes') {
-                    action.resume(); // if user wants to loose changes move on
-                } else {
-                    Ung.app.redirectTo(Ung.app.hashBackup); // otherwise keep it in same view and reset the hash to reflect the same view
-                }
-            });
+                function(btn) {
+                    if (btn === 'yes') {
+                        action.resume(); // if user wants to loose changes move on
+                    } else {
+                        Ung.app.redirectTo(Ung.app.hashBackup); // otherwise keep it in same view and reset the hash to reflect the same view
+                    }
+                });
         } else {
             action.resume();
         }
@@ -151,34 +169,73 @@ Ext.define('Ung.controller.Global', {
         });
     },
 
+    /**
+     * Common method used for routing Dashboard and Reports based on conditions query
+     */
+    onRoute: function (query) {
+        var hash = window.location.hash, view, viewModel, validQuery = true,
+            route = {}, conditions = [], condsQuery = '',
+            decoded, parts, key, sep, val, fmt;
 
-    onAppInstall: function () {
-        // refetch current applications and rebuild reports tree
-        if (rpc.reportsManager) {
-            Rpc.asyncData('rpc.reportsManager.getCurrentApplications').then(function (result) {
-                Ext.getStore('categories').loadData(Ext.Array.merge(Util.baseCategories, result.list));
-                Ext.getStore('reportstree').build();
+        if (hash === '' || Ext.String.startsWith(hash, '#') || Ext.String.startsWith(hash, '#dashboard')) {
+            view = 'dashboardMain';
+            viewModel = this.getDashboardView().getViewModel();
+        }
+        if (Ext.String.startsWith(hash, '#reports')) {
+            view = 'reports';
+            viewModel = this.getReportsView().getViewModel();
+        }
+
+        if (query) {
+            Ext.Array.each(query.replace('?', '').split('&'), function (part) {
+                decoded = decodeURIComponent(part);
+
+                if (decoded.indexOf(':') > 0) {
+                    parts = decoded.split(':');
+                    key = parts[0];
+                    sep = parts[1];
+                    val = parts[2];
+                    fmt = parseInt(parts[3], 10);
+                } else {
+                    parts = decoded.split('=');
+                    key = parts[0];
+                    val = parts[1];
+                }
+                if (key === 'cat' || key === 'rep') {
+                    route[key] = Util.urlEncode(val);
+                } else {
+                    if (!key || !sep || !val) {
+                        validQuery = false;
+                    } else {
+                        conditions.push({
+                            column: key,
+                            operator: sep,
+                            value: val,
+                            autoFormatValue: fmt === 1 ? true : false,
+                            javaClass: 'com.untangle.app.reports.SqlCondition'
+                        });
+                        condsQuery += '&' + key + ':' + encodeURIComponent(sep) + ':' + encodeURIComponent(val) + ':' + fmt;
+                    }
+                }
             });
         }
+
+        if (!validQuery) {
+            Ext.fireEvent('invalidquery');
+            return;
+        }
+
+        viewModel.set('query', {
+            route: route,
+            conditions: conditions,
+            string: condsQuery
+        });
+
+        this.getMainView().getViewModel().set('activeItem', view);
     },
 
-    setExpertMode: function () {
-        rpc.isExpertMode = true;
-        this.getMainView().getViewModel().set('isExpertMode', true);
-        Ung.app.redirectTo('#apps');
-        // Ung.app.redirectTo(window.location.hash.replace('|expert', ''));
-    },
-
-    setNoExpertMode: function () {
-        rpc.isExpertMode = false;
-        this.getMainView().getViewModel().set('isExpertMode', false);
-        Ung.app.redirectTo('#apps');
-        // this.redirectTo(window.location.hash.replace('|noexpert', ''));
-    },
-
-
-    onDashboard: function () {
-        this.getMainView().getViewModel().set('activeItem', 'dashboard');
+    onUnmatchedRoute: function () {
+        this.getMainView().getViewModel().set('activeItem', 'invalidRoute');
     },
 
     onApps: function (policyId, app, view, subView) {
@@ -200,6 +257,15 @@ Ext.define('Ung.controller.Global', {
         }
     },
 
+    onAppAction: function () {
+        if (Rpc.exists('rpc.reportsManager')) {
+            Rpc.asyncData('rpc.reportsManager.getCurrentApplications').then(function (result) {
+                Ext.getStore('categories').loadData(Ext.Array.merge(Util.baseCategories, result.list));
+                Ext.getStore('reportstree').build();
+            });
+        }
+    },
+
     onService: function (app, view, subView) {
         var me = this;
         this.getMainView().getViewModel().set('activeItem', 'apps');
@@ -210,19 +276,21 @@ Ext.define('Ung.controller.Global', {
 
     },
 
-
     loadApp: function (policyId, app, view, subView) {
+        var subViews = [];
+        for( var i = 3; i < arguments.length; i++){
+            if(typeof(arguments[i]) != 'string'){
+                break;
+            }
+            subViews.push(arguments[i]);
+        }
         var me = this, mainView = me.getMainView();
         if (mainView.down('app-' + app)) {
             // if app card already exists activate it and select given view
             mainView.getViewModel().set('activeItem', 'appCard');
-            mainView.down('app-' + app).setActiveItem(view || 0);
-            if(subView){
-                var subViewTarget = mainView.down('tabpanel').down('tabpanel');
-                if(subViewTarget){
-                    subViewTarget.setActiveTab(subView);
-                }
-            }
+            var viewTarget = mainView.down('app-' + app).setActiveItem(view || 0);
+            mainView.down('app-' + app).subViews = subViews;
+            Ung.controller.Global.onSubtabActivate(viewTarget);
             return;
         } else {
             // eventually do not remove the old card
@@ -240,7 +308,8 @@ Ext.define('Ung.controller.Global', {
         });
 
         if (!appInstance || !appProps) {
-            Util.handleException("Unable to find app: " + app);
+            // Util.handleException('Unable to find app: ' + app);
+            Ext.fireEvent('invalidquery');
             return;
         }
 
@@ -259,10 +328,9 @@ Ext.define('Ung.controller.Global', {
                             itemId: 'appCard',
                             appManager: result,
                             activeTab: view || 0,
-                            subTab: subView || 0,
+                            subViews: subViews || [],
                             viewModel: {
                                 data: {
-                                    // policyId: policyId,
                                     instance: appInstance,
                                     props: appProps,
                                     license: policy.get('licenseMap')[app],
@@ -278,6 +346,8 @@ Ext.define('Ung.controller.Global', {
                         });
                         mainView.getViewModel().set('activeItem', 'appCard');
                         mainView.getViewModel().notify();
+                        var appViewModel = mainView.down('app-' + app).getViewModel();
+                        appViewModel.set('state', Ext.create('Ung.model.AppState',{vm: appViewModel, app: result}));
                     }, function (ex) {
                         Util.handleException(ex);
                     }).always(function () {
@@ -287,21 +357,29 @@ Ext.define('Ung.controller.Global', {
         });
     },
 
-
     onConfig: function (config, view, subView) {
+        var subViews = [];
+
+        // config must be one of those defined in array, otherwise route is invalid
+        if (config && !Ext.Array.contains(['network', 'administration', 'events', 'email', 'local-directory', 'upgrade', 'system', 'about'], config)) {
+            Ext.fireEvent('invalidquery');
+            return;
+        }
+
+        for( var i = 2; i < arguments.length; i++){
+            if(typeof(arguments[i]) != 'string'){
+                break;
+            }
+            subViews.push(arguments[i]);
+        }
         var me = this, mainView = me.getMainView();
         mainView.getViewModel().set('activeItem', 'config');
         if (config) {
             if (mainView.down('config-' + config)) {
-                // if config card already exists activate it and select given view
                 mainView.getViewModel().set('activeItem', 'configCard');
                 var viewTarget = mainView.down('config-' + config).setActiveItem(view || 0);
-                if(subView){
-                    var subViewTarget = viewTarget.down('tabpanel');
-                    if(subViewTarget){
-                        subViewTarget.setActiveTab(subView);
-                    }
-                }
+                mainView.down('config-' + config).subViews = subViews;
+                Ung.controller.Global.onSubtabActivate(viewTarget);
                 return;
             } else {
                 mainView.remove('configCard');
@@ -315,7 +393,7 @@ Ext.define('Ung.controller.Global', {
                         name: config,
                         itemId: 'configCard',
                         activeTab: view || 0,
-                        subTab: subView || 0,
+                        subViews: subViews || [],
                         listeners: {
                             deactivate: function () {
                                 // remove the config container
@@ -331,17 +409,16 @@ Ext.define('Ung.controller.Global', {
         }
     },
 
-    onReports: function (categoryName, reportName) {
-        var reportsVm = this.getReportsView().getViewModel();
-        var hash = '';
-        if (categoryName) {
-            hash += categoryName;
-        }
-        if (reportName) {
-            hash += '/' + reportName;
-        }
-        reportsVm.set('hash', hash);
-        this.getMainView().getViewModel().set('activeItem', 'reports');
+    setExpertMode: function () {
+        rpc.isExpertMode = true;
+        this.getMainView().getViewModel().set('isExpertMode', true);
+        Ung.app.redirectTo('#apps');
+    },
+
+    setNoExpertMode: function () {
+        rpc.isExpertMode = false;
+        this.getMainView().getViewModel().set('isExpertMode', false);
+        Ung.app.redirectTo('#apps');
     },
 
     onMonitor: function(id, xtype, params){
@@ -395,31 +472,63 @@ Ext.define('Ung.controller.Global', {
     statics: {
         //
         // These two methods are used on tab panels with their own sub-tab panels and added
-        // to the controller.  See openvon/server and virus-blocker/advanced.
+        // to the controller.  See openvpn/server and virus-blocker/advanced.
         //
+        activateTaskDelay: 250,
+        activateTaskDelayMax: 5000,
         onSubtabActivate: function(panel){
+            var me = this;
             var parentPanel = panel.up('apppanel') || panel.up('configpanel');
-            var subTab = parentPanel.subTab;
-            if(subTab == 0){
-                return;
-            }
-            // Get the first child tabpanel (could be us!)
-            while( (panel != null ) && ( panel.isXType('tabpanel') == false ) ){
-                panel = panel.down('tabpanel');
-            }
-            if(panel){
-                panel.setActiveItem(subTab);
-            }
+
+            // While we're setting tabs, don't trigger the subtab activation.
+            // Doing so will loop back into onConfig for a partial path, short-circuiting
+            // the loop wer'e doing here.
+            Ung.controller.Global.ignoreActivate = true;
+
+            var runActivateTaskDelay = 250;
+            parentPanel.subViews.forEach(function(subView){
+                var targetPanel = panel.down('[itemId='+subView+']');
+                if(!targetPanel){
+                    return;
+                }
+                var parentPanel = targetPanel.up('tabpanel');
+                parentPanel.setActiveItem(subView);
+                panel = targetPanel;
+                if(parentPanel.disabled){
+                    return false;
+                }
+
+                if(targetPanel.tab){
+                    // For deeply nested tabs, settng the active item sets the tab panel
+                    // properly but not the tab itself.  To verify tis properly set, we
+                    // spawn a delayed task to keep trying to change the tabbar manually.
+                    var activateTaskExpire = (new Date().getTime() / 1000) + 5000;
+                    var runActivateTask = new Ext.util.DelayedTask( Ext.bind(function(){
+                        if(parentPanel.destroyed){
+                            return;
+                        }
+                        if( ( parentPanel.tabBar.activeTab != targetPanel.tab) &&
+                            ( activateTaskExpire >  ( new Date().getTime() / 1000) ) ){
+                            runActivateTask.delay( Ung.controller.Global.activateTaskDelay );
+                        }
+                        parentPanel.tabBar.setActiveTab(targetPanel.tab);
+                    }, me) );
+                    runActivateTask.delay( Ung.controller.Global.activateTaskDelay );
+                }
+            });
+            Ung.controller.Global.ignoreActivate = false;
         },
 
+        ignoreActivate: false,
         onBeforeSubtabChange: function (tabPanel, card, oldCard) {
+            if(Ung.controller.Global.ignoreActivate){
+                return;
+            }
             var hash = window.location.hash;
             var id = tabPanel.itemId;
             if( id && hash.indexOf(id) > -1 ){
                 Ung.app.redirectTo(hash.substr(0,hash.indexOf(id) + id.length) + '/' + card.getItemId());
             }
         }
-
     }
-
 });

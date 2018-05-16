@@ -6,7 +6,7 @@ Ext.define('Ung.cmp.AppReports', {
     viewModel: {
         stores: {
             appReports: {
-                source: '{reports}',
+                source: 'reports',
                 filters: [{
                     property: 'category',
                     value: '{props.displayName}',
@@ -24,9 +24,9 @@ Ext.define('Ung.cmp.AppReports', {
     disabled: true,
     hidden: true,
     bind: {
-        collapsed: '{instance.runState !== "RUNNING"}',
-        disabled: '{instance.runState !== "RUNNING"}',
-        hidden: '{!reportsEnabled}'
+        collapsed: '{!state.on}',
+        disabled: '{!state.on}',
+        hidden: '{!reportsAppStatus.enabled}'
     },
 
     items: [{
@@ -34,7 +34,7 @@ Ext.define('Ung.cmp.AppReports', {
         bind: '{appReports}',
         cls: 'app-reports',
         tpl: '<tpl for=".">' +
-                '<a href="#reports/{url}"><i class="fa {icon}"></i> {localizedTitle}</a>' +
+                '<a href="#reports?{url}"><i class="fa {icon}"></i> {localizedTitle}</a>' +
             '</tpl>',
         itemSelector: 'a'
     }]

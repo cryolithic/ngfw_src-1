@@ -13,12 +13,8 @@ import global_functions
 import platform
 from global_functions import uvmContext
 
-defaultRackId = 1
+default_policy_id = 1
 app = None
-AD_ADMIN = "ATSadmin"
-AD_PASSWORD = "passwd"
-AD_DOMAIN = "adtest.adtesting.int"
-AD_USER = "user_28004"
 
 AD_RESULT = 1
 RADIUS_RESULT = 1
@@ -37,7 +33,7 @@ def create_ad_settings(ldap_secure=False):
     return {
         "apiEnabled": True,
         "activeDirectorySettings": {
-            "LDAPHost": global_functions.adServer,
+            "LDAPHost": global_functions.ad_server,
             "LDAPSecure": ldap_secure,
             "LDAPPort": ldap_port,
             "OUFilter": "",
@@ -45,15 +41,15 @@ def create_ad_settings(ldap_secure=False):
                 "javaClass": "java.util.LinkedList",
                 "list": []
             },
-            "domain": AD_DOMAIN,
+            "domain": global_functions.ad_domain,
             "javaClass": "com.untangle.app.directory_connector.ActiveDirectorySettings",
-            "superuser": AD_ADMIN,
-            "superuserPass": AD_PASSWORD,
+            "superuser": global_functions.ad_admin,
+            "superuserPass": global_functions.ad_password,
             "enabled": True,
             "servers": {
                 "javaClass": "java.util.LinkedList",
                 "list": [{
-                    "LDAPHost": global_functions.adServer,
+                    "LDAPHost": global_functions.ad_server,
                     "LDAPSecure": ldap_secure,
                     "LDAPPort": ldap_port,
                     "OUFilter": "",
@@ -61,11 +57,11 @@ def create_ad_settings(ldap_secure=False):
                         "javaClass": "java.util.LinkedList",
                         "list": []
                     },
-                    "domain": AD_DOMAIN,
+                    "domain": global_functions.ad_domain,
                     "enabled": True,
                     "javaClass": "com.untangle.app.directory_connector.ActiveDirectoryServer",
-                    "superuser": AD_ADMIN,
-                    "superuserPass": AD_PASSWORD
+                    "superuser": global_functions.ad_admin,
+                    "superuserPass": global_functions.ad_password
                 }]
             }
         },
@@ -74,7 +70,7 @@ def create_ad_settings(ldap_secure=False):
             "enabled": False,
             "authenticationMethod": "PAP",
             "javaClass": "com.untangle.app.directory_connector.RadiusSettings",
-            "server": global_functions.radiusServer,
+            "server": global_functions.radius_server,
             "sharedSecret": "mysharedsecret"
         },
         "googleSettings": {
@@ -91,7 +87,7 @@ def create_radius_settings():
     return {
         "apiEnabled": True,
         "activeDirectorySettings": {
-                    "LDAPHost": global_functions.adServer,
+                    "LDAPHost": global_functions.ad_server,
                     "LDAPSecure": True,
                     "LDAPPort": "636",
                     "OUFilter": "",
@@ -99,15 +95,15 @@ def create_radius_settings():
                         "javaClass": "java.util.LinkedList",
                         "list": []
                     },
-                    "domain": AD_DOMAIN,
+                    "domain": global_functions.ad_domain,
                     "enabled": True,
                     "javaClass": "com.untangle.app.directory_connector.ActiveDirectorySettings",
-                    "superuser": AD_ADMIN,
-                    "superuserPass": AD_PASSWORD,
+                    "superuser": global_functions.ad_admin,
+                    "superuserPass": global_functions.ad_password,
             "servers": {
                 "javaClass": "java.util.LinkedList",
                 "list": [{
-                    "LDAPHost": global_functions.adServer,
+                    "LDAPHost": global_functions.ad_server,
                     "LDAPSecure": True,
                     "LDAPPort": "636",
                     "OUFilter": "",
@@ -115,11 +111,11 @@ def create_radius_settings():
                         "javaClass": "java.util.LinkedList",
                         "list": []
                     },
-                    "domain": AD_DOMAIN,
+                    "domain": global_functions.ad_domain,
                     "enabled": True,
                     "javaClass": "com.untangle.app.directory_connector.ActiveDirectoryServer",
-                    "superuser": AD_ADMIN,
-                    "superuserPass": AD_PASSWORD
+                    "superuser": global_functions.ad_admin,
+                    "superuserPass": global_functions.ad_password
                 }]
             }
         },
@@ -128,7 +124,7 @@ def create_radius_settings():
             "enabled": True,
             "authenticationMethod": "PAP",
             "javaClass": "com.untangle.app.directory_connector.RadiusSettings",
-            "server": global_functions.radiusServer,
+            "server": global_functions.radius_server,
             "sharedSecret": "chakas"
         },
         "googleSettings": {
@@ -144,7 +140,7 @@ def get_list_of_username_mapped():
     entries = uvmContext.hostTable().getHosts()['list']
     usernames = []
     for entry in entries:
-        print entry
+        print(entry)
         if entry['usernameDirectoryConnector'] != None and entry['usernameDirectoryConnector'] != "":
             usernames.append(entry['usernameDirectoryConnector'])
     return usernames
@@ -155,7 +151,7 @@ def add_ad_settings(ldap_secure=False):
     """
     # test the settings before saving them.
     test_result_string = app.getActiveDirectoryManager().getStatusForSettings(create_ad_settings(ldap_secure)["activeDirectorySettings"]["servers"]["list"][0])
-    print 'AD test_result_string %s' % test_result_string
+    print('AD test_result_string %s' % test_result_string)
     if ("success" in test_result_string):
         # settings are good so save them
         app.setSettings(create_ad_settings())
@@ -170,7 +166,7 @@ def add_radius_settings():
     """
     # test the settings before saving them.
     test_result_string = app.getRadiusManager().getRadiusStatusForSettings(create_radius_settings(), "normal", "passwd")
-    print 'RADIUS test_result_string %s' % test_result_string
+    print('RADIUS test_result_string %s' % test_result_string)
     if ("success" in test_result_string):
         # settings are good so save them
         app.setSettings(create_radius_settings())
@@ -207,8 +203,8 @@ def find_name_in_host_table (hostname='test'):
     session_list = host_list['list']
     # find session generated with netcat in session table.
     for i in range(len(session_list)):
-        print session_list[i]
-        # print "------------------------------"
+        print(session_list[i])
+        # print("------------------------------")
         if (session_list[i]['address'] == remote_control.clientIP) and (session_list[i]['username'] == hostname):
             found_test_session = True
             break
@@ -238,9 +234,9 @@ class DirectoryConnectorTests(unittest2.TestCase):
         global app, AD_RESULT, AD_RESULT, RADIUS_RESULT
         if (uvmContext.appManager().isInstantiated(self.appName())):
             raise Exception('app %s already instantiated' % self.appName())
-        app = uvmContext.appManager().instantiate(self.appName(), defaultRackId)
-        AD_RESULT = subprocess.call(["ping", "-c", "1", global_functions.adServer], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        RADIUS_RESULT = subprocess.call(["ping", "-c", "1", global_functions.radiusServer], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        app = uvmContext.appManager().instantiate(self.appName(), default_policy_id)
+        AD_RESULT = subprocess.call(["ping", "-c", "1", global_functions.ad_server], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        RADIUS_RESULT = subprocess.call(["ping", "-c", "1", global_functions.radius_server], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         # enable the API for testing
         appSettings = app.getSettings()
@@ -267,7 +263,7 @@ class DirectoryConnectorTests(unittest2.TestCase):
         if (AD_RESULT != 0):
             raise unittest2.SkipTest("No AD server available")
         result = add_ad_settings(ldap_secure=False)
-        print 'result %s' % result
+        print('result %s' % result)
 
         assert (result == 0)
 
@@ -278,7 +274,7 @@ class DirectoryConnectorTests(unittest2.TestCase):
         if (AD_RESULT != 0):
             raise unittest2.SkipTest("No secure AD server available")
         result = add_ad_settings(ldap_secure=True)
-        print 'result %s' % result
+        print('result %s' % result)
 
         assert (result == 0)
 
@@ -294,9 +290,9 @@ class DirectoryConnectorTests(unittest2.TestCase):
         test_name_lower = test_name.lower()
         result = register_username(http_admin, test_name)
         user_list = get_list_of_username_mapped()
-        # print 'test_name %s' % test_name
-        # print 'result %s' % result
-        # print 'user_list %s' % user_list
+        # print('test_name %s' % test_name)
+        # print('result %s' % result)
+        # print('user_list %s' % user_list)
         found_username = find_name_in_host_table(test_name_lower)
         assert(found_username)
         assert (result == 0)
@@ -321,8 +317,8 @@ class DirectoryConnectorTests(unittest2.TestCase):
         # Force at least one upper-case character
         result = register_username(http_admin, test_name.title())
         user_list = get_list_of_username_mapped()
-        # print 'result %s' % result
-        # print 'num %s' % numUsers
+        # print('result %s' % result)
+        # print('num %s' % numUsers)
         test_name = test_name.lower()
         found_username = find_name_in_host_table(test_name)
 
@@ -342,8 +338,8 @@ class DirectoryConnectorTests(unittest2.TestCase):
         test_name = test_name.lower()
         result = register_username_old(http_admin, test_name)
         user_list = get_list_of_username_mapped()
-        # print 'result %s' % result
-        # print 'num %s' % numUsers
+        # print('result %s' % result)
+        # print('num %s' % numUsers)
         found_username = find_name_in_host_table(test_name)
 
         assert(found_username)
@@ -357,7 +353,7 @@ class DirectoryConnectorTests(unittest2.TestCase):
         if (AD_RESULT != 0):
             raise unittest2.SkipTest("No AD server available")
         result = add_ad_settings(ldap_secure=False)
-        print 'result %s' % result
+        print('result %s' % result)
         assert (result == 0)
 
         string_to_find = "authentication success"
@@ -375,7 +371,7 @@ class DirectoryConnectorTests(unittest2.TestCase):
         if (AD_RESULT != 0):
             raise unittest2.SkipTest("No secure AD server available")
         result = add_ad_settings(ldap_secure=True)
-        print 'result %s' % result
+        print('result %s' % result)
         assert (result == 0)
 
         string_to_find = "authentication success"
@@ -395,7 +391,7 @@ class DirectoryConnectorTests(unittest2.TestCase):
             raise unittest2.SkipTest("No AD server available")
         # Check for a list of Active Directory Users
         result = add_ad_settings(ldap_secure=False)
-        print 'result %s' % result
+        print('result %s' % result)
         assert (result == 0)
 
         appData = app.getSettings()["activeDirectorySettings"]["servers"]["list"][0]
@@ -405,9 +401,9 @@ class DirectoryConnectorTests(unittest2.TestCase):
         # check for known user "tempuser" in AD user list
         for i in range(len(appADData)):
             userName = appADData[i]['uid']
-            if (AD_USER in userName):
+            if (global_functions.ad_user in userName):
                 result = 0
-            # print 'userName %s' % userName
+            # print('userName %s' % userName)
         assert (result == 0)
 
     def test_051_checkListOfADUsers_Secure(self):
@@ -419,7 +415,7 @@ class DirectoryConnectorTests(unittest2.TestCase):
             raise unittest2.SkipTest("No AD server available")
         # Check for a list of Active Directory Users
         result = add_ad_settings(ldap_secure=True)
-        print 'result %s' % result
+        print('result %s' % result)
         assert (result == 0)
 
         appData = app.getSettings()["activeDirectorySettings"]["servers"]["list"][0]
@@ -429,9 +425,9 @@ class DirectoryConnectorTests(unittest2.TestCase):
         # check for known user "tempuser" in AD user list
         for i in range(len(appADData)):
             userName = appADData[i]['uid']
-            if (AD_USER in userName):
+            if (global_functions.ad_user in userName):
                 result = 0
-            # print 'userName %s' % userName
+            # print('userName %s' % userName)
         assert (result == 0)
 
     def test_060_setRadiusSettings(self):
@@ -449,7 +445,7 @@ class DirectoryConnectorTests(unittest2.TestCase):
                 break
             else:
                 attempts += 1
-        print 'test_result_string %s attempts %s' % (test_result_string, attempts) # debug line
+        print('test_result_string %s attempts %s' % (test_result_string, attempts) ) # debug line
         assert ("success" in test_result_string)
 
     @staticmethod

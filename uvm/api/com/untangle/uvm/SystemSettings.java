@@ -4,7 +4,6 @@
 package com.untangle.uvm;
 
 import java.io.Serializable;
-import java.util.LinkedList;
 
 import org.json.JSONObject;
 import org.json.JSONString;
@@ -20,8 +19,8 @@ public class SystemSettings implements Serializable, JSONString
     private int version = 3;
     private int httpsPort;
 
-    private boolean supportEnabled = true;
-    private boolean cloudEnabled = true;
+    private boolean supportEnabled = false;
+    private boolean cloudEnabled = false;
     private boolean httpAdministrationAllowed = true;
     private String administrationSubnets = null;
 

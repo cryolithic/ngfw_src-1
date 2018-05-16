@@ -232,6 +232,11 @@ Ext.define('Ung.config.administration.MainController', {
                 me.loadAdmin();
                 me.loadCertificates();
                 Util.successToast('Administration'.t() + ' settings saved!');
+
+                if(vm.get('skinChanged') == true){
+                    window.location.reload();
+                }
+
                 Ext.fireEvent('resetfields', v);
                 v.setLoading(false);
             }, 3000);
@@ -426,19 +431,21 @@ Ext.define('Ung.config.administration.MainController', {
         if (certMode === 'SERVER') {
             me.certDialog.setLoading(true);
             Rpc.asyncData('rpc.UvmContext.certificateManager.generateServerCertificate', certSubject, altNames)
-            .then(function (result) {
-                if(Util.isDestroyed(me)){
-                    return;
-                }
-                me.certDialog.close();
-                me.refreshServerCertificate();
-                me.certDialog.setLoading(false);
-            }, function (ex) {
-                Util.handleException('Error during certificate generation.'.t());
-                if(!Util.isDestroyed(me)){
+                .then(function (result) {
+                    if(Util.isDestroyed(me)){
+                        return;
+                    }
+                    if (result === false) {
+                        Util.handleException('Certificate generation failed. Please confirm the information provided is valid and try again.'.t());
+                        return;
+                    }
+                    me.certDialog.close();
+                    me.refreshServerCertificate();
+                }, function (ex) {
+                    Util.handleException('Error during certificate generation.'.t());
+                }).always(function () {
                     me.certDialog.setLoading(false);
-                }
-            });
+                });
         }
 
         if (certMode === 'CSR') {
@@ -533,7 +540,18 @@ Ext.define('Ung.config.administration.MainController', {
                     });
                 }
             });
-    }
+    },
+
+    skinChange: function(combo, newValue, oldValue){
+        var me = this,
+            vm = me.getViewModel();
+
+        if( ( oldValue != null ) &&
+            ( newValue != oldValue ) ){
+            vm.set('skinChanged', true);
+        }
+    },
+
 });
 
 Ext.define('Ung.cmp.AdminGridController', {

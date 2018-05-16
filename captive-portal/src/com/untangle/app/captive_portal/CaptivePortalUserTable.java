@@ -7,10 +7,8 @@ package com.untangle.app.captive_portal;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Hashtable;
-import java.util.TimerTask;
 import org.apache.log4j.Logger;
 import com.untangle.uvm.UvmContextFactory;
-import com.untangle.uvm.HostTable;
 import com.untangle.uvm.HostTableEntry;
 
 /**
@@ -33,19 +31,19 @@ public class CaptivePortalUserTable
     public class StaleUser
     {
         CaptivePortalUserEvent.EventType reason;
-        InetAddress netaddr;
+        String useraddr;
 
         /**
          * Constructor
          * 
-         * @param netaddr
+         * @param useraddr
          *        The address of the stale user
          * @param reason
          *        The reason for the logout
          */
-        StaleUser(InetAddress netaddr, CaptivePortalUserEvent.EventType reason)
+        StaleUser(String useraddr, CaptivePortalUserEvent.EventType reason)
         {
-            this.netaddr = netaddr;
+            this.useraddr = useraddr;
             this.reason = reason;
         }
     }
@@ -210,7 +208,7 @@ public class CaptivePortalUserTable
             // look for users with no traffic within the configured non-zero idle timeout
             if ((idleTimeout > 0) && (currentTime > idleTrigger)) {
                 logger.info("Idle timeout removing user " + item.toString());
-                stale = new StaleUser(entry.getAddress(), CaptivePortalUserEvent.EventType.INACTIVE);
+                stale = new StaleUser(address, CaptivePortalUserEvent.EventType.INACTIVE);
                 wipelist.add(stale);
                 wipecount++;
             }
@@ -218,7 +216,7 @@ public class CaptivePortalUserTable
             // look for users who have exceeded the configured maximum session time
             if (currentTime > userTrigger) {
                 logger.info("Session timeout removing user " + item.toString());
-                stale = new StaleUser(entry.getAddress(), CaptivePortalUserEvent.EventType.TIMEOUT);
+                stale = new StaleUser(address, CaptivePortalUserEvent.EventType.TIMEOUT);
                 wipelist.add(stale);
                 wipecount++;
             }

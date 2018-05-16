@@ -16,7 +16,7 @@ Ext.define('Ung.apps.virusblocker.view.Status', {
         items: [{
             xtype: 'component',
             cls: 'app-desc',
-            html: '<img src="/skins/modern-rack/images/admin/apps/virus-blocker_80x80.png" width="80" height="80"/>' +
+            html: '<img src="/icons/apps/virus-blocker.svg" width="80" height="80"/>' +
                 '<h3>Virus Blocker</h3>' +
                 '<p>' + 'Virus Blocker detects and blocks malware before it reaches users\' desktops or mailboxes.'.t() + '</p>'
         }, {
@@ -31,7 +31,10 @@ Ext.define('Ung.apps.virusblocker.view.Status', {
             xtype: 'displayfield',
             fieldLabel: '<STRONG>' + 'Signatures were last updated'.t() + '</STRONG>',
             labelWidth: 250,
-            bind: '{getSignatureTimestamp}'
+            bind: {
+                value: '{getSignatureTimestamp}',
+                hidden: '{!isFileScannerAvailable}'
+            }
         }, {
             xtype: 'displayfield',
             value: 'Scanning Engine &copy; BitDefender 1997-2017',

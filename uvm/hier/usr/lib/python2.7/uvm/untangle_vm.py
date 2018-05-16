@@ -14,7 +14,7 @@ from jsonrpc import JSONRPCException
 # urlgrabber, it doesn't support cookies which are required in order
 # for java callable references to work.
 class CurlRequestHandler(object):
-    def __init__( self, timeout=120 ):
+    def __init__( self, timeout=240 ):
         self.__curl = pycurl.Curl()
         self.__curl.setopt( pycurl.POST, 1 )
         self.__curl.setopt( pycurl.NOSIGNAL, 1 )
@@ -36,7 +36,7 @@ class CurlRequestHandler(object):
         try:
             self.__curl.perform()
         except Exception, e:
-            print "Problem while asking for " + url
+            print("Problem while asking for " + url)
             raise e
 
         http_code = self.__curl.getinfo( pycurl.HTTP_CODE ) 
@@ -57,14 +57,14 @@ class CurlRequestHandler(object):
         self.__curl.setopt( pycurl.TIMEOUT, timeout )
 
 class Uvm:
-    def getUvmContext( self, hostname="127.0.0.1", username=None, password=None, timeout=120 ):
+    def getUvmContext( self, hostname="127.0.0.1", username=None, password=None, timeout=240 ):
         handler = CurlRequestHandler( timeout )
 
         try:
             if ( username != None and password != None ):
                 handler.make_request( "http://" + hostname  + "/auth/login", urllib.urlencode({ "username" : username, "password" : password }))
         except JSONRPCException,e:
-            print "Login error: "
+            print("Login error: ")
             traceback.print_exc(e)
             return None
         

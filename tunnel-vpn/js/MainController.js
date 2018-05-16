@@ -34,12 +34,12 @@ Ext.define('Ung.apps.tunnel-vpn.MainController', {
     },
 
     recycleTunnel: function(view, row, colIndex, item, e, record) {
-        var me = this, v = this.getView(), vm = this.getViewModel(), grid = this.getView().down('#tunnelStatus');
+        var me = this, grid = this.getView().down('#tunnelStatus');
 
         grid.setLoading('Recycling...'.t());
         Rpc.asyncData(this.getView().appManager, 'recycleTunnel', record.get("tunnelId"))
         .then(function(result){
-            var timer = setTimeout(function() {
+            setTimeout(function() {
                 if(Util.isDestroyed(grid, me)){
                     return;
                 }
@@ -148,6 +148,7 @@ Ext.define('Ung.apps.tunnel-vpn.MainController', {
 
         var providers = vm.get('providers');
         var providerComboListData = [['', 'Select'.t()]];
+
         for( var provider in providers ){
             providerComboListData.push([provider, providers[provider].description]);
         }
@@ -158,24 +159,44 @@ Ext.define('Ung.apps.tunnel-vpn.MainController', {
         }) );
 
         v.setLoading(true);
-        Rpc.asyncData(v.appManager, 'getSettings')
+        Ext.Deferred.sequence([
+            Rpc.asyncPromise(v.appManager, 'getSettings'),
+            Rpc.asyncPromise('rpc.networkManager.getNetworkSettings')
+        ])
         .then( function(result){
             if(Util.isDestroyed(v, vm)){
                 return;
             }
 
-            vm.set('settings', result);
+            var appSettings = result[0];
+            var networkSettings = result[1];
+            
+            vm.set('settings', appSettings);
             var destinationTunnelData = [];
             destinationTunnelData.push([-1, 'Any Available Tunnel'.t()]);
             destinationTunnelData.push([0, 'Route Normally'.t()]);
-            if ( result.tunnels && result.tunnels.list ) {
-                for (var i = 0 ; i < result.tunnels.list.length ; i++) {
-                    var tunnel = result.tunnels.list[i];
+            if ( appSettings.tunnels && appSettings.tunnels.list ) {
+                for (var i = 0 ; i < appSettings.tunnels.list.length ; i++) {
+                    var tunnel = appSettings.tunnels.list[i];
                     destinationTunnelData.push([tunnel.tunnelId, tunnel.name]);
                 }
             }
             vm.set('destinationTunnelData', destinationTunnelData);
 
+            var interfaceData = [];
+            interfaceData.push([0, 'Any Interface'.t()]);
+            var intf;
+            for (var c = 0 ; c < networkSettings.interfaces.list.length ; c++) {
+                intf = networkSettings.interfaces.list[c];
+                var name = intf.name;
+                var key = intf.interfaceId;
+                // only allow addressed WANs (is there any use case for non-WANs? perhaps)
+                if ( intf.configType == 'ADDRESSED' && intf.isWan) {
+                    interfaceData.push( [ key, name ] );
+                }
+            }
+            vm.set('interfaceData', interfaceData);
+            
             vm.set('panel.saveDisabled', false);
             v.setLoading(false);
         },function(ex){
@@ -196,7 +217,6 @@ Ext.define('Ung.apps.tunnel-vpn.MainController', {
         v.setLoading(true);
         var sequence = [
             Rpc.asyncPromise(v.appManager, 'setSettings', vm.get('settings') ),
-            Rpc.asyncPromise(v.appManager, 'getRunState')
         ];
 
         var validSave = true;
@@ -254,17 +274,16 @@ Ext.define('Ung.apps.tunnel-vpn.MainController', {
             v.setLoading(false);
 
             result.shift();
-            var state = result.shift();
             result.forEach(function(result, index){
                 Util.successToast('Configuration imported'.t() + ': ' + tunnelNamesToImport[index]);
             });
 
             me.getSettings();
 
-            if(sequence.length > 2){
+            if(sequence.length > 1){
                 // Added one or more tunnels but not powered on.
-                if( state !== 'RUNNING'){
-                    v.down('appstate > button').click();
+                if( !vm.get('state.on')){
+                    v.down('appstate').down('button').click();
                 }
             }
             Ext.fireEvent('resetfields', v);
@@ -351,7 +370,6 @@ Ext.define('Ung.apps.tunnel-vpn.TunnelGridController', {
 
     deleteRecord: function (view, rowIndex, colIndex, item, e, record) {
         var me = this,
-            v = me.getView(),
             vm = me.getViewModel();
 
         var rulesInUse = [];
@@ -371,8 +389,7 @@ Ext.define('Ung.apps.tunnel-vpn.TunnelGridController', {
     },
 
     checkauth: function( e, editor){
-        var me = this,
-            vm = this.getViewModel();
+        var vm = this.getViewModel();
 
         var providers = vm.get('providers');
         return providers[editor.record.get('provider')].userAuth;
@@ -394,7 +411,6 @@ Ext.define('Ung.apps.tunnel-vpn.TunnelRecordEditorController', {
 
     uploadFile: function(cmp) {
         var me = this,
-            v = me.getView(),
             vm = me.getViewModel(),
             component = cmp;
 
@@ -426,7 +442,6 @@ Ext.define('Ung.apps.tunnel-vpn.TunnelRecordEditorController', {
     },
     providerChange: function(combo, newValue, oldValue){
         var me = this,
-            v = me.getView(),
             vm = me.getViewModel();
 
         vm.set('fileResult', '');

@@ -83,7 +83,6 @@ Ext.define('Ung.cmp.AppSessionsController', {
                 tickPixelInterval: 50,
                 tickLength: 5,
                 tickWidth: 1,
-                //tickPosition: 'inside',
                 showFirstLabel: false,
                 showLastLabel: true,
                 maxPadding: 0,
@@ -106,21 +105,6 @@ Ext.define('Ung.cmp.AppSessionsController', {
                     x: 2,
                     y: 5
                 }
-                // title: {
-                //     align: 'high',
-                //     offset: -10,
-                //     y: -5,
-                //     rotation: 0,
-                //     //text: entry.units,
-                //     text: 'sessions',
-                //     textAlign: 'left',
-                //     style: {
-                //         fontFamily: 'Source Sans Pro',
-                //         color: '#555',
-                //         fontSize: '10px',
-                //         fontWeight: 600
-                //     }
-                // }
             },
             legend: {
                 enabled: false
@@ -185,12 +169,9 @@ Ext.define('Ung.cmp.AppSessionsController', {
             series: [{
                 name: 'Sessions'.t(),
                 data: (function () {
-                    var data = [], time = Date.now(), i;
-                    try {
-                        time = rpc.systemManager.getMilliseconds();
-                    } catch (e) {
-                        console.log('Unable to get current millis.');
-                    }
+                    var data = [],
+                        time = Util.getMilliseconds(),
+                        i;
                     time = Math.round(time/1000) * 1000;
                     for (i = -6; i <= 0; i += 1) {
                         data.push({
@@ -202,7 +183,6 @@ Ext.define('Ung.cmp.AppSessionsController', {
                 }())
             }]
         });
-        // this.onAddPoint();
     },
 
     onResize: function () {
@@ -214,11 +194,14 @@ Ext.define('Ung.cmp.AppSessionsController', {
             return;
         }
         var vm = this.getViewModel();
-        if (vm.get('instance.runState') !== 'RUNNING' && this.updateMetricsCount > 0) {
+        if (!vm.get('state.on') && this.updateMetricsCount > 0) {
             return;
         }
         this.updateMetricsCount++;
         var appMetrics = Ext.getStore('metrics').findRecord('appId', vm.get('instance.id'));
+        if(!appMetrics){
+            return;
+        }
         var newVal = appMetrics.get('metrics').list.filter(function (metric) {
             return metric.name === 'live-sessions';
         })[0].value || 0;

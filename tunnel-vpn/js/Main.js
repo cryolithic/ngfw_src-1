@@ -24,6 +24,10 @@ Ext.define('Ung.apps.tunnel-vpn.Main', {
                 fields: [ 'index', 'name' ],
                 data: '{destinationTunnelData}'
             },
+            interfaceList: {
+                fields: [ 'index', 'name' ],
+                data: '{interfaceData}'
+            },
             tunnelStatusList: {
                 data: '{tunnelStatusData}',
                 fields:[{
@@ -44,23 +48,6 @@ Ext.define('Ung.apps.tunnel-vpn.Main', {
                 }]
             }
         },
-    },
-
-    tabBar: {
-        items: [{
-            xtype: 'component',
-            margin: '0 0 0 10',
-            cls: 'view-reports',
-            autoEl: {
-                tag: 'a',
-                href: '#reports/tunnel-vpn',
-                html: '<i class="fa fa-line-chart"></i> ' + 'View Reports'.t()
-            },
-            hidden: true,
-            bind: {
-                hidden: '{!reportsEnabled || instance.runState !== "RUNNING"}'
-            }
-        }]
     },
 
     items: [

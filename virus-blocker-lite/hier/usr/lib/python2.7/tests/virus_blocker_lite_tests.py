@@ -2,6 +2,7 @@ import unittest2
 import time
 import sys
 import os
+import subprocess
 from jsonrpc import ServiceProxy
 from jsonrpc import JSONRPCException
 from uvm import Manager
@@ -30,8 +31,17 @@ class VirusBlockerLiteTests(VirusBlockerBaseTests):
     # verify daemon is running
     def test_009_clamdIsRunning(self):
         # wait for freshclam to finish updating sigs
-        os.system("freshclam >/dev/null 2>&1")
-        result = os.system("pidof clamd >/dev/null 2>&1")
+        subprocess.call("freshclam >/dev/null 2>&1", shell=True)
+        result = subprocess.call("pidof clamd >/dev/null 2>&1", shell=True)
         assert (result == 0)
+
+        # give it up to 20 minutes to download signatures for the first time
+        print("Waiting for server to start...")
+        for i in xrange(1200):
+            time.sleep(1)
+            result = subprocess.call("netcat -n -z 127.0.0.1 3310 >/dev/null 2>&1", shell=True)
+            if result == 0:
+                break
+        print("Number of sleep cycles waiting: %d" % i)
 
 test_registry.registerApp("virus-blocker-lite", VirusBlockerLiteTests)

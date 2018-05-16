@@ -14,7 +14,7 @@ import remote_control
 import test_registry
 import global_functions
 
-defaultRackId = 1
+default_policy_id = 1
 app = None
 default_enabled = None
 orig_netsettings = None
@@ -94,7 +94,7 @@ class ShieldTests(unittest2.TestCase):
     def finalTearDown(self):
         global orig_netsettings
         # Restore original settings to return to initial settings
-        # print "orig_netsettings <%s>" % orig_netsettings
+        # print("orig_netsettings <%s>" % orig_netsettings)
         uvmContext.networkManager().setNetworkSettings(orig_netsettings)
 
         settings = app.getSettings()

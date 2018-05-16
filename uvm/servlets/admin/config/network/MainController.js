@@ -8,8 +8,8 @@ Ext.define('Ung.config.network.MainController', {
         '#interfaces': { beforerender: 'onInterfaces' },
         '#interfacesGrid': { reconfigure: 'interfacesGridReconfigure'},
         '#routes': { afterrender: 'refreshRoutes' },
-        '#qosStatistics': { afterrender: 'refreshQosStatistics' },
-        '#upnpStatus': { afterrender: 'refreshUpnpStatus' },
+        '#qos_statistics': { afterrender: 'refreshQosStatistics' },
+        '#upnp_status': { afterrender: 'refreshUpnpStatus' },
         '#dhcpLeases': { afterrender: 'refreshDhcpLeases' },
         'networktest': { afterrender: 'networkTestRender' },
         '#advanced': {
@@ -17,6 +17,27 @@ Ext.define('Ung.config.network.MainController', {
         },
         '#advanced #advanced': {
             beforetabchange: Ung.controller.Global.onBeforeSubtabChange
+        },
+        '#advanced #qos': {
+            beforetabchange: Ung.controller.Global.onBeforeSubtabChange
+        },
+        '#advanced #upnp': {
+            beforetabchange: Ung.controller.Global.onBeforeSubtabChange
+        },
+        '#advanced #dynamic_routing': {
+            beforetabchange: Ung.controller.Global.onBeforeSubtabChange
+        },
+        '#advanced #dynamic_routing #status':{
+            activate: 'getDynamicRoutingStatus'
+        },
+        '#advanced #dynamic_routing #bgp': {
+            beforetabchange: Ung.controller.Global.onBeforeSubtabChange
+        },
+        '#advanced #dynamic_routing #ospf': {
+            beforetabchange: Ung.controller.Global.onBeforeSubtabChange
+        },
+        '#advanced #dynamic_routing #ospf #interfaces':{
+            activate: 'getOspfInterfaces'
         },
         '#troubleshooting': {
             activate: Ung.controller.Global.onSubtabActivate,
@@ -43,6 +64,7 @@ Ext.define('Ung.config.network.MainController', {
             }
             var intfStatus, devStatus;
 
+            var nextHopDevices = [];
             result[0].interfaces.list.forEach(function (intf) {
                 if (result[1] && result[1].list.length > 0) {
                     intfStatus = Ext.Array.findBy(result[1].list, function (intfSt) {
@@ -62,7 +84,11 @@ Ext.define('Ung.config.network.MainController', {
                     Ext.apply(intf, devStatus);
                 }
 
+                var name = Ext.String.format("Local on {0} ({1})".t(), intf.name, intf.systemDev);
+                var key = ("" + intf.interfaceId);
+                nextHopDevices.push([ key, name ]);
             });
+            vm.set('nextHopDevicesList', nextHopDevices);
             vm.set('savedSettings', Ext.merge({}, result[0]));
             vm.set('settings', result[0]);
 
@@ -79,6 +105,7 @@ Ext.define('Ung.config.network.MainController', {
             vm.set('companyName', result[3]);
 
             vm.set('panel.saveDisabled', false);
+
             v.setLoading(false);
         }, function(ex) {
             if(!Util.isDestroyed(vm, vm)){
@@ -228,6 +255,8 @@ Ext.define('Ung.config.network.MainController', {
         var vm = this.getViewModel();
         var me = this;
 
+        // !!! on writes, set interface list.
+
         v.setLoading(true);
         Ext.Deferred.sequence([
             Rpc.asyncPromise('rpc.networkManager.setNetworkSettings', vm.get('settings'))
@@ -302,15 +331,15 @@ Ext.define('Ung.config.network.MainController', {
     },
 
     interfaceStatusLinkMap:{
-        2: 'macAddress',
-        7: 'rxbytes',
-        8: 'rxpkts',
-        9: 'rxerr',
-        10: 'rxdrop',
-        13: 'txbytes',
-        14: 'txpkts',
-        15: 'txerr',
-        16: 'txdrop'
+        1: 'macAddress',
+        2: 'rxbytes',
+        3: 'rxpkts',
+        4: 'rxerr',
+        5: 'rxdrop',
+        8: 'txbytes',
+        9: 'txpkts',
+        10: 'txerr',
+        11: 'txdrop'
     },
     getInterfaceStatus: function () {
         var me = this,
@@ -332,6 +361,8 @@ Ext.define('Ung.config.network.MainController', {
                 txdrop: null
             };
 
+
+
         // This kind of simulates a "loading" in the status grid so the emptyText doesn't immediately appear.
         vm.set('siStatus', {device: ''});
 
@@ -342,13 +373,13 @@ Ext.define('Ung.config.network.MainController', {
 
         v.setLoading(true);
         Ext.Deferred.sequence([
-            Rpc.asyncPromise('rpc.execManager.execOutput', 'ip -s -d link show dev ' + symbolicDev + ' | sed -n -e "/link/{p}" -e "/RX/{n;p}" -e "/TX/{n;p}" | tr "\\n" " " | tr -s " "'),
+            Rpc.asyncPromise('rpc.execManager.execOutput', 'ip -s -d link show dev ' + symbolicDev + ' | sed -n -e "/link/{p}" -e "/RX/{n;p}" -e "/TX/{n;p}" | sed -e "s/brd .*$//g" | tr "\\n" " " | tr -s " "'),
             Rpc.asyncPromise('rpc.execManager.execOutput', 'ip addr show dev ' + symbolicDev + ' | grep inet | grep global | tr "\\n" " " | tr -s " "')
         ]).then(function(result){
             if(Util.isDestroyed(me, v, vm)){
                 return;
             }
-            result[0].split(' ').forEach(function(item, index){
+            result[0].trim().split(' ').forEach(function(item, index){
                 if( index in me.interfaceStatusLinkMap){
                     stat[me.interfaceStatusLinkMap[index]] = item;
                 }
@@ -583,6 +614,260 @@ Ext.define('Ung.config.network.MainController', {
         staticDhcpGrid.getStore().add(newDhcpEntry);
     },
 
+    getDynamicRoutingStatus: function(view){
+        if(view.itemId != 'status'){
+            view = view.up('#status');
+        }
+        var vm = this.getViewModel();
+
+        view.setLoading(true);
+        Ext.Deferred.sequence([
+            Rpc.asyncPromise('rpc.execManager.execOutput', 'ip route show proto zebra | tr -s " " '),
+            Rpc.asyncPromise('rpc.execManager.execOutput', 'vtysh -c "show ip bgp summary" | sed -e "/Neighbor/,\\$!d" | sed -e "/Total/,\\$d" -e "1d" | tr -s " "'),
+            Rpc.asyncPromise('rpc.execManager.execOutput', 'vtysh -c "show ip ospf neighbor" | sed -e "/Neighbor/,\\$!d" | sed -e "1d" | tr -s " "')
+        ]).then( function(result){
+            // !!! check view is not destroyed
+            view.setLoading(false);
+
+            // Build dynamic routes
+            var routeStore = view.down('#dynamic_routing_status').getStore();
+            var routeStoreFields = routeStore.getModel().getFields();
+            var storeData = [];
+            var currentNetwork = null;
+            var firstNexthop = false;
+            var inFields = false;
+            result[0].split("\n").forEach(function(line){
+                line = line.trim();
+                if(line == "" ){
+                    return;
+                }
+                if(line.indexOf("Exiting:") > -1){
+                    return;
+                }
+                var columns = line.split(" ");
+                var row = {};
+                var i;
+                if(columns[0] == 'nexthop'){
+                    row = currentNetwork ? Ext.clone(currentNetwork) : {};
+                    columns.shift();
+                    if(firstNexthop == false){
+                        storeData.pop();
+                    }
+                    firstNexthop = true;
+                }else{
+                    var network = columns.shift().split('/');
+                    currentNetwork = {
+                        network: network[0],
+                        prefix: network[1],
+                        attributes: []
+                    };
+                    firstNexthop = false;
+                    row = currentNetwork;
+                }
+                for(i = 0; i < columns.length; i += 2){
+                    inFields = false;
+                    var columnName = columns[i];
+                    var columnValue = columns[i + 1];
+                    routeStoreFields.forEach(function(field){
+                        if(field.getName() == columnName){
+                            inFields = true;
+                        }
+                    });
+                    if(inFields){
+                        if(columnName == 'dev'){
+                            var interfaceRecord = vm.get('interfaces').findRecord('symbolicDev', columnValue);
+                            row['interface'] = interfaceRecord ? interfaceRecord.get('interfaceId') : columnValue;
+                        }
+                        row[columnName] = columnValue;
+                    }else{
+                        row['attributes'].push({name: columns[i], value: columnValue});
+                    }
+                }
+                storeData.push(row);
+            });
+            routeStore.loadData(storeData);
+
+            // Build BGP Neighbor status
+            storeData = [];
+            result[1].split("\n").forEach(function(line){
+                line = line.trim();
+                if(line == "" ){
+                    return;
+                }
+                if(line.indexOf("Exiting:") > -1){
+                    return;
+                }
+                var columns = line.split(" ");
+                if(columns[8] == 'never'){
+                    uptime = 0;
+                }else{
+                    var uptimes = columns[8].trim().split(/[dhm]/);
+                    if(uptimes.length > 1){
+                        uptime = (parseInt(uptimes[0],10) * 3600 * 24) + (parseInt(uptimes[1],10) * 3600) + (parseInt(uptimes[2],10) * 60);
+                    }else{
+                        uptimes = columns[8].split(':');
+                        uptime = parseInt(uptimes[uptimes.length -1],10) + (parseInt(uptimes[uptimes.length -2],10) * 60) + (parseInt(uptimes[uptimes.length -3],10) * 3600);
+                    }
+                    uptime *= 1000;
+                }
+                storeData.push({
+                    neighbor: columns[0],
+                    as: columns[2],
+                    msgsRecv: columns[3],
+                    msgsSent: columns[4],
+                    uptime: uptime
+                });
+            });
+            view.down('#bgp_status').getStore().loadData(storeData);
+
+            // Build OSPF status
+            storeData = [];
+            result[2].split("\n").forEach(function(line){
+                line = line.trim();
+                if(line == "" ){
+                    return;
+                }
+                if(line.indexOf("Exiting:") > -1){
+                    return;
+                }
+                var columns = line.split(" ");
+
+                devs = columns[5].split(':');
+                dev = devs[0];
+                var interfaceRecord = vm.get('interfaces').findRecord('symbolicDev', dev);
+                interfaceId = interfaceRecord ? interfaceRecord.get('interfaceId') : dev;
+                storeData.push({
+                    neighbor: columns[0],
+                    address: columns[4],
+                    time: parseFloat(columns[3]),
+                    dev: dev,
+                    interface: interfaceId
+                });
+            });
+            view.down('#ospf_status').getStore().loadData(storeData);
+
+            view.setLoading(false);
+
+        },function(ex){
+            view.setLoading(false);
+            console.error(ex);
+            Util.handleException(ex);
+        });
+    },
+
+    getOspfInterfaces: function(view, cmp){
+        var me = this;
+        var vm = null;
+        if(this == window){
+            vm = view.getViewModel();
+        }else{
+            vm = this.getViewModel();
+        }
+
+        var interfacesInUse = [];
+        if(cmp.isXType('combo')){
+            var currentValue = cmp.getBind().value.getRawValue();
+            cmp.up('#interfaces').getStore().getData().each(function(interface){
+                if(interface.get('dev') == currentValue){
+                    return;
+                }
+                interfacesInUse.push(interface.get('dev'));
+            });
+        }
+
+        view.setLoading(true);
+
+        runInterfaceTaskDelay = 100;
+        var runInterfaceTask = new Ext.util.DelayedTask( Ext.bind(function(){
+            // !!! look for destroyed objects in 14.0
+            var networkInterfaces = vm.get('settings.interfaces');
+            if(!networkInterfaces){
+                runInterfaceTask.delay( runInterfaceTaskDelay );
+                return;
+            }
+
+            var interfaceData = [];
+            var dev;
+            networkInterfaces.list.forEach( function(interface){
+                if( interface["configType"] != "ADDRESSED" || interface["v4ConfigType"] != "STATIC"){
+                    return;
+                }
+                dev = interface['symbolicDev'];
+                if(interfacesInUse.indexOf(dev) > -1){
+                    return;
+                }
+                interfaceData.push({
+                    'dev': dev,
+                    'interface': interface['name'],
+                });
+            });
+
+            // !!! convert to sequence in 14.0.
+            var app = Rpc.directData('rpc.UvmContext.appManager').app('ipsec-vpn');
+            var settings, networkId;
+            if(app){
+                settings = app.getSettings();
+                networkId = 1;
+                settings.networks.list.forEach(function(network){
+                    if(network.active){
+                        dev = 'gre' + networkId.toString();
+                        if(interfacesInUse.indexOf(dev) > -1){
+                            return;
+                        }
+                        interfaceData.push({
+                            dev: dev,
+                            interface: network.description
+                        });
+                    }
+                    networkId++;
+                });
+            }
+
+            app = Rpc.directData('rpc.UvmContext.appManager').app('openvpn');
+            if(app){
+                settings = app.getSettings();
+                networkId = 1;
+                settings.remoteServers.list.forEach(function(network){
+                    if(network.enabled){
+                        dev = 'tun' + networkId.toString();
+                        if(interfacesInUse.indexOf(dev) > -1){
+                            return;
+                        }
+                        interfaceData.push({
+                            dev: dev,
+                            interface: network.name
+                        });
+                    }
+                    networkId++;
+                });
+            }
+
+            app = Rpc.directData('rpc.UvmContext.appManager').app('tunnel-vpn');
+            if(app){
+                settings = app.getSettings();
+                settings.tunnels.list.forEach(function(network){
+                    if(network.enabled){
+                        dev = 'tun' + network.tunnelId.toString();
+                        if(interfacesInUse.indexOf(dev) > -1){
+                            return;
+                        }
+                        interfaceData.push({
+                            dev: dev,
+                            interface: network.name
+                        });
+                    }
+                });
+            }
+
+            vm.get('ospfDevices').loadData(interfaceData);
+            view.setLoading(false);
+            if(view.itemId && view.itemId == 'interfaces'){
+                view.reconfigure();
+            }
+        }, me) );
+        runInterfaceTask.delay( runInterfaceTaskDelay );
+    },
+
     // Network Tests
     networkTestRender: function (view) {
         view.down('form').insert(0, view.commandFields);
@@ -792,6 +1077,26 @@ Ext.define('Ung.config.network.MainController', {
             }
         });
         me.dialog.show();
+
+        me.dialog.getViewModel().bind('{intf}', function () {
+            // add change event only after binding is set,
+            // so the change fires only when manual click on isWan checkbox
+            me.dialog.down('#isWanCk').addListener('change', function (ck, val) {
+                if (!val) {
+                    // not WAN
+                    me.dialog.down('#ipv4ConfigType').setValue('STATIC');
+                    me.dialog.down('#ipv6ConfigType').setValue('STATIC');
+                } else {
+                    // WAN
+                    // automatically turn on NAT egress if its a WAN
+                    // but only if manually changed, not the first time this is called
+                    // during binding
+                    me.dialog.down('#v4NatEgressTraffic').setValue(true);
+                    me.dialog.down('tabpanel').setActiveItem(0);
+                }
+            });
+        });
+
 
         // wireless channels
         var wirelessChannelsArr = [];
@@ -1134,6 +1439,10 @@ Ext.define('Ung.config.network.MainController', {
     },
 
     statics: {
+        ospfInterfaceComboBeforeRender: function(cmp){
+            var view = cmp.up('config-network');
+            view.getController().getOspfInterfaces(view, cmp);
+        },
         connectedIconRenderer: function(value){
             switch (value) {
                 case 'CONNECTED': return '<i class="fa fa-circle fa-green"></i>';
@@ -1223,14 +1532,16 @@ Ext.define('Ung.config.network.MainController', {
             return record.get('auto') ? '' : value;
         },
 
-        routesNextHopRenderer: function(value, metadata, record, rowIndex, colIndex, store, view){
-            var devMap = Util.getNextHopList(true);
-            var intRegex = /^\d+$/;
-            if ( intRegex.test( value ) ) {
-                return devMap[value] ? devMap[value] : "Local interface".t();
-            } else {
-                return value;
+        routesNextHopRenderer: function(value, metadata){
+            var store = this.up('configpanel').getViewModel().getStore('nextHopDevices');
+
+            var record = store.findRecord('key', value);
+            if(record != null){
+                value = record.get('value');
             }
+
+            metadata.tdAttr = 'data-qtip="' + Ext.String.htmlEncode( value ) + '"';
+            return value;
         },
 
         qosBandwidthRenderer: function(value){
@@ -1274,7 +1585,95 @@ Ext.define('Ung.config.network.MainController', {
                 case 'M10_HALF_DUPLEX': return '10 Mbps, Half Duplex'.t();
                 default: return 'Unknown'.t();
             }
+        },
+
+        ospfAreaRenderer:function( value ){
+            var store = this.up('configpanel').getViewModel().getStore('ospfAreas');
+            var record = store.findRecord('ruleId', value);
+            if(record != null){
+                return record.get('comboValueField');
+            }else{
+                return 'Unknown'.t() + ' - ' + value;
+            }
+        },
+
+        ospfAreaTypeRenderer:function( value ){
+            var store = this.up('configpanel').getViewModel().getStore('ospfAreaTypes');
+            var record = store.findRecord('value', value);
+            if(record != null){
+                return record.get('type');
+            }else{
+                return 'Unknown'.t() + ' - ' + value;
+            }
+        },
+
+        ospfInterfaceAuthenticationRenderer:function( value ){
+            var store = this.up('configpanel').getViewModel().getStore('ospfAuthenticationTypes');
+            var record = store.findRecord('value', value);
+            if(record != null){
+                return record.get('type');
+            }else{
+                return 'Unknown'.t() + ' - ' + value;
+            }
+        },
+
+        ospDeviceRenderer: function( value ){
+            var store = this.up('configpanel').getViewModel().getStore('ospfDevices');
+            var record = store.findRecord('dev', value);
+            if(record != null){
+                return record.get('interface');
+            }else{
+                return 'Unknown'.t() + ' - ' + value;
+            }
+        },
+
+        routeAttributes: function( value ){
+            var attributes = [];
+            value.forEach(function(entry){
+                attributes.push('<div class="tag-item">' + entry.name + ':'  + entry.value + '</div>');
+            });
+            return '<div class="tagpicker">' + attributes.join('') + '</div>';
+        },
+
+    }
+});
+
+Ext.define('Ung.config.network.cmp.OspfAreaRecordEditor', {
+    extend: 'Ung.cmp.RecordEditor',
+    xtype: 'ung.cmp.unospfarearecordeditor',
+
+    controller: 'unospfarearecordeditorcontroller'
+
+});
+
+Ext.define('Ung.config.network.cmp.OspfAreaRecordEditorController', {
+    extend: 'Ung.cmp.RecordEditorController',
+    alias: 'controller.unospfarearecordeditorcontroller',
+
+    onApply: function () {
+        var me = this, v = this.getView(), vm = this.getViewModel();
+
+        if (!this.action) {
+            for (var fieldName in vm.get('record').modified) {
+                v.record.set(fieldName, vm.get('record').get(fieldName));
+            }
+        }else if (this.action === 'add') {
+            this.mainGrid.getStore().add(v.record);
         }
 
+        v.query('[itemId=unvirtuallinkgrid]').forEach( function( grid ){
+            var ouFiltersData = vm.get('record').get('virtualLinks');
+            var ouFilters = [];
+            grid.getStore().each( function(record){
+                if (record.get('markedForDelete')){
+                    return;
+                }
+                ouFilters.push(record.get('field1'));
+            });
+            ouFiltersData.list = ouFilters;
+            vm.get('record').set('virtualLinks', ouFiltersData);
+            v.up('grid').getView().refresh();
+        });
+        v.close();
     }
 });

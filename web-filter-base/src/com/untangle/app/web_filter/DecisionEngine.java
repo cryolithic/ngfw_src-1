@@ -16,18 +16,15 @@ import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
-import com.untangle.uvm.LanguageManager;
 import com.untangle.uvm.UvmContextFactory;
 import com.untangle.uvm.vnet.AppTCPSession;
 import com.untangle.uvm.vnet.AppSession;
 import com.untangle.uvm.util.UrlMatchingUtil;
 import com.untangle.uvm.util.I18nUtil;
 import com.untangle.uvm.app.GenericRule;
-import com.untangle.uvm.app.MimeType;
 import com.untangle.uvm.app.UrlMatcher;
 import com.untangle.app.http.RequestLineToken;
 import com.untangle.app.http.HeaderToken;
-import com.untangle.app.http.HttpEventHandler;
 
 /**
  * This is the core functionality of web filter It decides if a site should be
@@ -158,11 +155,13 @@ public abstract class DecisionEngine
         }
 
         // restrict google applications
-        // If restricting google app access, verify google domain and add restrict header.
         if (app.getSettings().getRestrictGoogleApps()) {
-            UrlMatcher matcher = new UrlMatcher("*google*");
-            if (matcher.isMatch(host, uri.toString())) {
-                header.addField("X-GoogApps-Allowed-Domains", app.getSettings().getRestrictGoogleAppsDomain());
+            String allowedDomains = app.getSettings().getRestrictGoogleAppsDomain();
+            if (allowedDomains != null && !"".equals(allowedDomains.trim()) && port == 443) {
+                UrlMatcher matcher = new UrlMatcher("*google*");
+                if (matcher.isMatch(host, uri.toString()) || host.contains("google")) {
+                    header.addField("X-GoogApps-Allowed-Domains", app.getSettings().getRestrictGoogleAppsDomain());
+                }
             }
         }
 

@@ -104,10 +104,17 @@ ungAllDirs = [ 'overrides', 'model', 'store', 'controller',
 ungAllDirs.map! { |e| "uvm/servlets/admin/app/#{e}" }
 JsBuilder.new(uvm_lib, "ung-all", ungAllDirs, "admin/script")
 
+
 # ung-modern-all
 ungModernAllDirs = [ 'model', 'store', 'controller', 'view', 'util', 'cmp', 'Application.js' ]
 ungModernAllDirs.map! { |e| "uvm/servlets/modern/app/#{e}" }
 JsBuilder.new(uvm_lib, "ung-modern-all", ungModernAllDirs, "modern/script")
+
+# ung-setup-all
+ungSetupAllDirs = [ 'view', 'Application.js' ]
+ungSetupAllDirs.map! { |e| "uvm/servlets/setup/app/#{e}" }
+JsBuilder.new(uvm_lib, "ung-setup-all", ungSetupAllDirs, "setup/script")
+
 
 # sections
 # ['about', 'administration', 'events', 'email', 'local-directory', 'network',
@@ -126,13 +133,15 @@ end
 
 
 # jslinting
-# JsLintTarget.new(uvm_lib, './uvm/servlets/admin', 'jslint-adminui')
-# JsLintTarget.new(uvm_lib, './uvm/js/common', 'jslint-common')
+JsLintTarget.new(uvm_lib, './uvm/servlets/admin', 'jslint-adminui')
+JsLintTarget.new(uvm_lib, './uvm/js/common', 'jslint-common')
+JsLintTarget.new(uvm_lib, './uvm/servlets/setup', 'jslint-setupui')
 
 ## SCSS
 ScssBuilder.new(uvm_lib, "ung-all", "./uvm/servlets/admin/sass", "admin/styles")
 ScssBuilder.new(uvm_lib, "ung-modern-all", "./uvm/servlets/modern/sass", "modern/styles")
 ScssBuilder.new(uvm, "reports-all", "./uvm/js/common/reports/sass", "script/common")
+ScssBuilder.new(uvm, "setup-all", "./uvm/servlets/setup/sass", "setup/styles")
 
 ## i18n
 poFiles = FileList["./i18ntools/po/**/*.po"]

@@ -64,7 +64,6 @@ Ext.define('Ung.cmp.GridController', {
     copyRecord: function (view, rowIndex, colIndex, item, e, record) {
         var me = this,
             v = me.getView(),
-            grid = v.down('grid'),
             newRecord = record.copy(null);
 
         var newRecordData_Id = newRecord.data._id;
@@ -184,7 +183,11 @@ Ext.define('Ung.cmp.GridController', {
             case 'SRC_INTF':
             case 'DST_INTF':
                 conds[i].value.toString().split(',').forEach(function (intfff) {
-                    valueRenderer.push(Util.interfacesListNamesMap()[intfff]);
+                    Util.getInterfaceList(true, true).forEach(function(interface){
+                        if(interface[0] == intfff){
+                            valueRenderer.push(interface[1]);
+                        }
+                    });
                 });
                 break;
             case 'DST_LOCAL':
@@ -205,11 +208,15 @@ Ext.define('Ung.cmp.GridController', {
                 }
             }
             // for boolean conditions just add 'True' string as value
-            if (view.conditionsMap[conds[i].conditionType].type === 'boolean') {
+            if (view.conditionsMap[conds[i].conditionType] != undefined && view.conditionsMap[conds[i].conditionType].type === 'boolean') {
                 valueRenderer = ['True'.t()];
             }
 
-            resp.push(view.conditionsMap[conds[i].conditionType].displayName + '<strong>' + (conds[i].invert ? ' &nrArr; ' : ' &rArr; ') + '<span class="cond-val ' + (conds[i].invert ? 'invert' : '') + '">' + valueRenderer.join(', ') + '</span>' + '</strong>');
+            resp.push(
+                ( view.conditionsMap[conds[i].conditionType] != undefined ? view.conditionsMap[conds[i].conditionType].displayName : conds[i].conditionType ) +
+                '<strong>' +
+                (conds[i].invert ? ' &nrArr; ' : ' &rArr; ') + '<span class="cond-val ' + (conds[i].invert ? 'invert' : '') + '">' + valueRenderer.join(', ') + '</span>' +
+                '</strong>');
         }
         return resp.length > 0 ? resp.join(' &nbsp;&bull;&nbsp; ') : '<em>' + 'No conditions' + '</em>';
     },
@@ -391,7 +398,6 @@ Ext.define('Ung.cmp.GridController', {
 
     importHandler: function (importMode, newData) {
         var grid = this.getView(),
-            vm = this.getViewModel(),
             existingData = Ext.Array.pluck(grid.getStore().getRange(), 'data');
 
         Ext.Array.forEach(existingData, function (rec, index) {

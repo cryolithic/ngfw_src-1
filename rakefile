@@ -36,6 +36,8 @@ task :kindaclean do
   FileUtils.rm_rf(BuildEnv::SRC.staging) if File.exist?(BuildEnv::SRC.staging)
   info "[rm -rf  ] debian/dirs"
   FileUtils.rm_rf(FileList['debian/*'].select { |f| File.directory?(f) })
+  info "[rm -rf  ] debian/*init"
+  FileUtils.rm_rf(FileList['debian/*init'])
   ## Clear the stamp hashes
   Rake::StampHash.instance.clear
 end
@@ -130,7 +132,7 @@ task :devel => [:build, :hier, :installuvmcore] do
   end
 end
 
-task :i18n => [:builduvmcore, :targets ] do
+task :i18n => [:builduvmcore, :targets] do
   ## Generate and update po files
   #  raise "generate failed" unless Kernel.system("#{BuildEnv::SRC.i18ntools}/generate.py")
   #  raise "translate failed" unless Kernel.system("#{BuildEnv::SRC.i18ntools}/translate.py", "--languages=xx")
@@ -154,7 +156,7 @@ task :javadocanalyzer do
               '--path='+sourcepath)
 end
 
-task :javadoc do
+task :javadoc => [:download] do
   javaDirs = FileList["./**/*.java"].exclude(%r{downloads/})
   sourcepath = javaDirs.map { |d| d.split('/')[1..2].join('/') }.uniq.join(':')
   puts sourcepath
@@ -163,7 +165,7 @@ task :javadoc do
   cpath = FileList["#{BuildEnv::SRC.devel}/*","#{BuildEnv::downloads}/**/*jar"].join(':')
   css = "./buildtools/javadoc.css"
 
-  Kernel.exec('javadoc',
+  Kernel.exec(JavaCompiler.JavadocCommand,
             '-docletpath', './downloads/wikidoclet.1.0.4.jar',
             '-doclet', 'wikidoclet.WikiDoclet',
             '-splitindex','-docencoding','UTF-8','-use','-docfilessubdirs', '-stylesheetfile', css, '-sourcepath', sourcepath, '-classpath', cpath,

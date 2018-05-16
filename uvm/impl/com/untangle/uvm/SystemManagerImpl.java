@@ -12,8 +12,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.net.InetAddress;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -38,7 +36,6 @@ import com.untangle.uvm.SettingsManager;
 import com.untangle.uvm.SystemManager;
 import com.untangle.uvm.SystemSettings;
 import com.untangle.uvm.SnmpSettings;
-import com.untangle.uvm.UvmState;
 import com.untangle.uvm.ExecManagerResultReader;
 import com.untangle.uvm.app.DayOfWeekMatcher;
 import com.untangle.uvm.servlet.DownloadHandler;
@@ -159,10 +156,10 @@ public class SystemManagerImpl implements SystemManager
         /**
          * If pyconnector state does not match the settings, re-sync them
          */
-        File pyconnectorStartFile = new File( "/etc/rc5.d/S01untangle-pyconnector" );
-        if ( pyconnectorStartFile.exists() && !settings.getCloudEnabled() )
+        Integer exitValue = UvmContextImpl.context().execManager().execResult("systemctl is-enabled untangle-pyconnector");
+        if ( (0 == exitValue) && !settings.getCloudEnabled() )
             syncPyconnectorStart();
-        if ( !pyconnectorStartFile.exists() && settings.getCloudEnabled() )
+        if ( (0 != exitValue) && settings.getCloudEnabled() )
             syncPyconnectorStart();
         
         
@@ -301,8 +298,8 @@ public class SystemManagerImpl implements SystemManager
             }
         );
         if( ( files.length > 0 ) && settings.getTimeSource().equals("manual") ){
-            UvmContextFactory.context().execManager().exec( "update-rc.d ntp remove" );
-            UvmContextFactory.context().execManager().exec( "service ntp stop" );
+            UvmContextFactory.context().execManager().exec( "systemctl disable ntp" );
+            UvmContextFactory.context().execManager().exec( "systemctl stop ntp" );
             logger.info("Time changed from NTP to manual");
         }else if( ( files.length == 0 ) && settings.getTimeSource().equals("ntp") ){
             UvmContextFactory.context().execManager().exec( "update-rc.d ntp defaults" );
@@ -734,12 +731,13 @@ public class SystemManagerImpl implements SystemManager
         try {
             logger.debug("Restarting the snmpd...");
 
-            String result = UvmContextFactory.context().execManager().execOutput( "/etc/init.d/snmpd restart" );
+	    String command = "systemctl restart snmpd";
+            String result = UvmContextFactory.context().execManager().execOutput(command);
             try {
                 String lines[] = result.split("\\r?\\n");
-                logger.info("/etc/init.d/snmpd restart: ");
+                logger.info(command + ": ");
                 for ( String line : lines )
-                    logger.info("/etc/init.d/snmpd restart: " + line);
+                    logger.info(command + ": " + line);
             } catch (Exception e) {}
 
         }
@@ -753,12 +751,13 @@ public class SystemManagerImpl implements SystemManager
         try {
             logger.debug("Stopping the snmpd...");
 
-            String result = UvmContextFactory.context().execManager().execOutput( "/etc/init.d/snmpd stop" );
+	    String command = "systemctl stop snmpd";
+            String result = UvmContextFactory.context().execManager().execOutput(command);
             try {
                 String lines[] = result.split("\\r?\\n");
-                logger.info("/etc/init.d/snmpd stop: ");
+                logger.info(command + ": ");
                 for ( String line : lines )
-                    logger.info("/etc/init.d/snmpd stop: " + line);
+                    logger.info(command + ": " + line);
             } catch (Exception e) {}
             // The daemon must be completely shut down for purposes such as adding an snmpv3 user
             // and returning from the init script doesn't 100% guarantee that it's shut down.
@@ -784,12 +783,13 @@ public class SystemManagerImpl implements SystemManager
         try {
             logger.debug("Starting the snmpd...");
 
-            String result = UvmContextFactory.context().execManager().execOutput( "/etc/init.d/snmpd start" );
+	    String command = "systemctl start snmpd";
+            String result = UvmContextFactory.context().execManager().execOutput(command);
             try {
                 String lines[] = result.split("\\r?\\n");
-                logger.info("/etc/init.d/snmpd start: ");
+                logger.info(command + ": ");
                 for ( String line : lines )
-                    logger.info("/etc/init.d/snmpd start: " + line);
+                    logger.info(command + ": " + line);
             } catch (Exception e) {}
 
         }
@@ -852,11 +852,11 @@ public class SystemManagerImpl implements SystemManager
          * If not, stop it and disable on startup
          */
         if ( settings.getCloudEnabled() ) {
-            UvmContextFactory.context().execManager().exec( "update-rc.d untangle-pyconnector defaults 95 5" );
-            UvmContextFactory.context().execManager().exec( "service untangle-pyconnector restart" );
+            UvmContextFactory.context().execManager().exec( "systemctl enable untangle-pyconnector" );
+            UvmContextFactory.context().execManager().exec( "systemctl restart untangle-pyconnector" );
         } else {
-            UvmContextFactory.context().execManager().exec( "update-rc.d untangle-pyconnector remove" );
-            UvmContextFactory.context().execManager().exec( "service untangle-pyconnector stop" );
+            UvmContextFactory.context().execManager().exec( "systemctl disable untangle-pyconnector" );
+            UvmContextFactory.context().execManager().exec( "systemctl stop untangle-pyconnector" );
         }
     }
     

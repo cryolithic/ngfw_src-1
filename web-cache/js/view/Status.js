@@ -29,7 +29,7 @@ Ext.define('Ung.apps.webcache.view.Status', {
         items: [{
             xtype: 'component',
             cls: 'app-desc',
-            html: '<img src="/skins/modern-rack/images/admin/apps/web-cache_80x80.png" width="80" height="80"/>' +
+            html: '<img src="/icons/apps/web-cache.svg" width="80" height="80"/>' +
                 '<h3>Web Cache</h3>' +
                 '<p>' + 'Web Cache stores and serves web content from local cache for increased speed and reduced bandwidth usage.'.t() + '</p>'
         }, {
@@ -47,8 +47,10 @@ Ext.define('Ung.apps.webcache.view.Status', {
             padding: 10,
             margin: '20 0',
             disabled: true,
+            collapsed: true,
             bind: {
-                disabled: '{instance.runState !== "RUNNING"}'
+                collapsed: '{!state.on}',
+                disabled: '{!state.on}'
             },
             items: [{
                 xtype: 'component',
@@ -105,7 +107,7 @@ Ext.define('Ung.apps.webcache.view.Status', {
             hideHeaders: true,
             disabled: true,
             bind: {
-                disabled: '{instance.runState !== "RUNNING"}',
+                disabled: '{!state.on}',
                 store: { data: '{stats}' }
             },
             listeners: {

@@ -3,7 +3,6 @@
  */
 package com.untangle.app.firewall;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -21,10 +20,10 @@ import com.untangle.uvm.util.I18nUtil;
 import com.untangle.uvm.app.AppBase;
 import com.untangle.uvm.vnet.Affinity;
 import com.untangle.uvm.vnet.Fitting;
-import com.untangle.uvm.vnet.Protocol;
-import com.untangle.uvm.vnet.AppSession;
 import com.untangle.uvm.vnet.PipelineConnector;
 
+
+/** FirewalApp is the Firewall Application implementation */
 public class FirewallApp extends AppBase
 {
     private final Logger logger = Logger.getLogger(getClass());
@@ -39,10 +38,25 @@ public class FirewallApp extends AppBase
 
     private FirewallSettings settings = null;
 
-    /* This can't be static because it uses policy which is per app */
+    /**
+     * This is used to reset sessions that are blocked by firewall when they switch policy
+     */
     private final SessionMatcher FIREWALL_SESSION_MATCHER = new SessionMatcher() {
             
-            /* Kill all sessions that should be blocked */
+            
+            /**
+             * isMatch returns true if the session matches a block rule
+             * @param policyId
+             * @param protocol
+             * @param clientIntf
+             * @param serverIntf
+             * @param clientAddr
+             * @param serverAddr
+             * @param clientPort
+             * @param serverPort
+             * @param attachments
+             * @return true if the session should be reset
+             */
             public boolean isMatch( Integer policyId, short protocol,
                                     int clientIntf, int serverIntf,
                                     InetAddress clientAddr, InetAddress serverAddr,
@@ -79,6 +93,11 @@ public class FirewallApp extends AppBase
             }
         };
     
+    /**
+     * Firewall App constructor
+     * @param appSettings - the AppSettings
+     * @param appProperties the AppProperties
+     */
     public FirewallApp( AppSettings appSettings, AppProperties appProperties )
     {
         super( appSettings, appProperties );
@@ -93,11 +112,19 @@ public class FirewallApp extends AppBase
         this.connectors = new PipelineConnector[] { connector };
     }
 
+    /**
+     * Get the current Firewall Settings
+     * @return FirewallSettings
+     */
     public FirewallSettings getSettings()
     {
         return settings;
     }
 
+    /**
+     * Set the current Firewall settings
+     * @param newSettings
+     */
     public void setSettings(final FirewallSettings newSettings)
     {
         /**
@@ -135,6 +162,10 @@ public class FirewallApp extends AppBase
         this.reconfigure();
     }
 
+    /**
+     * Get the current ruleset
+     * @return the list
+     */
     public List<FirewallRule> getRules()
     {
         if (getSettings() == null)
@@ -143,6 +174,10 @@ public class FirewallApp extends AppBase
         return getSettings().getRules();
     }
 
+    /**
+     * Set the current ruleset
+     * @param rules - the new rules
+     */
     public void setRules( List<FirewallRule> rules )
     {
         FirewallSettings set = getSettings();
@@ -156,54 +191,74 @@ public class FirewallApp extends AppBase
         setSettings(set);
     }
     
-    public void initializeSettings()
-    {
-        logger.info("Initializing Settings...");
-
-        FirewallSettings settings = getDefaultSettings();
-
-        setSettings(settings);
-    }
-
+    
+    /**
+     * Increment the block stat
+     */
     public void incrementBlockCount() 
     {
         this.incrementMetric(STAT_BLOCK);
     }
 
+    /**
+     * Increment the pass stat
+     */
     public void incrementPassCount() 
     {
         this.incrementMetric(STAT_PASS);
     }
 
+    /**
+     * Increment the flag stat
+     */
     public void incrementFlagCount() 
     {
         this.incrementMetric(STAT_FLAG);
     }
 
+    /**
+     * Get the Pipeline connectors
+     * @return the pipeline connectors array
+     */
     @Override
     protected PipelineConnector[] getConnectors()
     {
         return this.connectors;
     }
 
+    /**
+     * preStart
+     * @param isPermanentTransition
+     */
     @Override
     protected void preStart( boolean isPermanentTransition )
     {
         this.reconfigure();
     }
 
+    /**
+     * postStart()
+     * @param isPermanentTransition
+     */
     @Override
     protected void postStart( boolean isPermanentTransition )
     {
         killAllSessions();
     }
 
+    /**
+     * postStop()
+     * @param isPermanentTransition
+     */
     @Override
     protected void postStop( boolean isPermanentTransition )
     {
         killAllSessions();
     }
 
+    /**
+     * postInit()
+     */
     @Override
     protected void postInit()
     {
@@ -223,8 +278,7 @@ public class FirewallApp extends AppBase
          */
         if (readSettings == null) {
             logger.warn("No settings found - Initializing new settings.");
-
-            this.initializeSettings();
+            setSettings(getDefaultSettings());
         }
         else {
             logger.info("Loading Settings...");
@@ -238,6 +292,10 @@ public class FirewallApp extends AppBase
         this.reconfigure();
     }
 
+    /**
+     * Create new default settings
+     * @return the default settings
+     */
     private FirewallSettings getDefaultSettings()
     {
         logger.info("Creating the default settings...");
@@ -272,6 +330,10 @@ public class FirewallApp extends AppBase
         return settings;
     }
 
+    /**
+     * Call reconfigure() after setting settings to
+     * affect all new settings
+     */
     private void reconfigure() 
     {
         logger.info("Reconfigure()");
@@ -284,15 +346,5 @@ public class FirewallApp extends AppBase
         } else {
             handler.configure(settings);
         }
-    }
-
-    private void updateToCurrent(FirewallSettings settings)
-    {
-        if (settings == null) {
-            logger.error("NULL Firewall Settings");
-            return;
-        }
-
-        logger.info("Update Settings Complete");
     }
 }

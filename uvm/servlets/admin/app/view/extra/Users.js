@@ -48,30 +48,6 @@ Ext.define('Ung.view.extra.Users', {
 
     layout: 'border',
 
-    dockedItems: [{
-        xtype: 'toolbar',
-        ui: 'navigation',
-        dock: 'top',
-        border: false,
-        style: {
-            background: '#333435',
-            zIndex: 9997
-        },
-        defaults: {
-            xtype: 'button',
-            border: false,
-            hrefTarget: '_self'
-        },
-        items: Ext.Array.insert(Ext.clone(Util.subNav), 0, [{
-            xtype: 'component',
-            margin: '0 0 0 10',
-            style: {
-                color: '#CCC'
-            },
-            html: 'Current Users'.t()
-        }])
-    }],
-
     defaults: {
         border: false
     },
@@ -166,6 +142,7 @@ Ext.define('Ung.view.extra.Users', {
                 width: Renderer.actionWidth,
                 align: 'center',
                 header: 'Refill'.t(),
+                menuText: 'Refill'.t(),
                 iconCls: 'fa fa-refresh fa-green',
                 handler: 'externalAction',
                 action: 'refillQuota'
@@ -174,6 +151,7 @@ Ext.define('Ung.view.extra.Users', {
                 width: Renderer.actionWidth,
                 align: 'center',
                 header: 'Drop'.t(),
+                menuText: 'Drop'.t(),
                 iconCls: 'fa fa-minus-circle',
                 handler: 'externalAction',
                 action: 'dropQuota'
@@ -240,11 +218,11 @@ Ext.define('Ung.view.extra.Users', {
         xtype: 'button',
         text: 'View Reports'.t(),
         iconCls: 'fa fa-line-chart',
-        href: '#reports/users',
+        href: '#reports?cat=users',
         hrefTarget: '_self',
         hidden: true,
         bind: {
-            hidden: '{!reportsEnabled}'
+            hidden: '{!reportsAppStatus.enabled}'
         }
     }],
     bbar: ['->', {
