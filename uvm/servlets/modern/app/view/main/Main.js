@@ -21,63 +21,86 @@ Ext.define('Ung.view.main.Main', {
     publishes: 'activeItem',
 
     items: [
-        { xtype: 'ung-dashboard' }, 
-        { xtype: 'ung-apps' }, 
+        { xtype: 'ung-dashboard' },
+        { xtype: 'ung-apps' },
         { xtype: 'ung-config' },
         { xtype: 'ung-reports' },
-        { xtype: 'ung-sessions' }, 
+        { xtype: 'ung-sessions' },
         {
             xtype: 'toolbar',
             cls: 'nav',
+            // docked: 'left',
             docked: 'top',
-            padding: 5,
+            zIndex: 9999,
+            // padding: 5,
             style: {
-                background: '#1B1E26'
+                background: '#1b1e26'
             },
             defaults: {
-                iconAlign: 'top',
-                padding: 0
+                // iconAlign: 'top',
+                padding: 0,
+                tooltip: {
+                    // align: 'l-r',
+                    // align: 'b-t',
+                    anchor: true,
+                    showDelay: 0,
+                    hideDelay: 0
+                }
             },
             items: [{
                 xtype: 'component',
-                padding: '0 10',
-                html: '<img src="' + '/images/BrandingLogo.png" style="height: 40px;"/>'
+                html: '<img src="' + '/images/BrandingLogoWhite.png" style="height: 30px;"/>'
             }, {
-                text: 'Dashboard'.t(),
+                // text: 'Dashboard'.t(),
                 iconCls: 'x-fa fa-home',
+                tooltip: {
+                    html: 'Dashboard'.t(),
+                },
                 handler: function () { Ung.app.redirectTo('#'); }
             }, {
-                text: 'Apps'.t(),
-                iconCls: 'x-fa fa-th-large',
-                handler: function () { Ung.app.redirectTo('#apps'); }
-            }, {
-                text: 'Config'.t(),
-                iconCls: 'x-fa fa-cogs',
+                // text: 'Config'.t(),
+                iconCls: 'x-fa fa-cog',
+                tooltip: { html: 'Config'.t() },
                 handler: function () { Ung.app.redirectTo('#config'); }
             }, {
-                text: 'Reports'.t(),
-                iconCls: 'x-fa fa-line-chart',
+                // text: 'Reports'.t(),
+                iconCls: 'x-fa fa-area-chart',
                 handler: function () { Ung.app.redirectTo('#reports'); }
             }, {
-                xtype: 'spacer',
-                width: 20
+                href: '#sessions',
+                iconCls: 'monitor sessions',
+                // bind: { userCls: '{activeItem === "sessions" ? "pressed" : ""}' }
             }, {
-                text: 'Sessions'.t(),
-                iconCls: 'x-fa fa-list',
-                ui: 'confirm',
-                handler: function () { Ung.app.redirectTo('#sessions'); }
+                href: '#hosts',
+                iconCls: 'monitor hosts',
+                bind: { userCls: '{activeItem === "hosts" ? "pressed" : ""}' }
             }, {
-                text: 'Hosts'.t(),
-                iconCls: 'x-fa fa-th-list',
-                handler: function () { Ung.app.redirectTo('#apps'); }
+                href: '#devices',
+                iconCls: 'monitor devices',
+                bind: { userCls: '{activeItem === "devices" ? "pressed" : ""}' }
             }, {
-                text: 'Devices'.t(),
-                iconCls: 'x-fa fa-desktop',
-                handler: function () { Ung.app.redirectTo('#apps'); }
-            }, {
-                text: 'Users'.t(),
-                iconCls: 'x-fa fa-users',
-                handler: function () { Ung.app.redirectTo('#apps'); }
+                href: '#users',
+                iconCls: 'monitor users',
+                bind: { userCls: '{activeItem === "users" ? "pressed" : ""}' }
             }]
-        }]
+        }
+    ],
+
+    // lbar: [{
+    //     xtype: 'component',
+    //     // padding: '0 10',
+    //     html: '<img src="' + '/images/BrandingLogoWhite.png" style="height: 30px;"/>'
+    // }, {
+    //     // text: 'Dashboard'.t(),
+    //     iconCls: 'x-fa fa-home fa-lg',
+    //     handler: function () { Ung.app.redirectTo('#'); }
+    // }, {
+    //     // text: 'Config'.t(),
+    //     iconCls: 'x-fa fa-cog fa-lg',
+    //     handler: function () { Ung.app.redirectTo('#config'); }
+    // }, {
+    //     // text: 'Reports'.t(),
+    //     iconCls: 'x-fa fa-area-chart fa-lg',
+    //     handler: function () { Ung.app.redirectTo('#reports'); }
+    // }]
 });

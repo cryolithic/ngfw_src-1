@@ -3,7 +3,7 @@
 :root {
     --base-color: #5eb141;
     --base-highlight-color: #91e971;
-    --highlight-color: rgba(17, 17, 17, 0.7);
+    --highlight-color: #{rgba(17, 17, 17, 0.7)};
 }
 
 html, body {
@@ -50,7 +50,7 @@ html, body {
             background-color: #E6E6E6;
             border-radius: 3px 0 0 3px;
             border: 1px #D4D4D4 solid;
-            // box-shadow: 0 0 1px rgba(0, 0, 0, 0.9) inset;
+            // box-shadow: 0 0 1px #{rgba(0, 0, 0, 0.9)} inset;
         }
 
         .invert {
@@ -58,7 +58,7 @@ html, body {
             background-color: #FFF;
             // border: 1px #BFBFBF solid;
             font-weight: 600;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0 5px #{rgba(0, 0, 0, 0.3)};
             position: relative;
             z-index: 1;
             color: #555;
@@ -108,14 +108,14 @@ html, body {
     margin: 4px 0 0 0;
     background-size: contain;
     background-repeat: no-repeat;
-    &.network { background-image: url('/skins/modern-rack/images/admin/config/icon_config_network.png'); }
-    &.administration { background-image: url('/skins/modern-rack/images/admin/config/icon_config_administration.png'); }
-    &.events { background-image: url('/skins/modern-rack/images/admin/config/icon_config_events.png'); }
-    &.email { background-image: url('/skins/modern-rack/images/admin/config/icon_config_email.png'); }
-    &.directory { background-image: url('/skins/modern-rack/images/admin/config/icon_config_directory.png'); }
-    &.system { background-image: url('/skins/modern-rack/images/admin/config/icon_config_system.png'); }
-    &.upgrade { background-image: url('/skins/modern-rack/images/admin/config/icon_config_upgrade.png'); }
-    &.about { background-image: url('/skins/modern-rack/images/admin/config/icon_config_about.png'); }
+    &.network { background-image: url('/icons/config/network.svg'); }
+    &.administration { background-image: url('/icons/config/administration.svg'); }
+    &.events { background-image: url('/icons/config/events.svg'); }
+    &.email { background-image: url('/icons/config/email.svg'); }
+    &.directory { background-image: url('/icons/config/local-directory.svg'); }
+    &.system { background-image: url('/icons/config/system.svg'); }
+    &.upgrade { background-image: url('/icons/config/upgrade.svg'); }
+    &.about { background-image: url('/icons/config/about.svg'); }
 }
 
 .x-gridcell-body-el em {
@@ -128,6 +128,7 @@ html, body {
         padding-right: 8px;
     }
     .x-treelist-item-text {
+        font-family: $custom-font-condensed;
         line-height: 28px;
         margin-left: 30px;
         font-size: 14px;
@@ -183,9 +184,9 @@ html, body {
 }
 
 .x-rownumberercell {
-    background: rgba(200, 200, 200, 0.3);
+    background: #{rgba(200, 200, 200, 0.3)};
     border-right: 1px #CCC solid;
-    box-shadow: 3px 0 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 3px 0 3px #{rgba(0, 0, 0, 0.1)};
 }
 
 
@@ -218,7 +219,7 @@ html, body {
         // margin: 4px 0 0 0;
         background-size: contain;
         background-repeat: no-repeat;
-        &.network { background-image: url('/skins/modern-rack/images/admin/config/icon_config_network.png'); }
+        &.network { background-image: url('/icons/config/network.svg'); }
         &.administration { background-image: url('/skins/modern-rack/images/admin/config/icon_config_administration.png'); }
         &.events { background-image: url('/skins/modern-rack/images/admin/config/icon_config_events.png'); }
         &.email { background-image: url('/skins/modern-rack/images/admin/config/icon_config_email.png'); }
@@ -226,5 +227,54 @@ html, body {
         &.system { background-image: url('/skins/modern-rack/images/admin/config/icon_config_system.png'); }
         &.upgrade { background-image: url('/skins/modern-rack/images/admin/config/icon_config_upgrade.png'); }
         &.about { background-image: url('/skins/modern-rack/images/admin/config/icon_config_about.png'); }
+    }
+}
+
+
+.monitor {
+    background-size: contain;
+    opacity: 0.7;
+    &.sessions {
+        background: url('/icons/monitor/sessions-monitor-icon.svg') no-repeat 50% 50%;
+    }
+    &.hosts {
+        background: url('/icons/monitor/hosts-monitor-icon.svg') no-repeat 50% 50%;
+    }
+    &.devices {
+        background: url('/icons/monitor/devices-monitor-icon.svg') no-repeat 50% 50%;
+    }
+    &.users {
+        background: url('/icons/monitor/users-monitor-icon.svg') no-repeat 50% 50%;
+    }
+}
+
+
+
+
+
+
+
+
+.placeholder {
+    background: #EEE;
+    // position: absolute;
+    // margin: 10px;
+    // &:nth-child(1) {
+    //     height: 300px;
+    // }
+    // &:nth-child(2) {
+    //     height: 200px;
+    // }
+}
+
+.layout1-body-el {
+    display: flex;
+    display: -webkit-flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    -webkit-align-content: flex-start;
+    -webkit-flex-wrap: wrap;
+    .placeholder {
+        // -webkit-flex-grow: 1;
     }
 }

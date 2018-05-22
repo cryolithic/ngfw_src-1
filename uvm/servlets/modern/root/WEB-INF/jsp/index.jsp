@@ -52,7 +52,6 @@
                 left: 0;
                 right: 0;
                 bottom: 0;
-                background: #282828;
                 opacity: 1;
                 z-index: 9999;
                 transition: opacity 1s ease-out;
@@ -68,6 +67,7 @@
         <script src="/script/common/bootstrap-modern.js"></script>
         <script>
             Ext.onReady(function () {
+                Ext.Anim.disableAnimations = true;
                 // setups all initializations and load required scrips
                 Bootstrap.load([
                     '/script/common/util-all.js', // include custom grid module
@@ -90,7 +90,7 @@
     <body>
         <div id="app-loader">
             <div style="position: absolute; left: 50%; top: 30%; margin-left: -75px; margin-top: -60px; width: 150px; height: 140px; font-size: 16px;">
-                <img src="/images/BrandingLogo.png"/>
+                <img src="/images/BrandingLogoWhite.png"/>
                 <i class="fa fa-spinner fa-spin fa-lg fa-fw"></i>
             </div>
         </div>

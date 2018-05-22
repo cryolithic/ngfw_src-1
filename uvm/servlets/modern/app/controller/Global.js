@@ -50,10 +50,17 @@ Ext.define('Ung.controller.Global', {
             'service/:app/:view': 'onService',
             'service/:app/:view/:subView': 'onService',
 
-            'config': { before: 'detectChanges', action: 'onConfig' },
-            'config/:configName': { before: 'detectChanges', action: 'onConfig' },
-            'config/:configName/:configView': 'onConfig',
-            'config/:configName/:configView/:subView': 'onConfig',
+            'config:params': {
+                action: 'onConfig',
+                conditions: {
+                    ':params' : '(.*)'
+                }
+            },
+
+            // 'config': { before: 'detectChanges', action: 'onConfig' },
+            // 'config/:configName': { before: 'detectChanges', action: 'onConfig' },
+            // 'config/:configName/:configView': 'onConfig',
+            // 'config/:configName/:configView/:subView': 'onConfig',
             'reports': { before: 'detectChanges', action: 'onReports' },
             'reports/create': { before: 'detectChanges', action: 'onReports' },
             'reports/:category': { before: 'detectChanges', action: 'onReports' },
@@ -273,9 +280,19 @@ Ext.define('Ung.controller.Global', {
     },
 
 
-    onConfig: function (config, view, subView) {
-        var me = this, mainView = me.getMainView(), configView = me.getConfigView();
+    onConfig: function (params) {
+        var me = this, mainView = me.getMainView(), configView = me.getConfigView(), config, view;
         mainView.getViewModel().set('activeItem', 'ung-config');
+
+        configView.getViewModel().set('params', params);
+
+        if (params) {
+            config = params.split('/')[1];
+            view = params.split('/')[2];
+        }
+
+        console.log(params.split('/'), config);
+
 
         if (config) {
             if (configView.down('config-' + config)) {
@@ -288,16 +305,15 @@ Ext.define('Ung.controller.Global', {
                 //         subViewTarget.setActiveTab(subView);
                 //     }
                 // }
-                return;
+                // return;
             } else {
-                console.log(mainView);
+                // console.log(mainView);
                 // mainView.remove('configCard');
             }
 
             var tree = configView.down('treelist');
             var node = tree.getStore().findNode('href', window.location.hash);
-
-            tree.setSelection(node);
+            configView.getViewModel().set('ttl', node.get('text'));
             // mainView.setLoading(true);
 
             Ext.Loader.loadScript({
@@ -309,18 +325,16 @@ Ext.define('Ung.controller.Global', {
                         itemId: 'configCard',
                         activeItem: view ? 'config-' + config + '-' + view : 0,
                         // subTab: subView || 0,
-                        listeners: {
-                            deactivate: function () {
-                                // remove the config container
-                                mainView.remove('configCard');
-                            }
-                        }
                     });
                     // mainView.getViewModel().set('activeItem', 'configCard');
                     // mainView.getViewModel().notify();
                     // mainView.setLoading(false);
                 }
             });
+        } else {
+            if (configView.down('#configCard')) {
+                configView.remove('configCard');
+            }
         }
     },
 

@@ -72,11 +72,12 @@ Ext.define('Ung.view.reports.Reports', {
             split: true,
             edges: 'east'
         },
+
         items: [{
-            xtype: 'tree',
-            userCls: 'x-nav',
-            // scrollable: true,
-            // ui: 'nav',
+            xtype: 'treelist',
+            // userCls: 'x-nav',
+            scrollable: true,
+            ui: 'nav',
             singleExpand: true,
             rootVisible: false,
             expanderFirst: false,

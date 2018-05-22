@@ -41,8 +41,8 @@ Ext.define('Ung.cmp.MasterGrid', {
     controller: {
         onInitialize: function (grid) {
             var columns = [], actions = [];
-            if (grid.enableMove)   { grid.columnsDef.unshift(Column.MOVE); }
-            if (grid.enableDelete) { grid.columnsDef.push(Column.DELETE); }
+            // if (grid.enableMove)   { grid.columnsDef.unshift(Column.MOVE); }
+            // if (grid.enableDelete) { grid.columnsDef.push(Column.DELETE); }
             Ext.Array.each(grid.columnsDef, function (column) {
                 columns.push(Ext.create(column));
             });

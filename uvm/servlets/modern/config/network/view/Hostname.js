@@ -7,7 +7,7 @@ Ext.define('Ung.config.network.view.Hostname', {
     withValidation: true, // requires validation on save
     viewModel: true,
 
-    title: 'Hostname'.t(),
+    // title: 'Hostname'.t(),
 
     bodyPadding: '10 20',
 

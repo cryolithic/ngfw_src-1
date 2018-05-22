@@ -32,7 +32,8 @@ Ext.define('Ung.store.ReportsTree', {
                 slug: storeCat.get('slug'),
                 type: storeCat.get('type'), // app or system
                 icon: storeCat.get('icon'),
-                cls: 'x-tree-category',
+                // icon: 'x-fa fa-play',
+                // cls: 'x-tree-category',
                 url: storeCat.get('slug'),
                 children: [],
                 viewPosition: storeCat.get('viewPosition')

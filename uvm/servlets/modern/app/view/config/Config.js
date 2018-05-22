@@ -3,6 +3,11 @@ Ext.define('Ung.view.config.Config', {
     alias: 'widget.ung-config',
     itemId: 'config',
 
+    viewModel: {
+        data: {
+            params: null
+        }
+    },
 
     controller: 'config',
     // viewModel: true,
@@ -10,26 +15,50 @@ Ext.define('Ung.view.config.Config', {
 
     layout: 'fit',
 
+    tbar: {
+        padding: 8,
+        items: [{
+            xtype: 'searchfield',
+            ui: 'faded',
+            flex: 1,
+            placeholder: 'Find settings...'.t(),
+            listeners: {
+                change: 'filterSettings'
+            },
+            hidden: true,
+            bind: { hidden: '{params}' }
+        }, {
+            xtype: 'button',
+            iconCls: 'x-fa fa-chevron-left',
+            handler: function () { Ung.app.redirectTo('#config'); },
+            hidden: true,
+            bind: { hidden: '{!params}' }
+        }, {
+            xtype: 'component',
+            margin: '0 0 0 8',
+            hidden: true,
+            bind: {
+                html: 'Network / {ttl}',
+                hidden: '{!params}'
+            }
+        }]
+    },
+
     items: [{
-        docked: 'left',
-        width: 250,
+        // docked: 'left',
+        // width: 250,
         layout: 'fit',
 
-        tbar: {
-            items: [{
-                xtype: 'searchfield',
-                ui: 'faded',
-                flex: 1,
-                placeholder: 'Find settings...'.t(),
-                listeners: {
-                    change: 'filterSettings'
-                }
-            }]
+        hidden: true,
+        bind: {
+            hidden: '{params}'
         },
-        resizable: {
-            split: true,
-            edges: 'east'
-        },
+
+        // resizable: {
+        //     resizable: false,
+        //     split: true,
+        //     edges: 'east'
+        // },
         // collapsible: {
         //     collapsed: false,
         //     animation: false,
@@ -44,6 +73,11 @@ Ext.define('Ung.view.config.Config', {
             // selectable: {
             //     mode: 'single'
             // },
+
+            animation: {
+                duration: 150,
+                easing: 'ease'
+            },
             floatLeafItems: false,
             singleExpand: true,
             expanderFirst: false,

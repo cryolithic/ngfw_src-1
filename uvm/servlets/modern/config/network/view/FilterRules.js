@@ -10,7 +10,7 @@ Ext.define('Ung.config.network.view.FilterRules', {
         }
     },
 
-    title: 'Filter Rules'.t(),
+    // title: 'Filter Rules'.t(),
     description: 'Filter Rules control what sessions are passed/blocked. Filter rules process all sessions including bypassed sessions. The rules are evaluated in order.'.t(),
 
     toolbarActions: ['ADD'],

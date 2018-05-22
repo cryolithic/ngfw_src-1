@@ -6,7 +6,7 @@ Ext.define('Ung.config.network.view.Interfaces', {
 
     layout: 'fit',
 
-    title: 'Interfaces'.t(),
+    // title: 'Interfaces'.t(),
 
     // tbar: [{
     //     xtype: 'tbtext',

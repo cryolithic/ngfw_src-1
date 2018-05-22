@@ -10,7 +10,7 @@ Ext.define('Ung.config.network.view.NatRules', {
         }
     },
 
-    title: 'NAT Rules'.t(),
+    // title: 'NAT Rules'.t(),
     description: 'NAT Rules control the rewriting of the IP source address of traffic (Network Address Translation). The rules are evaluated in order.'.t(),
 
     toolbarActions: ['ADD', 'REVERT'],

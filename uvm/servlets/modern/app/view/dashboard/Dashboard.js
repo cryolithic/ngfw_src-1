@@ -2,7 +2,7 @@
  * Dashboard view which holds the widgets and manager
  */
 Ext.define('Ung.view.dashboard.Dashboard', {
-    extend: 'Ext.panel.Panel',
+    extend: 'Ext.Panel',
     alias: 'widget.ung-dashboard',
     // itemId: 'dashboard',
 
@@ -22,80 +22,86 @@ Ext.define('Ung.view.dashboard.Dashboard', {
         }
     },
 
-    layout: {
-        type: 'vbox',
-        align: 'stretch'
-    },
+    // bodyStyle: {
+    //     margin
+    // },
 
-    defaultType: 'panel',
+    layout: 'fit',
 
-    items: [{
-        title: 'Manager',
-        docked: 'left',
-        width: 350,
-        resizable: {
-            split: true,
-            edges: 'east'
-        },
-        collapsible: {
-            collapsed: false,
-            animation: false,
-            direction: 'left',
-            useDrawer: false
-            // dynamic: false
-        },
-        layout: 'fit',
-        items: [{
-            xtype: 'toolbar',
-            docked: 'top',
-            margin: 0,
-            items: [{
-                iconCls: 'x-fa fa-plus',
-                ui: 'round',
-                tooltip: {
-                    html: 'Add Widget'.t(),
-                    anchor: true,
-                    align: 'tc-bc'
-                }
-            }, '->', {
-                iconCls: 'x-fa fa-download',
-                ui: 'round',
-                tooltip: {
-                    html: 'Import'.t(),
-                    anchor: true,
-                    align: 'tc-bc'
-                }
-            }, {
-                iconCls: 'x-fa fa-upload',
-                ui: 'round',
-                tooltip: {
-                    html: 'Export'.t(),
-                    anchor: true,
-                    align: 'tc-bc'
-                }
-            }]
-        }, {
-            xtype: 'grid',
-            hideHeaders: true,
-            store: {
-                type: 'widgets'
-            },
-            columns: [{
-                xtype: 'checkcolumn',
-                dataIndex: 'enabled',
-                width: 40
-            }, {
-                dataIndex: 'entryId',
-                renderer: 'widgetTitleRenderer',
-                flex: 1,
-                cell: {
-                    encodeHtml: false
-                }
-            }]
-        }]
-    }, {
-        html: 'Widgets here'
+    // defaultType: 'panel',
+
+
+
+    items: [
+    //     {
+    //     title: 'Manager',
+    //     docked: 'left',
+    //     width: 350,
+    //     hidden: true,
+    //     resizable: {
+    //         split: true,
+    //         edges: 'east'
+    //     },
+    //     collapsible: {
+    //         collapsed: true,
+    //         animation: false,
+    //         direction: 'left',
+    //         useDrawer: false
+    //         // dynamic: false
+    //     },
+    //     layout: 'fit',
+    //     items: [{
+    //         xtype: 'toolbar',
+    //         docked: 'top',
+    //         margin: 0,
+    //         items: [{
+    //             iconCls: 'x-fa fa-plus',
+    //             ui: 'round',
+    //             tooltip: {
+    //                 html: 'Add Widget'.t(),
+    //                 anchor: true,
+    //                 align: 'tc-bc'
+    //             }
+    //         }, '->', {
+    //             iconCls: 'x-fa fa-download',
+    //             ui: 'round',
+    //             tooltip: {
+    //                 html: 'Import'.t(),
+    //                 anchor: true,
+    //                 align: 'tc-bc'
+    //             }
+    //         }, {
+    //             iconCls: 'x-fa fa-upload',
+    //             ui: 'round',
+    //             tooltip: {
+    //                 html: 'Export'.t(),
+    //                 anchor: true,
+    //                 align: 'tc-bc'
+    //             }
+    //         }]
+    //     }, {
+    //         xtype: 'grid',
+    //         hideHeaders: true,
+    //         store: {
+    //             type: 'widgets'
+    //         },
+    //         columns: [{
+    //             xtype: 'checkcolumn',
+    //             dataIndex: 'enabled',
+    //             width: 40
+    //         }, {
+    //             dataIndex: 'entryId',
+    //             renderer: 'widgetTitleRenderer',
+    //             flex: 1,
+    //             cell: {
+    //                 encodeHtml: false
+    //             }
+    //         }]
+    //     }]
+    // },
+    {
+        xtype: 'layout1',
+        padding: 10
     }]
-
 
 });

@@ -9,9 +9,9 @@ Ext.define('Ung.config.network.view.BypassRules', {
             model: 'Ung.model.BypassRules'
         }
     },
-    
 
-    title: 'Bypass Rules'.t(),
+
+    // title: 'Bypass Rules'.t(),
     description: 'Bypass Rules control what traffic is scanned by the applications. Bypassed traffic skips application processing. The rules are evaluated in order. Sessions that meet no rule are not bypassed.'.t(),
 
     toolbarActions: ['ADD'],
