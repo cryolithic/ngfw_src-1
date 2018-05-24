@@ -25,7 +25,6 @@ Ext.define('Ung.view.dashboard.DashboardController', {
     listen: {
         global: {
             // init: 'loadWidgets',
-            // appinstall: 'onAppInstall',
             // addRemoveReportwidget: 'onAddRemoveReportWidget', // fired from Reports view
             // reportsInstall: 'loadWidgets',
             // widgetaction: 'onWidgetAction'

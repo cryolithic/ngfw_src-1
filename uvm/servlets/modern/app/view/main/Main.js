@@ -1,5 +1,5 @@
 Ext.define('Ung.view.main.Main', {
-    extend: 'Ext.panel.Panel',
+    extend: 'Ext.Panel',
     itemId: 'main',
     reference: 'main',
 
@@ -22,7 +22,6 @@ Ext.define('Ung.view.main.Main', {
 
     items: [
         { xtype: 'ung-dashboard' },
-        { xtype: 'ung-apps' },
         { xtype: 'ung-config' },
         { xtype: 'ung-reports' },
         { xtype: 'ung-sessions' },
@@ -82,9 +81,19 @@ Ext.define('Ung.view.main.Main', {
                 href: '#users',
                 iconCls: 'monitor users',
                 bind: { userCls: '{activeItem === "users" ? "pressed" : ""}' }
+            }, {
+                xtype: 'component',
+                style: { color: '#FFF '},
+                bind: {
+                    html: 'screen: {screen}'
+                }
             }]
         }
     ],
+
+    listeners: {
+        resize: 'onResize'
+    }
 
     // lbar: [{
     //     xtype: 'component',

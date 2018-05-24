@@ -20,6 +20,13 @@ Ext.define('Ung.Application', {
         // window.document.title = rpc.companyName + (rpc.hostname ? ' - ' + rpc.hostname : '');
         Ext.get('app-loader').destroy();
 
+        // Ext.GlobalEvents.on({
+        //     resize: function (w, h) {
+        //         console.log(w, h);
+        //     }
+        // });
+
+
         // Ext.getStore('policies').loadData(rpc.appsViews);
         // // Metrics.start();
 

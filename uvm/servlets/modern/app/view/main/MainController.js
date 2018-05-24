@@ -16,6 +16,15 @@ Ext.define('Ung.view.main.MainController', {
         }
     },
 
+    onResize: function (el, width) {
+        var screen;
+        if (width > 750 ) { screen = 'WIDE'; }
+        if (width <= 750 ) { screen = 'NARROW'; }
+        this.getViewModel().set({
+            screen: screen
+        });
+    },
+
     afterLaunch: function () {
         // this.checkRegister();
         // this.checkNotifications();
@@ -107,6 +116,8 @@ Ext.define('Ung.view.main.MainController', {
     onPainted: function(view) {
         var me = this,
             vm = view.getViewModel();
+
+        Ext.fireEvent('resize');
 
         // vm.bind('{reportsEnabled}', function(enabled) {
         //     if (enabled) {

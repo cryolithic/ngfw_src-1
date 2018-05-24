@@ -19,16 +19,16 @@ Ext.define('Ung.config.network.Main', {
         {
             xtype: 'toolbar',
             docked: 'bottom',
-            items: [{
-                text: 'Save Network Settings'.t(),
-                ui: 'action',
+            items: ['->', {
+                text: 'Save'.t(),
+                // ui: 'action',
                 iconCls: 'x-fa fa-floppy-o',
-                handler: 'saveSettings'
+                // handler: 'saveSettings'
             }]
         },
         { xtype: 'config-network-interfaces' },
         { xtype: 'config-network-hostname' },
-        // { xtype: 'config-network-services' },
+        { xtype: 'config-network-services' },
         // { xtype: 'config-network-port-forward-rules' },
         { xtype: 'config-network-nat-rules' },
         { xtype: 'config-network-bypass-rules' },

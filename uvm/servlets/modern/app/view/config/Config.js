@@ -11,47 +11,63 @@ Ext.define('Ung.view.config.Config', {
 
     controller: 'config',
     // viewModel: true,
-    defaultType: 'panel',
+    // defaultType: 'panel',
 
     layout: 'fit',
 
     tbar: {
         padding: 8,
+        hidden: true,
+        bind: { hidden: '{!params}' },
         items: [{
-            xtype: 'searchfield',
-            ui: 'faded',
-            flex: 1,
-            placeholder: 'Find settings...'.t(),
-            listeners: {
-                change: 'filterSettings'
-            },
-            hidden: true,
-            bind: { hidden: '{params}' }
-        }, {
             xtype: 'button',
             iconCls: 'x-fa fa-chevron-left',
             handler: function () { Ung.app.redirectTo('#config'); },
             hidden: true,
-            bind: { hidden: '{!params}' }
+            bind: {
+                hidden: '{ screen === "WIDE" }'
+            }
         }, {
             xtype: 'component',
             margin: '0 0 0 8',
-            hidden: true,
             bind: {
                 html: 'Network / {ttl}',
-                hidden: '{!params}'
             }
         }]
     },
 
     items: [{
-        // docked: 'left',
-        // width: 250,
         layout: 'fit',
-
+        xtype: 'panel',
+        // bodyStyle: {
+        //     background: '#CCC'
+        // },
+        shadow: true,
+        zIndex: 999,
         hidden: true,
         bind: {
-            hidden: '{params}'
+            docked: '{ screen === "WIDE" ? "left" : null }',
+            width: '{ screen === "WIDE" ? 280 : null }',
+            hidden: '{params && screen !== "WIDE" }',
+            // resizable: {
+            //     split: '{ screen === "WIDE" }',
+            //     direction: 'left',
+            //     edges: 'east'
+            // }
+        },
+
+        tbar: {
+            items: [{
+                xtype: 'searchfield',
+                ui: 'faded',
+                flex: 1,
+                placeholder: 'Find settings...'.t(),
+                listeners: {
+                    change: 'filterSettings'
+                },
+                // hidden: true,
+                // bind: { hidden: '{params}' }
+            }]
         },
 
         // resizable: {
@@ -68,6 +84,9 @@ Ext.define('Ung.view.config.Config', {
         items: [{
             xtype: 'treelist',
             scrollable: true,
+            // style: {
+            //     background: '#EEE'
+            // },
             ui: 'nav',
             // micro: true,
             // selectable: {
@@ -95,11 +114,12 @@ Ext.define('Ung.view.config.Config', {
                         allowDrag: true,
                         // icon: '/skins/modern-rack/images/admin/config/icon_config_network.png',
                         iconCls: 'tree network',
+                        // iconCls: 'x-fa fa-cog',
                         // href: '#config/network/interfaces',
                         children: [
                             { text: 'Interfaces'.t(), leaf: true, href: '#config/network/interfaces' },
                             { text: 'Hostname'.t(), leaf: true, href: '#config/network/hostname' },
-                            { text: 'Services'.t(), leaf: true },
+                            { text: 'Services'.t(), leaf: true, href: '#config/network/services' },
                             { text: 'Port Forward Rules'.t(), leaf: true },
                             { text: 'NAT Rules'.t(), leaf: true, href: '#config/network/nat-rules' },
                             { text: 'Bypass Rules'.t(), leaf: true, href: '#config/network/bypass-rules' },
@@ -163,15 +183,13 @@ Ext.define('Ung.view.config.Config', {
                             { text: 'Shield'.t(), leaf: true }
                         ]
                     }, {
-                        text: 'Upgrade'.t(), leaf: true,
-                        iconCls: 'tree upgrade',
-                    }, {
                         text: 'About'.t(),
                         iconCls: 'tree about',
                         children: [
                             { text: 'Server'.t(), leaf: true },
                             { text: 'License'.t(), leaf: true },
-                            { text: 'License Agreement'.t(), leaf: true }
+                            { text: 'License Agreement'.t(), leaf: true },
+                            { text: 'Upgrade'.t(), leaf: true }
                         ]
                     }]
                 }

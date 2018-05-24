@@ -21,6 +21,7 @@ Ext.define('Ung.cmp.MasterGrid', {
     // defaultListenerScope: true,
     // striped: true,
     sortable: false,
+    scrollable: true,
 
     enableMove: false,
     enableDelete: false,
@@ -154,7 +155,7 @@ Ext.define('Ung.cmp.MasterGrid', {
         addRecord: function () {
             var me = this,
                 grid = me.getView();
-            console.log('add');
+            // console.log('add');
             grid.getStore().add(Ext.clone(grid.newRecord));
         },
 
@@ -173,7 +174,6 @@ Ext.define('Ung.cmp.MasterGrid', {
         validate: function (store) {
             var grid = this.getView(), row, validation;
             // if (!grid.isVisible()) { return; }
-            console.log('validate');
             // var store = this.getView().getStore();
             // console.log(grid.getItemAt(0));
             // console.log(store);

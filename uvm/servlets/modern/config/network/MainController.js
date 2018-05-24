@@ -27,7 +27,7 @@ Ext.define('Ung.config.network.MainController', {
     },
 
     onPainted: function(grid) {
-        console.log(grid.conditions);
+        console.log('on painted');
         grid.menu = {
             xtype: 'menu',
             viewModel: {},
@@ -47,10 +47,11 @@ Ext.define('Ung.config.network.MainController', {
     },
 
     loadSettings: function () {
-        console.log('loading');
         var me = this,
             v = this.getView(),
             vm = this.getViewModel();
+
+        // console.log('painted');
 
         v.mask({
             xtype: 'loadmask',
@@ -64,7 +65,7 @@ Ext.define('Ung.config.network.MainController', {
         ], this).then(function (result) {
             v.unmask();
             var intfStatus, devStatus;
-            console.log(result);
+
             rpc.networkSettings = result[0]; // update rpc.networkSettings with latest data (usually after save)
 
             result[0].interfaces.list.forEach(function (intf) {
