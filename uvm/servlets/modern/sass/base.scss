@@ -10,6 +10,10 @@ html, body {
     font-family: $custom-font;
 }
 
+i {
+    font-style: normal;
+}
+
 .x-toolbar.nav .x-button {
     color: #999;
     font-size: 11px;
@@ -102,6 +106,31 @@ html, body {
     border-top: 2px #F95821 solid;
 }
 
+.config-menu {
+    .x-treelist-item-leaf .x-treelist-item-text {
+        margin-left: 16px;
+    }
+}
+
+.x-treelist-item-icon {
+    &.network:before { background-image: url('/icons/config/network.svg'); }
+    &.administration:before { background-image: url('/icons/config/administration.svg'); }
+    &.events:before { background-image: url('/icons/config/events.svg'); }
+    &.email:before { background-image: url('/icons/config/email.svg'); }
+    &.directory:before { background-image: url('/icons/config/local-directory.svg'); }
+    &.system:before { background-image: url('/icons/config/system.svg'); }
+    &.upgrade:before { background-image: url('/icons/config/upgrade.svg'); }
+    &.about:before { background-image: url('/icons/config/about.svg'); }
+
+    &.hosts:before { background-image: url('/icons/config/hosts.svg'); }
+    &.devices:before { background-image: url('/icons/config/devices.svg'); }
+    &.users:before { background-image: url('/icons/config/users.svg'); }
+    &.shield:before { background-image: url('/icons/config/shield.svg'); }
+}
+
+.reports-menu {
+
+}
 .x-treelist-item-icon.tree {
     width: 24px;
     &:before {
@@ -111,20 +140,21 @@ html, body {
         display: block;
         margin: 9px 0;
     }
-    &.network:before { background-image: url('/icons/config/network.svg'); }
-    &.administration:before { background-image: url('/icons/config/administration.svg'); }
-    &.events:before { background-image: url('/icons/config/events.svg'); }
-    &.email:before { background-image: url('/icons/config/email.svg'); }
-    &.directory:before { background-image: url('/icons/config/local-directory.svg'); }
-    &.system:before { background-image: url('/icons/config/system.svg'); }
-    &.upgrade:before { background-image: url('/icons/config/upgrade.svg'); }
-    &.about:before { background-image: url('/icons/config/about.svg'); }
+}
+.x-treelist-nav {
+    .x-treelist-item-text {
+        font-family: $custom-font-condensed;
+        // line-height: 28px;
+        // margin-left: 30px;
+        // font-size: 14px;
+        font-weight: 600;
+    }
 }
 
-.x-treelist-item-leaf .x-treelist-item-text {
-    margin-left: 16px;
-    font-weight: 400 !important;
+.x-treelist-item-selected {
+    background: #EEE;
 }
+
 
 
 
@@ -133,50 +163,6 @@ html, body {
 .x-gridcell-body-el em {
     color: #999;
 }
-
-.x-treelist-nav {
-    // .x-treelist-row {
-    //     padding-left: 16px;
-    //     padding-right: 8px;
-    // }
-    .x-treelist-item-text {
-        font-family: $custom-font-condensed;
-        // line-height: 28px;
-        // margin-left: 30px;
-        // font-size: 14px;
-        font-weight: 600;
-    }
-    // .x-treelist-item-expander {
-    //     line-height: 28px;
-    //     &::after {
-    //         line-height: 28px !important;
-    //     }
-    // }
-    // .x-treelist-item-icon:before {
-    //     line-height: 28px !important;
-    //     font-size: 16px;
-    // }
-    // .x-treelist-item-expanded > * > * > .x-treelist-item-expander::after {
-    //     line-height: 28px !important;
-    // }
-}
-
-.x-treelist-item-selected {
-    background: #EEE;
-}
-
-// .x-gridcell-body-el {
-//     padding: 6px;
-// }
-// .x-gridcell-tool-dock > .x-body-el {
-//     padding: 6px 0;
-// }
-
-// .x-gridcell {
-//     // vertical-align: top;
-// }
-
-
 
 .x-grid-events {
     .x-gridcell {
@@ -206,7 +192,7 @@ html, body {
 
 
 
-.x-nav {
+.config-menu {
     .x-gridcell {
         font-family: 'Roboto Condensed', sans-serif;
         font-weight: 600;
@@ -231,17 +217,18 @@ html, body {
         // margin: 4px 0 0 0;
         background-size: contain;
         background-repeat: no-repeat;
-        &.network { background-image: url('/icons/config/network.svg'); }
-        &.administration { background-image: url('/skins/modern-rack/images/admin/config/icon_config_administration.png'); }
-        &.events { background-image: url('/skins/modern-rack/images/admin/config/icon_config_events.png'); }
-        &.email { background-image: url('/skins/modern-rack/images/admin/config/icon_config_email.png'); }
-        &.directory { background-image: url('/skins/modern-rack/images/admin/config/icon_config_directory.png'); }
-        &.system { background-image: url('/skins/modern-rack/images/admin/config/icon_config_system.png'); }
-        &.upgrade { background-image: url('/skins/modern-rack/images/admin/config/icon_config_upgrade.png'); }
-        &.about { background-image: url('/skins/modern-rack/images/admin/config/icon_config_about.png'); }
     }
 }
 
+.reports-menu {
+    .x-icon-el {
+        width: 16px;
+        height: 16px;
+        // margin: 4px 0 0 0;
+        background-size: contain;
+        background-repeat: no-repeat;
+    }
+}
 
 .monitor {
     background-size: contain;
@@ -289,4 +276,24 @@ html, body {
     .placeholder {
         // -webkit-flex-grow: 1;
     }
+}
+
+
+
+.config-bg {
+    position: absolute;
+    left: 50%;
+}
+
+.reports-bg {
+    position: absolute;
+    left: 50%;
+    top: 100px;
+}
+
+
+.interface-expander table td:first-child {
+    font-weight: 600;
+    text-align: right;
+    padding-right: 10px;
 }

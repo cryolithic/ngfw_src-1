@@ -48,14 +48,14 @@ Ext.define('Ung.controller.Global', {
                 }
             },
 
-            // 'config': { action: 'onConfig' },
-            // 'config/:configName': { action: 'onConfig' },
-            // 'config/:configName/:configView': 'onConfig',
-            // 'config/:configName/:configView/:subView': 'onConfig',
-            'reports': { action: 'onReports' },
-            'reports/create': { action: 'onReports' },
-            'reports/:category': { action: 'onReports' },
-            'reports/:category/:entry': { action: 'onReports', conditions: { ':entry': '(.*)' } },
+            'reports:params': {
+                action: 'onReports',
+                conditions: {
+                    ':params' : '(.*)'
+                }
+            },
+
+
             'sessions': { action: 'onSessions' },
             'sessions/:params': {
                 action: 'onSessions',
@@ -113,7 +113,8 @@ Ext.define('Ung.controller.Global', {
             configView.remove('configCard');
         }
 
-        if (config) {
+        if (config && view) {
+            // configView.remove('ung-config-select');
             // configView.remove('configCard');
             if (configView.down('config-' + config)) {
                 // if config card already exists activate it and select given view
@@ -152,38 +153,36 @@ Ext.define('Ung.controller.Global', {
                 }
             });
         } else {
+            // configView.add({ xtype: 'ung-config-select' });
             if (configView.down('#configCard')) {
                 configView.remove('configCard');
             }
         }
     },
 
-    onReports: function (categoryName, reportName) {
-        console.log('reports');
-        var me = this, mainView = me.getMainView(), reportsView = me.getReportsView();
+    onReports: function (params) {
+        var me = this, mainView = me.getMainView(), reportsView = me.getReportsView(), category, report;
         mainView.getViewModel().set('activeItem', 'ung-reports');
 
-        if (categoryName) {
-            // if (configView.down('config-' + config)) {
-            //     // if config card already exists activate it and select given view
-            //     // mainView.getViewModel().set('activeItem', 'configCard');
-            //     configView.down('config-' + config).setActiveItem('config-' + config + '-' + view || 0);
-            //     // if(subView){
-            //     //     var subViewTarget = viewTarget.down('tabpanel');
-            //     //     if(subViewTarget){
-            //     //         subViewTarget.setActiveTab(subView);
-            //     //     }
-            //     // }
-            //     return;
-            // } else {
-            //     console.log(mainView);
-            //     // mainView.remove('configCard');
-            // }
+        if (params) {
+            category = params.split('/')[1];
+            report = params.split('/')[2];
+        }
 
-            var tree = reportsView.down('treelist');
+        if (reportsView.down('#reportsCard')) {
+            reportsView.remove('reportsCard');
+        }
+
+
+        if (category && report) {
+            // var tree = reportsView.down('treelist');
             var node = Ext.getStore('reportstree').findNode('url', window.location.hash.replace('#reports/', ''));
-            tree.setSelection(node);
+            // tree.setSelection(node);
+            reportsView.getViewModel().set('params', true);
+            reportsView.getViewModel().set('ttl', node.get('cat') + ' / ' + node.get('text'));
             // mainView.setLoading(true);
+        } else {
+            reportsView.getViewModel().set('params', false);
         }
 
 

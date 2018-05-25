@@ -19,6 +19,7 @@ Ext.define('Ung.view.config.Config', {
         padding: 8,
         hidden: true,
         bind: { hidden: '{!params}' },
+        shadow: false,
         items: [{
             xtype: 'button',
             iconCls: 'x-fa fa-chevron-left',
@@ -36,18 +37,19 @@ Ext.define('Ung.view.config.Config', {
         }]
     },
 
+    listeners: {
+        deactivate: 'onDeactivate'
+    },
+
     items: [{
         layout: 'fit',
         xtype: 'panel',
-        // bodyStyle: {
-        //     background: '#CCC'
-        // },
         shadow: true,
         zIndex: 999,
         hidden: true,
         bind: {
             docked: '{ screen === "WIDE" ? "left" : null }',
-            width: '{ screen === "WIDE" ? 280 : null }',
+            width: '{ screen === "WIDE" ? 320 : null }',
             hidden: '{params && screen !== "WIDE" }',
             // resizable: {
             //     split: '{ screen === "WIDE" }',
@@ -57,6 +59,7 @@ Ext.define('Ung.view.config.Config', {
         },
 
         tbar: {
+            shadow: false,
             items: [{
                 xtype: 'searchfield',
                 ui: 'faded',
@@ -64,29 +67,14 @@ Ext.define('Ung.view.config.Config', {
                 placeholder: 'Find settings...'.t(),
                 listeners: {
                     change: 'filterSettings'
-                },
-                // hidden: true,
-                // bind: { hidden: '{params}' }
+                }
             }]
         },
 
-        // resizable: {
-        //     resizable: false,
-        //     split: true,
-        //     edges: 'east'
-        // },
-        // collapsible: {
-        //     collapsed: false,
-        //     animation: false,
-        //     direction: 'left',
-        //     useDrawer: false
-        // },
         items: [{
             xtype: 'treelist',
             scrollable: true,
-            // style: {
-            //     background: '#EEE'
-            // },
+            userCls: 'config-menu',
             ui: 'nav',
             // micro: true,
             // selectable: {
@@ -97,7 +85,6 @@ Ext.define('Ung.view.config.Config', {
                 duration: 150,
                 easing: 'ease'
             },
-            floatLeafItems: false,
             singleExpand: true,
             expanderFirst: false,
             expanderOnly: false,
@@ -202,5 +189,11 @@ Ext.define('Ung.view.config.Config', {
                 }
             }
         }]
+    }, {
+        xtype: 'ung-config-select',
+        hidden: true,
+        bind: {
+            hidden: '{params || screen !== "WIDE"}'
+        }
     }]
 });

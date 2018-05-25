@@ -26,7 +26,7 @@
         <script src="/ext6.5/ext-modern-all-debug.js"></script>
             </c:when>
             <c:otherwise>
-        <script src="/ext6.2/ext-modern-all.js"></script>
+        <script src="/ext6.5/ext-modern-all.js"></script>
             </c:otherwise>
         </c:choose>
         <script src="/ext6.5/theme-material/theme-material.js"></script>
@@ -67,7 +67,7 @@
         <script src="/script/common/bootstrap-modern.js"></script>
         <script>
             Ext.onReady(function () {
-                Ext.Anim.disableAnimations = true;
+                // Ext.Anim.disableAnimations = true;
                 // setups all initializations and load required scrips
                 Bootstrap.load([
                     '/script/common/util-all.js', // include custom grid module

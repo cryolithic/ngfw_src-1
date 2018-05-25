@@ -25,13 +25,13 @@ Ext.define('Ung.store.ReportsTree', {
             storeCat = Ext.getStore('categories').findRecord('displayName', group._groupKey, 0, false, true, true);
 
             if (!storeCat) { return; }
-
             // create category node
             category = {
                 text: group._groupKey,
                 slug: storeCat.get('slug'),
                 type: storeCat.get('type'), // app or system
                 icon: storeCat.get('icon'),
+                iconCls: 'tree ' + storeCat.get('name'),
                 // icon: 'x-fa fa-play',
                 // cls: 'x-tree-category',
                 url: storeCat.get('slug'),
@@ -43,6 +43,7 @@ Ext.define('Ung.store.ReportsTree', {
             Ext.Array.each(group.items, function (entry) {
                 category.children.push({
                     text: entry.get('localizedTitle'),
+                    cat: storeCat.get('displayName'),
                     slug: entry.get('slug'),
                     url: entry.get('url'),
                     uniqueId: entry.get('uniqueId'),

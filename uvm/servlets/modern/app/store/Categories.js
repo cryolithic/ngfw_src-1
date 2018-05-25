@@ -17,8 +17,10 @@ Ext.define('Ung.store.Categories', {
             return '/icons/apps/' + cat.name + '.svg';
         }
     }, {
-        name: 'slug', type: 'string',
-        calculate: function (cat) { return cat.name; }
+        name: 'iconCls', type: 'string',
+        calculate: function (cat) {
+            return cat.name;
+        }
     }],
     proxy: {
         type: 'memory',

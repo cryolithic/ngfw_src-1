@@ -5,11 +5,7 @@ Ext.define('Ung.view.main.Main', {
 
     controller: 'main',
     viewModel: {
-        formulas: {
-            reportsEnabled: function (get) {
-                return (get('reportsInstalled') && get('reportsRunning'));
-            }
-        }
+
     },
 
     layout: 'card',
@@ -27,45 +23,44 @@ Ext.define('Ung.view.main.Main', {
         { xtype: 'ung-sessions' },
         {
             xtype: 'toolbar',
+            // shadow: false,
             cls: 'nav',
             // docked: 'left',
             docked: 'top',
             zIndex: 9999,
             // padding: 5,
-            style: {
-                background: '#1b1e26'
-            },
+            // style: {
+            //     background: '#1b1e26'
+            // },
             defaults: {
-                // iconAlign: 'top',
-                padding: 0,
-                tooltip: {
-                    // align: 'l-r',
-                    // align: 'b-t',
-                    anchor: true,
-                    showDelay: 0,
-                    hideDelay: 0
-                }
+                iconAlign: 'top',
+                // padding: 0,
+                // tooltip: {
+                //     // align: 'l-r',
+                //     // align: 'b-t',
+                //     anchor: true,
+                //     showDelay: 0,
+                //     hideDelay: 0
+                // }
             },
             items: [{
                 xtype: 'component',
-                html: '<img src="' + '/images/BrandingLogoWhite.png" style="height: 30px;"/>'
+                margin: '0 20 0 0',
+                html: '<img src="' + '/images/BrandingLogoWhite.png" style="height: 40px;"/>'
             }, {
-                // text: 'Dashboard'.t(),
+                text: 'Dashboard'.t(),
                 iconCls: 'x-fa fa-home',
-                tooltip: {
-                    html: 'Dashboard'.t(),
-                },
                 handler: function () { Ung.app.redirectTo('#'); }
             }, {
-                // text: 'Config'.t(),
+                text: 'Config'.t(),
                 iconCls: 'x-fa fa-cog',
-                tooltip: { html: 'Config'.t() },
+                // tooltip: { html: 'Config'.t() },
                 handler: function () { Ung.app.redirectTo('#config'); }
             }, {
-                // text: 'Reports'.t(),
+                text: 'Reports'.t(),
                 iconCls: 'x-fa fa-area-chart',
                 handler: function () { Ung.app.redirectTo('#reports'); }
-            }, {
+            }, '->', {
                 href: '#sessions',
                 iconCls: 'monitor sessions',
                 // bind: { userCls: '{activeItem === "sessions" ? "pressed" : ""}' }
@@ -81,12 +76,6 @@ Ext.define('Ung.view.main.Main', {
                 href: '#users',
                 iconCls: 'monitor users',
                 bind: { userCls: '{activeItem === "users" ? "pressed" : ""}' }
-            }, {
-                xtype: 'component',
-                style: { color: '#FFF '},
-                bind: {
-                    html: 'screen: {screen}'
-                }
             }]
         }
     ],

@@ -44,12 +44,24 @@ Ext.define('Ung.config.network.MainController', {
                 }]
             }
         };
+
     },
 
     loadSettings: function () {
         var me = this,
             v = this.getView(),
             vm = this.getViewModel();
+
+        // vm.bind('{ screen }', function (size) {
+        //     var g = v.down('#interfacesGrid');
+        //     if (size !== 'WIDE') {
+        //         // console.log(v.down('#interfacesGrid'));
+        //         g.applyPlugins(['rowexpander']);
+
+        //     } else {
+        //         g.applyPlugins([]);
+        //     }
+        // });
 
         // console.log('painted');
 

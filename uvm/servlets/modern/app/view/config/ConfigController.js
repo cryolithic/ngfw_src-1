@@ -90,14 +90,17 @@ Ext.define('Ung.view.config.ConfigController', {
     //     });
     // },
 
-    // onDeactivate: function (view) {
-    //     // console.log('here');
-    //     // if (view.down('#configCard')) {
-    //     //     view.setActiveItem(0);
-    //     //     view.down('#configCard').destroy();
-    //     // }
-    //     // view.remove('configCard');
-    // }
+    onDeactivate: function (view) {
+        var list = view.down('treelist'),
+            store = list.getStore();
+
+        store.each(function (node) {
+            if (!node.isLeaf()) {
+                list.getItem(node).collapse();
+            }
+        });
+        list.setSelection(null);
+    }
 
 
 });
