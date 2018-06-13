@@ -113,28 +113,29 @@ Ext.define('Ung.view.reports.Reports', {
             html: '<h1 style="font-family: \'Roboto Condensed\'; font-weight: 100; color: #777;">Select a Report from a Category!</h1>'
         }]
     }, {
-        xtype: 'container',
-        hidden: true,
-        bind: {
-            hidden: '{!params}'
-        },
-        items: [{
-            xtype: 'container',
-            style: {
-                background: '#EEE'
-            },
-            layout: 'center',
-            items: [{
-                xtype: 'component',
-                html: 'Graph placeholder'
-            }],
-            listeners: {
-                // painted: function (s, v) {
-                //     v.setHeight(Ext.Number.parseInt(v.getWidth()/3));
-                // },
-                resize: 'onResize'
-            }
-        }]
+        // xtype: 'container',
+        // hidden: true,
+        // bind: {
+        //     hidden: '{!params}'
+        // },
+        // items: [{
+        //     xtype: 'container',
+        //     style: {
+        //         background: '#EEE'
+        //     },
+        //     layout: 'center',
+        //     items: [{
+        //         xtype: 'component',
+        //         html: 'Graph placeholder'
+        //     }],
+        //     listeners: {
+        //         // painted: function (s, v) {
+        //         //     v.setHeight(Ext.Number.parseInt(v.getWidth()/3));
+        //         // },
+        //         resize: 'onResize'
+        //     }
+        // }]
+        xtype: 'report'
     }]
     //     {
     //     xtype: 'panel',
