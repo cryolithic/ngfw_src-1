@@ -167,7 +167,7 @@ Ext.define('Ung.apps.wireguard-vpn.Main', {
                                 fieldLabel: 'Local Networks'.t(),
                                 cls: 'x-selectable',
                                 bind: {
-                                    value: '{settings.networks}',
+                                    value: '{settings.networks.list}',
                                 }
                             }]
                         }]

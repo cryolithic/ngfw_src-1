@@ -56,15 +56,44 @@ Ext.define('Ung.apps.wireguard-vpn.view.Settings', {
                 value: '{settings.dnsServer}'
             }
         },{
-            xtype: 'textarea',
-            fieldLabel: 'Networks'.t(),
-            vtype: 'cidrBlockArea',
-            allowBlank: true,
-            height: 50,
-            bind: {
-                value: '{settings.networks}'
-            }
-        }]
+            xtype: 'fieldcontainer',
+            layout: 'hbox',
+            items: [{
+                    xtype: 'label',
+                    text: 'Local Networks:'.t(),
+                    width: 170
+                },
+                {
+                    xtype: 'ungrid',
+                    itemId: 'localNetGrid',
+                    tbar: ['@addInline'],
+                    recordActions: ['delete'],
+                    bind: '{settings.networks.list}',
+        
+                    width: 300,
+        
+                    emptyRow: {
+                        field1: '10.0.0.0/24',
+                        enabled: true,
+                        description: '',
+                    },
+        
+                     columns: [
+                         {
+                             dataIndex: "field1",
+                             width: 200,
+                             flex: 1,
+                             editor:{
+                                 xtype: 'textfield',
+                                 vtype: 'cidrBlock',
+                                 allowBlank: false,
+                                 emptyText: '[enter address]'.t(),
+                                 blankText: 'Invalid address specified'.t()
+                             }
+                         }
+                     ]
+                }]
+            }]
     }, {
         xtype: 'fieldset',
         title: 'Peer IP Address Pool'.t(),
