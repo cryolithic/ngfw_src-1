@@ -135,10 +135,8 @@ public class WireGuardVpnManager
         }
         ArrayList<String> allowedIps = new ArrayList<String>();
         allowedIps.add(addTunnel.getPeerAddress().getHostAddress() + "/32");
-        String[] networks = addTunnel.getNetworks().split("\\n");
-        for (int x = 0;x < networks.length;x++) {
-            if (networks[x].trim().length() == 0) continue;
-            allowedIps.add(networks[x].trim());
+        for (IPMaskedAddress net : addTunnel.getNetworks()) {
+            allowedIps.add(net.getAddressString());
         }
         String command = WIREGUARD_APP +
             " set wg0 peer " + publicKey +

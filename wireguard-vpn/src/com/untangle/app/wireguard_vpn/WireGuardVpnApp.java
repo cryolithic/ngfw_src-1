@@ -423,11 +423,8 @@ public class WireGuardVpnApp extends AppBase
 
         // add reservation for all networks of all configured tunnels 
         for (WireGuardVpnTunnel tunnel : tunnelPools) {
-            String[] networks = tunnel.getNetworks().split("\\n");
-            for (int x = 0;x < networks.length;x++) {
-                String item = networks[x].trim();
-                if (item.length() == 0) continue;
-                nsmgr.registerNetworkBlock(NETSPACE_OWNER, NETSPACE_TUNNEL, networks[x].trim());
+            for (IPMaskedAddress net : tunnel.getNetworks()) {
+                nsmgr.registerNetworkBlock(NETSPACE_OWNER, NETSPACE_TUNNEL, net);
             }
         }
     }
@@ -451,19 +448,15 @@ public class WireGuardVpnApp extends AppBase
 
         // check all tunnel networks for conflicts
         for (WireGuardVpnTunnel tunnel : tunnelPools) {
-            String[] networks = tunnel.getNetworks().split("\\n");
-            for (int x = 0;x < networks.length;x++) {
-                String item = networks[x].trim();
-                if (item.length() == 0) continue;
-                IPMaskedAddress maskaddr = new IPMaskedAddress(item);
+            for(IPMaskedAddress tunNet : tunnel.getNetworks()) {
                 // see if the tunnel network conflicts with our configured address space
-                if (maskaddr.isIntersecting(serverPool)) {
-                    return new String("Tunnel:" + tunnel.getDescription() + " Network:" + item + " conflicts with configured Address Space");
+                if (tunNet.isIntersecting(serverPool)) {
+                    return new String("Tunnel:" + tunnel.getDescription() + " Network:" + tunNet + " conflicts with configured Address Space");
                 }
                 // see if the tunnel network conflicts with any registered networks
-                space = nsmgr.isNetworkAvailable(NETSPACE_OWNER, maskaddr);
+                space = nsmgr.isNetworkAvailable(NETSPACE_OWNER, tunNet);
                 if (space != null) {
-                    return new String("Tunnel:" + tunnel.getDescription() + " Network:" + item + " conflicts with " + space.ownerName + ":" + space.ownerPurpose);
+                    return new String("Tunnel:" + tunnel.getDescription() + " Network:" + tunNet + " conflicts with " + space.ownerName + ":" + space.ownerPurpose);
                 }
             }
         }

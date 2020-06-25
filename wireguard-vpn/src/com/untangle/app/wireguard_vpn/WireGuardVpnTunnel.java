@@ -30,7 +30,7 @@ public class WireGuardVpnTunnel implements Serializable, JSONString
     private InetAddress endpointAddress; 
     private Integer endpointPort = 51820;
     private InetAddress peerAddress;
-    private String networks = "";
+    private List<IPMaskedAddress> networks = null;
     private InetAddress pingAddress = null;
     private Integer pingInterval = 60;
     private Boolean pingConnectionEvents = true;
@@ -63,8 +63,8 @@ public class WireGuardVpnTunnel implements Serializable, JSONString
     public InetAddress getPeerAddress() { return peerAddress; }
     public void setPeerAddress( InetAddress newValue ) { this.peerAddress = newValue; }
 
-    public String getNetworks() { return networks; }
-    public void setNetworks( String newValue ) { this.networks = newValue; }
+    public List<IPMaskedAddress> getNetworks() { return networks; }
+    public void setNetworks( List<IPMaskedAddress> newValue ) { this.networks = newValue; }
 
     public InetAddress getPingAddress() { return(pingAddress); }
     public void setPingAddress(InetAddress pingAddress) { this.pingAddress = pingAddress; }
