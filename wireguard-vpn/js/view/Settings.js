@@ -68,30 +68,24 @@ Ext.define('Ung.apps.wireguard-vpn.view.Settings', {
                     itemId: 'localNetGrid',
                     tbar: ['@addInline'],
                     recordActions: ['delete'],
-                    bind: '{settings.networks.list}',
-        
+                    isNetworkGrid: true,
+                    listProperty: 'settings.networks.list',
                     width: 300,
-        
                     emptyRow: {
-                        field1: '10.0.0.0/24',
-                        enabled: true,
-                        description: '',
+                        network: '10.0.0.0/24'
                     },
-        
-                     columns: [
-                         {
-                             dataIndex: "field1",
-                             width: 200,
-                             flex: 1,
-                             editor:{
-                                 xtype: 'textfield',
-                                 vtype: 'cidrBlock',
-                                 allowBlank: false,
-                                 emptyText: '[enter address]'.t(),
-                                 blankText: 'Invalid address specified'.t()
-                             }
-                         }
-                     ]
+                    columns: [{
+                        dataIndex: "network",
+                        width: 200,
+                        flex: 1,
+                        editor:{
+                            xtype: 'textfield',
+                            vtype: 'cidrBlock',
+                            allowBlank: false,
+                            emptyText: '[enter address]'.t(),
+                            blankText: 'Invalid address specified'.t()
+                        }
+                    }]
                 }]
             }]
     }, {

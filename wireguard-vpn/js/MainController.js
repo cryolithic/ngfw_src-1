@@ -41,6 +41,15 @@ Ext.define('Ung.apps.wireguard-vpn.MainController', {
             vm.set('warning', warning);
             vm.set('hostname', networkSettings['hostName']);
 
+
+            // bind any network grids with updated network store data using their listProperty
+            v.query('ungrid').forEach(function (grid) {
+                if(grid.isNetworkGrid) {
+                    var netGridStore = WireguardUtil.createNetworkStore(vm.get(grid.listProperty));
+                    grid.setStore(netGridStore);
+                }
+            });
+
             v.setLoading(false);
         },function(ex){
             if(!Util.isDestroyed(v, vm)){
@@ -87,8 +96,8 @@ Ext.define('Ung.apps.wireguard-vpn.MainController', {
                     }
                 });
                 store.isReordered = undefined;
-                vm.set(grid.listProperty, Ext.Array.pluck(store.getRange(), 'data'));
                 if(grid.listProperty == 'settings.tunnels.list'){
+                    vm.set(grid.listProperty, Ext.Array.pluck(store.getRange(), 'data'));
                     store.getModifiedRecords().forEach(function(record){
                         var previousPublicKey = record.getPrevious('publicKey');
                         if(previousPublicKey == undefined ){
@@ -116,6 +125,20 @@ Ext.define('Ung.apps.wireguard-vpn.MainController', {
                         }
                     });
                 }
+
+                // Now we need to convert the list back to settings format that setSettings is expecting (just an array of strings)
+                 if(grid.listProperty == 'settings.networks.list') {
+
+                     // Only update the setting if any of these changed
+                     if(store.getModifiedRecords().length > 0 || store.getNewRecords().length > 0 || store.getRemovedRecords().length > 0){
+                         settingsChanged = true;
+                         var netList = [];
+                         store.each(function(record){
+                             netList.push(record.get('network'));
+                         });
+                         vm.set(grid.listProperty, netList);
+                        }
+                 }
             }
         });
 
@@ -397,7 +420,9 @@ Ext.define('Ung.apps.wireguard-vpn.cmp.WireGuardVpnTunnelRecordEditorController'
 
     endpointTypeComboChange: function(combo, newValue, oldValue){
         var me = this,
-            record = me.getViewModel().get('record');
+            v = me.getView(),
+            vm = me.getViewModel(),
+            record = me.getViewModel().get('record'),
             form = combo.up('form');
 
         form.down('[itemId=publicKey]').allowBlank = newValue;
@@ -415,5 +440,55 @@ Ext.define('Ung.apps.wireguard-vpn.cmp.WireGuardVpnTunnelRecordEditorController'
                 }
             }
         }
+
+        // Bind the stores to the custom network grid
+        v.query('ungrid').forEach(function (grid) {
+            if(grid.isNetworkGrid) {
+                if(grid.getBind() == null) {
+                    var netGridStore = WireguardUtil.createNetworkStore(vm.get(grid.listProperty));
+                    grid.setBind({store: netGridStore});
+                }
+            }
+        });
+    }
+});
+
+/**
+ * WireguardUtil is a singleton used to add utility functions that may be needed across controller components.
+ * 
+ */
+Ext.define('Ung.apps.wireguard-vpn.WireguardUtil', {
+    singleton: true,
+    alternateClassName: ['WireguardUtil'],
+
+    /**
+     * createNetworkStore creates a dynamic in memory store interface that will translate json arrays into 
+     * a simple json object, to make it easier for an ungrid to handle
+     * 
+     * ie: "10.0.0.0/24", "10.0.0.1/24" -> network: "10.0.0.0/24", network: "10.0.0.1/24"
+     * 
+     * 
+     * @param {json} listPropData - The list data that should be bound to the grid
+     */
+    createNetworkStore: function(listPropData) {
+        var netStore = Ext.create('Ext.data.Store', {
+            data: listPropData,
+            fields: [{name:'network'}],
+            autoLoad: true,
+            proxy: {
+                type: 'memory',
+                reader: {
+                    type: 'json',
+                    transform: function(data) {
+                        data = data.map(function(val){
+                            return { network: val };
+                        });
+                        return data;
+                    }
+                },
+            }
+        });
+        
+        return netStore;
     }
 });

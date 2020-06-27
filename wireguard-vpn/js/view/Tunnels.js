@@ -41,7 +41,7 @@ Ext.define('Ung.apps.wireguard-vpn.cmp.TunnelsGrid', {
         'endpointAddress' : '',
         'endpointPort': 51820,
         'peerAddress': '',
-        'networks': '',
+        'networks': [],
         'pingInterval': 60,
         'pingConnectionEvents': true,
         'pingUnreachableEvents': false
@@ -177,17 +177,39 @@ Ext.define('Ung.apps.wireguard-vpn.cmp.TunnelsGrid', {
         bind: {
             value: '{record.peerAddress}'
         }
-    }, {
-        xtype: 'textarea',
-        fieldLabel: 'Remote Networks'.t(),
-        vtype: 'cidrBlockArea',
-        allowBlank: true,
-        width: 250,
-        height: 50,
-        bind: {
-            value: '{record.networks}'
-        }
-    }, {
+    },{
+        xtype: 'fieldcontainer',
+        layout: 'hbox',
+        items: [{
+                xtype: 'label',
+                text: 'Remote Networks:'.t(),
+                width: 170
+            },
+            {
+                xtype: 'ungrid',
+                itemId: 'remoteNetGrid',
+                tbar: ['@addInline'],
+                recordActions: ['delete'],
+                listProperty: 'record.networks.list',
+                isNetworkGrid: true,
+                width: 300,
+                emptyRow: {
+                    network: '10.0.0.0/24'
+                },
+                columns: [{
+                    dataIndex: "network",
+                    width: 200,
+                    flex: 1,
+                    editor:{
+                        xtype: 'textfield',
+                        vtype: 'cidrBlock',
+                        allowBlank: false,
+                        emptyText: '[enter address]'.t(),
+                        blankText: 'Invalid address specified'.t()
+                    }
+                }]
+            }]
+        }, {
         xtype: 'fieldset',
         title: 'Monitor'.t(),
         padding: 10,
