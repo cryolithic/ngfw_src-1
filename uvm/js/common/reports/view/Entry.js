@@ -156,30 +156,65 @@ Ext.define('Ung.view.reports.Entry', {
                     },
                     handler: 'dashboardAddRemove'
                 }, {
-                    xtype: 'exporterbutton',
-                    itemId: 'exportCsv',
+                    xtype: 'button',
                     text: 'Export Data (csv)'.t(),
+                    itemId: 'exportData',
                     iconCls: 'fa fa-external-link-square',
-                    hidden: true,
-                    disabled: true,
-                    component: this,
-                    store: this,
+                    menu: {
+                        plain: true,
+                        showSeparator: false,
+                        items: [{
+                            itemId: 'exportDatabase',
+                            text: 'Export Database'.t(),
+                            handler: 'exportEventsHandler',
+                            hidden: false,
+                            disabled: false,
+                        }, {
+                            cls: "x-menu-item x-menu-item-default x-box-item",
+                            xtype: 'exporterbutton',
+                            itemId: 'exportCsv',
+                            text: 'Export Display Data'.t(),
+                            hidden: false,
+                            disabled: false,
+                            component: this,
+                            store: this,
+/*
+                            format: 'csv',
+                            remote: false,
+                            title: 'export',
+                            handler: function() {
+                               var me = this,
+                                   blobURL = "",
+                                   format = me.format,
+                                   remote = me.remote,
+                                   title = me.title,
+                                   dt = new Date(),
+                                   //link = me.el.dom,
+                                   link = me.up().up().el.dom,
+                                   res, filename;
+
+                                   res = Ext.ux.exporter.Exporter.exportAny(me.component, me.store, format, { title : title });
+                                   filename = title + "_" + Ext.Date.format(dt, "Y-m-d h:i:s") + "." + res.ext;
+                                   Ext.ux.exporter.FileSaver.saveAs(res.data, res.mimeType, res.charset, filename, link, remote);
+                            }
+*/
+                        }, {
+                            xtype: 'exporterbutton',
+                            border: false,
+                            itemId: 'exportXls',
+                            text: 'Export (xls)'.t(),
+                            title: 'Export Template XLS',
+                            format: 'excel',
+                            hidden: true,
+                            disabled: true,
+                            component: this,
+                            store: this,
+                        }],
+                    },
+                    hidden: false,
+                    disabled: false,
                     bind: {
                         hidden: '{entry.type !== "EVENT_LIST" || eEntry}',
-                        disabled: '{fetching}'
-                    }
-                }, {
-                    xtype: 'exporterbutton',
-                    itemId: 'exportXls',
-                    text: 'Export (xls)'.t(),
-                    title: 'Export Template XLS',
-                    format: 'excel',
-                    iconCls: 'fa fa-external-link-square',
-                    hidden: true,
-                    disabled: true,
-                    component: this,
-                    store: this,
-                    bind: {
                         disabled: '{fetching}'
                     }
                 }, {

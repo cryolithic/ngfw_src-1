@@ -308,8 +308,8 @@ Ext.define('Ung.view.reports.EventReport', {
             var me = this,
             entry = me.getViewModel().get('entry'),
             export_title = 'export', // default export title
-            csvButton = me.getView().up().up().down('#exportCsv'),
-            xlsButton = me.getView().up().up().down('#exportXls'),
+            csvButton = me.getView().up().up().down('#exportData').down('#exportCsv'),
+            xlsButton = me.getView().up().up().down('#exportData').down('#exportXls'),
             grid = me.getView().down('grid');
 
             if (!csvButton || !xlsButton || !grid) { return; }
