@@ -170,34 +170,33 @@ Ext.define('Ung.view.reports.Entry', {
                             hidden: false,
                             disabled: false,
                         }, {
-                            cls: "x-menu-item x-menu-item-default x-box-item",
-                            xtype: 'exporterbutton',
-                            itemId: 'exportCsv',
                             text: 'Export Display Data'.t(),
+                            itemId: 'exportCsv',
                             hidden: false,
                             disabled: false,
                             component: this,
                             store: this,
-/*
                             format: 'csv',
                             remote: false,
                             title: 'export',
-                            handler: function() {
-                               var me = this,
+                            onClick: function(e) {
+                                var me = this,
                                    blobURL = "",
                                    format = me.format,
                                    remote = me.remote,
                                    title = me.title,
                                    dt = new Date(),
-                                   //link = me.el.dom,
-                                   link = me.up().up().el.dom,
+                                   link = me.el.dom.children[0],
                                    res, filename;
 
-                                   res = Ext.ux.exporter.Exporter.exportAny(me.component, me.store, format, { title : title });
-                                   filename = title + "_" + Ext.Date.format(dt, "Y-m-d h:i:s") + "." + res.ext;
-                                   Ext.ux.exporter.FileSaver.saveAs(res.data, res.mimeType, res.charset, filename, link, remote);
+                                res = Ext.ux.exporter.Exporter.exportAny(me.component, me.store, format, { title : title });
+                                filename = title + "_" + Ext.Date.format(dt, "Y-m-d h:i:s") + "." + res.ext;
+                                Ext.ux.exporter.FileSaver.saveAs(res.data, res.mimeType, res.charset, filename, link, remote, me.onComplete, me);
+                            },
+                            onComplete: function() {
+                                this.fireEvent('complete', this);
+                                this.blur();
                             }
-*/
                         }, {
                             xtype: 'exporterbutton',
                             border: false,
