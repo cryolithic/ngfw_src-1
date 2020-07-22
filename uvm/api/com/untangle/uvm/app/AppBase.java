@@ -11,6 +11,7 @@ import java.util.LinkedList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.net.InetAddress;
 
 import org.apache.log4j.Logger;
@@ -33,6 +34,8 @@ public abstract class AppBase implements App
 {
     private static final Logger staticLogger = Logger.getLogger(AppBase.class);
     private final Logger logger = Logger.getLogger(AppBase.class);
+
+    private static final Pattern SPACE_MATCH = Pattern.compile("\\s+");
 
     /**
      * These are the (generic) settings for this app The app usually stores more
@@ -313,7 +316,7 @@ public abstract class AppBase implements App
      */
     public void logEvent(LogEvent evt)
     {
-        String tag = appProperties.getDisplayName().replaceAll("\\s+", "_") + " [" + appSettings.getId() + "]:";
+        String tag = SPACE_MATCH.matcher(appProperties.getDisplayName()).replaceAll("_");
         evt.setTag(tag);
 
         UvmContextFactory.context().logEvent(evt);
