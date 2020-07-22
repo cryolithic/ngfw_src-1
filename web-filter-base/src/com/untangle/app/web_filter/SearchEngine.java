@@ -29,6 +29,7 @@ import com.untangle.uvm.util.UrlMatchingUtil;
 public class SearchEngine
 {
     private static final Logger logger = Logger.getLogger(SearchEngine.class);
+    private static final Pattern COLON_MATCH = Pattern.compile("(?<!:)/+");
 
     private static final List<Pattern> SearchEngines;
     public static final URIBuilder KidFriendlySearchEngineRedirectUri;
@@ -72,7 +73,7 @@ public class SearchEngine
     {
         URI uri = null;
         try {
-            uri = new URI(requestLine.getRequestUri().normalize().toString().replaceAll("(?<!:)/+", "/"));
+            uri = new URI(COLON_MATCH.matcher(requestLine.getRequestUri().normalize().toString()).replaceAll("/"));
         } catch (URISyntaxException e) {
             logger.error("Could not parse URI '" + uri + "'", e);
         }
