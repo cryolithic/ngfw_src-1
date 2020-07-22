@@ -7,6 +7,7 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -42,6 +43,7 @@ public class HttpParserEventHandler extends AbstractEventHandler
     private static final byte LF = '\n';
 
     private static final int TIMEOUT = 30000;
+    private static final Pattern COLON_MATCH = Pattern.compile("(?<!:)/+");
 
     private static enum BodyEncoding {
         NO_BODY, // no body
@@ -707,7 +709,7 @@ public class HttpParserEventHandler extends AbstractEventHandler
                      * XXX what is this: .replaceAll("(?<!:)/+", "/")
                      * -dmorris
                      */
-                    String uri = state.requestLineToken.getRequestLine().getRequestUri().normalize().toString().replaceAll("(?<!:)/+", "/");
+                    String uri = COLON_MATCH.matcher(state.requestLineToken.getRequestLine().getRequestUri().normalize().toString()).replaceAll("/");
                     String path = state.requestLineToken.getRequestLine().getRequestUri().normalize().getPath();
                     HostTableEntry hostEntry = null;
                     DeviceTableEntry deviceEntry = null;
