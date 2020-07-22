@@ -760,7 +760,7 @@ public class AppTCPSessionImpl extends AppSessionImpl implements AppTCPSession
             readBuf[side].limit((int) readLimit[side]);
         }
         if (readBuf[side] != null) {
-            logger.debug("putting into existing readbuf");
+            if (logger.isDebugEnabled()) logger.debug("putting into existing readbuf");
             // We have to put the crumb into the buffer, using the overflow if necessary.
             int s = dcsize;
             if (s > readBuf[side].remaining()) s = readBuf[side].remaining();
@@ -789,7 +789,7 @@ public class AppTCPSessionImpl extends AppSessionImpl implements AppTCPSession
             }
         } else {
             in.read(); // Consume the crumb
-            logger.debug("using jvector buf as new readbuf");
+            if (logger.isDebugEnabled()) logger.debug("using jvector buf as new readbuf");
             readBuf[side] = ByteBuffer.wrap(dcdata, 0, dcsize);
             readBuf[side].position(dcsize);
             readBuf[side].limit((int) readLimit[side]); //TODO: check the safety of this conversion
