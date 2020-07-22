@@ -18,6 +18,21 @@ if [ $(grep -c "jslint failed" $RAKEOUTPUT) -gt 0 ] ; then
     exit
 fi
 
+RESTART=0
 if [ $(grep -c javac $RAKEOUTPUT) -gt 0 ] ; then 
-    ./dist/etc/init.d/untangle-vm restart
+    RESTART=1
+    # ./dist/etc/init.d/untangle-vm restart
+fi
+
+if [ -f .vscode/remote-hosts ]; then
+    while read address; do
+        echo "Synchronzing begin with $address"
+        rsync -a dist/usr/share/untangle/lib root@$address:/usr/share/untangle
+        rsync -a dist/usr/share/untangle/web root@$address:/usr/share/untangle
+
+        if [ $RESTART -eq 1 ] ; then
+            ssh root@$address "sync; echo 3 > /proc/sys/vm/drop_caches;/etc/init.d/untangle-vm restart"
+        fi
+        echo "Synchronzing end with $address"
+    done < .vscode/remote-hosts
 fi
