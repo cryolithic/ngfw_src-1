@@ -452,7 +452,7 @@ public class EventWriterImpl implements Runnable
                      */
                     try {
                         long write_t0 = System.currentTimeMillis();
-                        logger.info("Writing " + className + " events...");
+                        logger.debug("Writing " + className + " events...");
                         try {
                             // Set the batchCollector to the current statement 
                             batchCollector = statement;
@@ -499,7 +499,7 @@ public class EventWriterImpl implements Runnable
             logger.warn("Failed batch, dropping events" + e);
         }  finally {
             if(batchCollector != null) {
-                logger.info("Closing batch collector.");
+                logger.debug("Closing batch collector.");
                 try {
                     batchCollector.close();
                 } catch(Exception e) {
