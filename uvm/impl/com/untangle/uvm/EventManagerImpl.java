@@ -38,8 +38,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TransferQueue;
+import java.util.concurrent.LinkedTransferQueue;
 import java.util.stream.Stream;
 import java.util.stream.Collectors;
 import java.util.Collection;
@@ -79,12 +79,14 @@ public class EventManagerImpl implements EventManager
     private static final String PREVIEW_EVENT_CLASS_NAME = "SystemStatEvent";
     private LogEvent mostRecentPreviewEvent = null;
 
+    private final HookCallback settingsChangeHook = new SettingsHook();;
+
     /**
      * The current event settings
      */
     private EventSettings settings;
 
-    private Pattern classesToProcess = Pattern.compile("");
+    private static Map<String, Boolean> classesToProcess = new HashMap<>();
 
     /**
      * Initialize event manager.
@@ -128,6 +130,7 @@ public class EventManagerImpl implements EventManager
         remoteEventWriter.start();
 
         SyslogManagerImpl.reconfigureCheck(settingsFilename, this.settings);
+        UvmContextFactory.context().hookManager().registerCallback( com.untangle.uvm.HookManager.SETTINGS_CHANGE, this.settingsChangeHook );
     }
 
     /**
@@ -245,7 +248,10 @@ public class EventManagerImpl implements EventManager
         }
 
         synchronized (classesToProcess) {
-            classesToProcess = Pattern.compile(GlobUtil.globToRegex(classes.size() == 0 ? "*" : String.join("|", classes) ));
+            classesToProcess.clear();
+            for(String className : classes ){
+                classesToProcess.put(className.replaceAll("\\*", ""), true);
+            }
         }
     }
 
@@ -946,12 +952,13 @@ public class EventManagerImpl implements EventManager
      */
     public void logEvent( LogEvent event )
     {
-        synchronized (classesToProcess) {
-            if(classesToProcess.matcher(event.getClass().getName()).matches()){
-                localEventWriter.inputQueue.offer(event);
-            }
+        if(classesToProcess.size() == 0 ||
+            classesToProcess.get(event.getClass().getSimpleName()) != null){
+            localEventWriter.inputQueue.offer(event);
         }
-        remoteEventWriter.inputQueue.offer(event);
+        if(remoteEventWriter.enabled){
+            remoteEventWriter.inputQueue.offer(event);
+        }
     }
 
     /**
@@ -1451,7 +1458,7 @@ public class EventManagerImpl implements EventManager
     private class LocalEventWriter implements Runnable
     {
         private volatile Thread thread;
-        private final BlockingQueue<LogEvent> inputQueue = new LinkedBlockingQueue<>();
+        private final LinkedTransferQueue<LogEvent> inputQueue = new LinkedTransferQueue<>();
 
         /**
          * Run event queue.
@@ -1510,7 +1517,8 @@ public class EventManagerImpl implements EventManager
     private class RemoteEventWriter implements Runnable
     {
         private volatile Thread thread;
-        private final BlockingQueue<LogEvent> inputQueue = new LinkedBlockingQueue<>();
+        private final LinkedTransferQueue<LogEvent> inputQueue = new LinkedTransferQueue<>();
+        public Boolean enabled = false;
 
         /**
          * Run event queue.
@@ -1548,6 +1556,7 @@ public class EventManagerImpl implements EventManager
         protected void start()
         {
             UvmContextFactory.context().newThread(this).start();
+            enabled = UvmContextFactory.context().systemManager().getSettings().getCloudEnabled();
         }
 
         /**
@@ -1605,5 +1614,32 @@ public class EventManagerImpl implements EventManager
         }
     }
 
+    /**
+     * Hook into setting saves to look for system settings
+     */
+    private class SettingsHook implements HookCallback
+    {
+        /**
+        * @return Name of callback hook
+        */
+        public String getName()
+        {
+            return "event-manager-settings-change-hook";
+        }
 
+        /**
+         * Callback documentation
+         *
+         * @param args  Args to pass
+         */
+        public void callback( Object... args )
+        {
+            Object o = args[1];
+            if ( ! (o instanceof SystemSettings) ) {
+                return;
+            }
+            SystemSettings settings = (SystemSettings)o;
+            remoteEventWriter.enabled = settings.getCloudEnabled();
+        }
+    }
 }
