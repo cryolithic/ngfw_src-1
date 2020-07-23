@@ -12,7 +12,6 @@ import java.util.LinkedHashMap;
 import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.sql.BatchUpdateException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -198,12 +197,8 @@ public class EventWriterImpl implements Runnable
                     /**
                      * If there is anything to log, log it to the database
                      */
-                    if (logQueue.size() > 0) {
-                        // Setting autoCommit(true) on the connection here will prevent transactions from failing
-                        // when an individual query fails
-                        dbConnection.setAutoCommit(true);
+                    if (logQueue.size() > 0)
                         persist(logQueue);
-                    }
                     else
                         try {Thread.sleep(1000);} catch (Exception e) {}
 
@@ -402,112 +397,86 @@ public class EventWriterImpl implements Runnable
          * 2) write update type events - we write these second because they update the previously inserted values
          * 3) write SessionMinuteEvents - write these last because despite being inserts they refer to inserted and update values in the sessions table
          */
-        for (int i=0;i<3;i++) 
-        {
-            logger.debug("Writing batch (1 - insert, 2 - update, 3 - sessionminuteevents): " + i);
+        for (int i=0;i<3;i++) {
+            for (Iterator<Map.Entry<String,PreparedStatement>> j = entries.iterator(); j.hasNext(); ) {
+                Map.Entry<String,PreparedStatement> entry = j.next();
 
-            //Initialize empty collector for batching
-            PreparedStatement batchCollector = null;
+                PreparedStatement statement = entry.getValue();
+                String str = entry.getKey();
+                String[] splits = str.split(",",2);
+                String className = splits[0];
+                String sql = splits[1];
 
-            try {
-                for (Iterator<Map.Entry<String,PreparedStatement>> j = entries.iterator(); j.hasNext(); ) {
-                    Map.Entry<String,PreparedStatement> entry = j.next();
+                if (className == null)
+                    logger.warn("Invalid Key: " + sql);
 
-                    PreparedStatement statement = entry.getValue();
-                    String str = entry.getKey();
-                    String[] splits = str.split(",",2);
-                    String className = splits[0];
-                    String sql = splits[1];
-
-                    if (className == null)
-                        logger.warn("Invalid Key: " + sql);
-
-                    // only handle INSERTS on first 
-                    if ( i == 0 ) {
-                        if ( "com.untangle.uvm.app.SessionMinuteEvent".equals(className) ) {
-                            continue;
-                        }
-                        if (!sql.substring(0,10).contains("INSERT") ) {
-                            continue;
-                        }
+                // only handle INSERTS on first 
+                if ( i == 0 ) {
+                    if ( "com.untangle.uvm.app.SessionMinuteEvent".equals(className) ) {
+                        continue;
                     }
-                    // only handle UPDATES on second 
-                    if ( i == 1 ) {
-                        if ( !sql.substring(0,10).contains("UPDATE") )
-                            continue;
-                    }
-                    // only handle SessionMinuteEvent on third
-                    if ( i == 2 ) {
-                        if ( !"com.untangle.uvm.app.SessionMinuteEvent".equals(className) ) {
-                            logger.warn("Unknown event in third run: " + className);
-                        }
-                    }
-                    
-                    // remove it from the list
-                    j.remove();
-                
-                    /**
-                     * Write event to database using SQL
-                     * If fails, just move on
-                     */
-                    try {
-                        long write_t0 = System.currentTimeMillis();
-                        logger.debug("Writing " + className + " events...");
-                        try {
-                            // Set the batchCollector to the current statement 
-                            batchCollector = statement;
-                            // and add it into the batch
-                            batchCollector.addBatch();
-                        } catch (Exception e) {
-                            logger.warn("Failed SQL query for " + statement, e);
-                            Throwable t = e;
-                            while ( ( t = t.getCause() ) != null ) {
-                                logger.warn("Cause: " + t, t);
-                            }
-                        }
-                        long write_t1 = System.currentTimeMillis();
-
-                        if (logger.isInfoEnabled() && className != null) {
-                            /**
-                             * Update the stats
-                             */
-                            String[] parts = className.split("\\.");
-                            String eventTypeName = parts[parts.length-1];
-                            //String eventTypeName = statements.get(statement).getClass().getSimpleName();
-                            Long currentTime = timeMap.get(eventTypeName);
-                            if (currentTime == null)
-                                currentTime = 0L;
-                            currentTime = currentTime+(write_t1-write_t0); //add time to write this instances
-                            timeMap.put(eventTypeName, currentTime);
-                        }
-                    } catch (Exception e) {
-                        logger.warn("Failed SQL query for " + statement, e);
+                    if (!sql.substring(0,10).contains("INSERT") ) {
+                        continue;
                     }
                 }
-
-            // This is when we execute all current prepared Statements as a batch
-            if(batchCollector != null) {
-                int[] batchResults = batchCollector.executeBatch();
-                logger.debug("Batch results: " + String.join(",", batchResults.toString()));
-            } else {
-                logger.debug("No batches at this time.");
-            }
-        } catch (BatchUpdateException be) {
-            logger.warn("Batch update exception: " + be);
-            logger.warn("Next exception: " + be.getNextException());
-        } catch (Exception e) {
-            logger.warn("Failed batch, dropping events" + e);
-        }  finally {
-            if(batchCollector != null) {
-                logger.debug("Closing batch collector.");
+                // only handle UPDATES on second 
+                if ( i == 1 ) {
+                    if ( !sql.substring(0,10).contains("UPDATE") )
+                        continue;
+                }
+                // only handle SessionMinuteEvent on third
+                if ( i == 2 ) {
+                    if ( !"com.untangle.uvm.app.SessionMinuteEvent".equals(className) ) {
+                        logger.warn("Unknown event in third run: " + className);
+                    }
+                }
+                
+                // remove it from the list
+                j.remove();
+            
+                /**
+                 * Write event to database using SQL
+                 * If fails, just move on
+                 */
                 try {
-                    batchCollector.close();
-                } catch(Exception e) {
-                    logger.warn("Can't close batch" + e);
+                    long write_t0 = System.currentTimeMillis();
+                    logger.debug("Writing " + className + " events...");
+                    try {
+                        //statement.execute();
+                        statement.executeBatch();
+                    } catch (Exception e) {
+                        logger.warn("Failed SQL query for " + statement, e);
+                        Throwable t = e;
+                        while ( ( t = t.getCause() ) != null ) {
+                            logger.warn("Cause: " + t, t);
+                        }
+                    } finally {
+                        try {
+                            statement.close();
+                        } catch (Exception e) {
+                            logger.warn("Failed to close statement", e);
+                        }
+                    }
+                    long write_t1 = System.currentTimeMillis();
+
+                    if (logger.isInfoEnabled() && className != null) {
+                        /**
+                         * Update the stats
+                         */
+                        String[] parts = className.split("\\.");
+                        String eventTypeName = parts[parts.length-1];
+                        //String eventTypeName = statements.get(statement).getClass().getSimpleName();
+                        Long currentTime = timeMap.get(eventTypeName);
+                        if (currentTime == null)
+                            currentTime = 0L;
+                        currentTime = currentTime+(write_t1-write_t0); //add time to write this instances
+                        timeMap.put(eventTypeName, currentTime);
+                    }
+                } catch (Exception e) {
+                    logger.warn("Failed SQL query for " + statement, e);
                 }
             }
         }
-    }
 
         for (Iterator<Map.Entry<String,PreparedStatement>> j = entries.iterator(); j.hasNext(); ) {
             Map.Entry<String,PreparedStatement> entry = j.next();
