@@ -68,6 +68,7 @@ public class ReportsApp extends AppBase implements Reporting, HostnameLookup
     private static final String REPORTS_DB_DRIVER_FILE = System.getProperty("uvm.conf.dir") + "/database-driver";
 
     private static final File CRON_FILE = new File("/etc/cron.daily/reports-cron");
+    private static final File HOURLY_CRON_FILE = new File("/etc/cron.hourly/reports-cron");
 
     protected static EventWriterImpl eventWriter = null;
     protected static EventReaderImpl eventReader = null;
@@ -210,6 +211,7 @@ public class ReportsApp extends AppBase implements Reporting, HostnameLookup
          * Sync settings to disk
          */
         writeCronFile();
+        writeHourlyCron();
     }
 
     /**
@@ -560,6 +562,10 @@ public class ReportsApp extends AppBase implements Reporting, HostnameLookup
         if (settingsFile.lastModified() > CRON_FILE.lastModified()){
             writeCronFile();
         }
+
+        if(settingsFile.lastModified() > HOURLY_CRON_FILE.lastModified()) {
+            writeHourlyCron();
+        }
     }
 
     /**
@@ -809,6 +815,42 @@ public class ReportsApp extends AppBase implements Reporting, HostnameLookup
 
         // Make it executable
         UvmContextFactory.context().execManager().execResult( "chmod 755 " + CRON_FILE );
+    }
+
+    /**
+     * Writes the hourly cron file that runs every hour
+     */
+    private void writeHourlyCron() {
+
+        //Currently we only need to write this file if the database has hourly retention set
+        if(settings.getDbRetentionHourly() > 0) {
+            String cronStr = "#!/bin/sh" + "\n" +
+            REPORTS_CLEAN_TABLES_SCRIPT + " -d " + ReportsApp.dbDriver + " -h " + settings.getDbRetentionHourly() + " 0 | logger -t uvmreports" + "\n";
+
+            BufferedWriter out = null;
+            try {
+                out = new BufferedWriter(new FileWriter(HOURLY_CRON_FILE));
+                out.write(cronStr, 0, cronStr.length());
+                out.write("\n");
+            } catch (IOException ex) {
+                logger.error("Unable to write file", ex);
+                return;
+            }finally{
+                if(out != null){
+                    try {
+                        out.close();
+                    } catch (IOException ex) {
+                        logger.error("Unable to close file", ex);
+                    }
+                }
+            }
+    
+            // Make it executable
+            UvmContextFactory.context().execManager().execResult( "chmod 755 " + HOURLY_CRON_FILE );
+        } else {
+            //RM the cron file if not set
+            UvmContextFactory.context().execManager().execResult( "rm -f " + HOURLY_CRON_FILE );
+        }
     }
 
     /** 
