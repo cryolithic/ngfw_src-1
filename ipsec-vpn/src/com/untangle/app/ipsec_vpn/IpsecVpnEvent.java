@@ -5,6 +5,7 @@
 package com.untangle.app.ipsec_vpn;
 
 import java.io.Serializable;
+import java.sql.Timestamp;
 
 import com.untangle.uvm.logging.LogEvent;
 import com.untangle.uvm.util.I18nUtil;
@@ -66,7 +67,7 @@ public class IpsecVpnEvent extends LogEvent implements Serializable, org.json.JS
         java.sql.PreparedStatement pstmt = getStatementFromCache(sql, statementCache, conn);
 
         int i = 0;
-        pstmt.setTimestamp(++i, getTimeStamp());
+        pstmt.setTimestamp(++i, new Timestamp(getTimeStamp()));
         pstmt.setString(++i, localAddress);
         pstmt.setString(++i, remoteAddress);
         pstmt.setString(++i, getTunnelDescription());

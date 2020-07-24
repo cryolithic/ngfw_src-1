@@ -4,6 +4,7 @@
 package com.untangle.uvm.app;
 
 import java.io.Serializable;
+import java.sql.Timestamp;
 
 import com.untangle.uvm.logging.LogEvent;
 import com.untangle.uvm.util.I18nUtil;
@@ -58,7 +59,7 @@ public class QuotaEvent extends LogEvent implements Serializable
         java.sql.PreparedStatement pstmt = getStatementFromCache( sql, statementCache, conn );        
 
         int i=0;
-        pstmt.setTimestamp(++i, getTimeStamp());
+        pstmt.setTimestamp(++i, new Timestamp(getTimeStamp()));
         pstmt.setString(++i, getEntity());
         pstmt.setInt(++i, getAction());
         pstmt.setString(++i, getReason());

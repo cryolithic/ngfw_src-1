@@ -5,6 +5,7 @@
 package com.untangle.app.spam_blocker;
 
 import java.net.InetAddress;
+import java.sql.Timestamp;
 
 import com.untangle.uvm.logging.LogEvent;
 import com.untangle.uvm.app.SessionEvent;
@@ -92,7 +93,7 @@ public class SpamSmtpTarpitEvent extends LogEvent
         java.sql.PreparedStatement pstmt = getStatementFromCache(sql, statementCache, conn);
 
         int i = 0;
-        pstmt.setTimestamp(++i, getTimeStamp());
+        pstmt.setTimestamp(++i, new Timestamp(getTimeStamp()));
         pstmt.setObject(++i, getIPAddr().getHostAddress(), java.sql.Types.OTHER);
         pstmt.setString(++i, getHostname());
         pstmt.setString(++i, getVendorName());

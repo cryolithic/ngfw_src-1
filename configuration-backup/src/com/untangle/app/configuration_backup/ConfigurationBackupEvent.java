@@ -3,6 +3,8 @@
  */
 package com.untangle.app.configuration_backup;
 
+import java.sql.Timestamp;
+
 import com.untangle.uvm.logging.LogEvent;
 import com.untangle.uvm.util.I18nUtil;
 
@@ -45,7 +47,7 @@ public class ConfigurationBackupEvent extends LogEvent
         java.sql.PreparedStatement pstmt = getStatementFromCache( sql, statementCache, conn );        
 
         int i=0;
-        pstmt.setTimestamp(++i, getTimeStamp());
+        pstmt.setTimestamp(++i, new Timestamp(getTimeStamp()));
         pstmt.setBoolean(++i, getSuccess());
         pstmt.setString(++i, getDetail());
         pstmt.setString(++i, getDestination());

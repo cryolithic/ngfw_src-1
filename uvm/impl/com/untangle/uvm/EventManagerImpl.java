@@ -30,6 +30,8 @@ import java.io.Serializable;
 import java.lang.Class;
 import java.lang.reflect.Method;
 
+import java.sql.Timestamp;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.ArrayList;
@@ -823,7 +825,7 @@ public class EventManagerImpl implements EventManager
             @Override
             public String getValue(AlertRule rule, LogEvent event, boolean convert)
             {
-                return event.getTimeStamp().toString();
+                return new Timestamp(event.getTimeStamp()).toString();
             }
         };
         eventTemplateVariables.put(etv.getName(), etv);

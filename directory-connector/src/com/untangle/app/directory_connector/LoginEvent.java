@@ -4,6 +4,7 @@
 package com.untangle.app.directory_connector;
 
 import java.net.InetAddress;
+import java.sql.Timestamp;
 
 import com.untangle.uvm.logging.LogEvent;
 import com.untangle.uvm.util.I18nUtil;
@@ -67,7 +68,7 @@ public class LoginEvent extends LogEvent
         java.sql.PreparedStatement pstmt = getStatementFromCache( sql, statementCache, conn );        
 
         int i=0;
-        pstmt.setTimestamp(++i, getTimeStamp());
+        pstmt.setTimestamp(++i, new Timestamp(getTimeStamp()));
         pstmt.setString(++i, getLoginName());
         pstmt.setString(++i, getDomain());
         pstmt.setString(++i, getEvent());

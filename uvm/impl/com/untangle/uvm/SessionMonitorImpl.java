@@ -90,8 +90,10 @@ public class SessionMonitorImpl implements SessionMonitor
             if ( session.getServerIntf() == null || session.getServerIntf() == 0 ) {
                 session.setServerIntf(Integer.valueOf(-1));
             }
+            boolean clientIsWanInterface = session.getClientIntf() != 0 && UvmContextFactory.context().networkManager().isWanInterface( session.getClientIntf() );
+            boolean serverIsWanInterface = session.getServerIntf() != 0 && UvmContextFactory.context().networkManager().isWanInterface( session.getServerIntf() );
             if ( session.getHostname() == null || session.getHostname().length() == 0 ) {
-                session.setHostname( SessionEvent.determineBestHostname( session.getPreNatClient(), session.getClientIntf(), session.getPostNatServer(), session.getServerIntf() ) );
+                session.setHostname( SessionEvent.determineBestHostname( session.getPreNatClient(), session.getClientIntf(), session.getPostNatServer(), session.getServerIntf(), clientIsWanInterface ) );
             }
             session.setPriority(session.getQosPriority());
 
@@ -187,7 +189,7 @@ public class SessionMonitorImpl implements SessionMonitor
                 // session.setBypassed(Boolean.TRUE);
             }
 
-            if ( UvmContextFactory.context().networkManager().isWanInterface( session.getClientIntf() ) ) {
+            if(clientIsWanInterface){
                 session.setLocalAddr( session.getPostNatServer() );
                 session.setRemoteAddr( session.getPreNatClient() );
             } else {

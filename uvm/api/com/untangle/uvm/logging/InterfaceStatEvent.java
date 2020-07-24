@@ -3,6 +3,8 @@
  */
 package com.untangle.uvm.logging;
 
+import java.sql.Timestamp;
+
 import com.untangle.uvm.util.I18nUtil;
 
 /**
@@ -47,7 +49,7 @@ public class InterfaceStatEvent extends LogEvent
         java.sql.PreparedStatement pstmt = getStatementFromCache( sql, statementCache, conn );        
 
         int i=0;
-        pstmt.setTimestamp(++i, getTimeStamp());
+        pstmt.setTimestamp(++i, new Timestamp(getTimeStamp()));
         pstmt.setLong(++i, interfaceId);
         pstmt.setDouble(++i, rxRate);
         pstmt.setDouble(++i, rxBytes);

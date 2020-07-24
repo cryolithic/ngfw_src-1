@@ -6,6 +6,7 @@ package com.untangle.app.tunnel_vpn;
 
 import java.io.Serializable;
 import java.net.InetAddress;
+import java.sql.Timestamp;
 
 import com.untangle.uvm.logging.LogEvent;
 import com.untangle.uvm.util.I18nUtil;
@@ -64,7 +65,7 @@ public class TunnelVpnEvent extends LogEvent implements Serializable, org.json.J
         String localAddress = (getLocalAddress() == null ? "unknown" : getLocalAddress().getHostAddress().toString());
 
         int i=0;
-        pstmt.setTimestamp(++i,getTimeStamp());
+        pstmt.setTimestamp(++i, new Timestamp(getTimeStamp()));
         pstmt.setObject(++i, serverAddress, java.sql.Types.OTHER);
         pstmt.setObject(++i, localAddress, java.sql.Types.OTHER);
         pstmt.setString(++i, getTunnelName());

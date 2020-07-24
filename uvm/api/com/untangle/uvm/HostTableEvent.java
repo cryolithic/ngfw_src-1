@@ -4,6 +4,7 @@
 package com.untangle.uvm;
 
 import java.net.InetAddress;
+import java.sql.Timestamp;
 
 import com.untangle.uvm.logging.LogEvent;
 import com.untangle.uvm.util.I18nUtil;
@@ -52,7 +53,7 @@ public class HostTableEvent extends LogEvent
         java.sql.PreparedStatement pstmt = getStatementFromCache( sql, statementCache, conn );        
 
         int i = 0;
-        pstmt.setTimestamp(++i,getTimeStamp());
+        pstmt.setTimestamp(++i, new Timestamp(getTimeStamp()));
         pstmt.setObject(++i, address.getHostAddress(), java.sql.Types.OTHER);
         pstmt.setString(++i, getKey());
         pstmt.setString(++i, getValue());

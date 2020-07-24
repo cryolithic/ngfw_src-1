@@ -3,6 +3,8 @@
  */
 package com.untangle.uvm.event;
 
+import java.sql.Timestamp;
+
 import org.json.JSONObject;
 
 import com.untangle.uvm.logging.LogEvent;
@@ -79,7 +81,7 @@ public class AlertEvent extends LogEvent
         java.sql.PreparedStatement pstmt = getStatementFromCache( sql, statementCache, conn );        
 
         int i=0;
-        pstmt.setTimestamp(++i,getTimeStamp());
+        pstmt.setTimestamp(++i, new Timestamp(getTimeStamp()));
         pstmt.setString(++i, getDescription());
         pstmt.setString(++i, getSummaryText());
         pstmt.setString(++i, json.toString());

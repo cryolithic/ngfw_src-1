@@ -4,6 +4,7 @@
 package com.untangle.app.smtp;
 
 import java.io.Serializable;
+import java.sql.Timestamp;
 
 import com.untangle.uvm.logging.LogEvent;
 import com.untangle.uvm.app.SessionEvent;
@@ -59,7 +60,7 @@ public class SmtpMessageAddressEvent extends LogEvent implements Serializable
         java.sql.PreparedStatement pstmt = getStatementFromCache( sql, statementCache, conn );        
 
         int i = 0;
-        pstmt.setTimestamp(++i, getTimeStamp());
+        pstmt.setTimestamp(++i, new Timestamp(getTimeStamp()));
         pstmt.setLong(++i, se.getSessionId());
         pstmt.setInt(++i, se.getClientIntf());
         pstmt.setInt(++i, se.getServerIntf());

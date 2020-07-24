@@ -3,6 +3,8 @@
  */
 package com.untangle.uvm;
 
+import java.sql.Timestamp;
+
 import com.untangle.uvm.logging.LogEvent;
 
 /**
@@ -46,7 +48,7 @@ public class SettingsChangesEvent extends LogEvent
         java.sql.PreparedStatement pstmt = getStatementFromCache( sql, statementCache, conn );        
 
         int i=0;
-        pstmt.setTimestamp(++i, getTimeStamp());
+        pstmt.setTimestamp(++i, new Timestamp(getTimeStamp()));
         pstmt.setString(++i, this.settingsFile);
         pstmt.setString(++i, this.username);
         pstmt.setString(++i, this.hostname);

@@ -4,6 +4,7 @@
 package com.untangle.uvm.event;
 
 import java.net.InetAddress;
+import java.sql.Timestamp;
 
 import com.untangle.uvm.logging.LogEvent;
 import com.untangle.uvm.util.I18nUtil;
@@ -57,7 +58,7 @@ public class AdminLoginEvent extends LogEvent
         java.sql.PreparedStatement pstmt = getStatementFromCache( sql, statementCache, conn );        
 
         int i=0;
-        pstmt.setTimestamp(++i,getTimeStamp());
+        pstmt.setTimestamp(++i, new Timestamp(getTimeStamp()));
         pstmt.setString(++i, getLogin());
         pstmt.setBoolean(++i, getLocal());
         pstmt.setObject(++i, getClientAddress().getHostAddress(), java.sql.Types.OTHER);

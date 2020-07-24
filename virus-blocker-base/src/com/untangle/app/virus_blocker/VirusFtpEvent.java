@@ -3,6 +3,8 @@
  */
 package com.untangle.app.virus_blocker;
 
+import java.sql.Timestamp;
+
 import com.untangle.uvm.logging.LogEvent;
 import com.untangle.uvm.app.SessionEvent;
 import com.untangle.uvm.util.I18nUtil;
@@ -58,7 +60,7 @@ public class VirusFtpEvent extends LogEvent
         java.sql.PreparedStatement pstmt = getStatementFromCache( sql, statementCache, conn );        
 
         int i = 0;
-        pstmt.setTimestamp(++i, getTimeStamp());
+        pstmt.setTimestamp(++i, new Timestamp(getTimeStamp()));
         pstmt.setLong(++i, getSessionEvent().getSessionId());
         pstmt.setInt(++i, getSessionEvent().getClientIntf());
         pstmt.setInt(++i, getSessionEvent().getServerIntf());

@@ -3,6 +3,8 @@
  */
 package com.untangle.app.captive_portal;
 
+import java.sql.Timestamp;
+
 import com.untangle.app.captive_portal.CaptivePortalSettings.AuthenticationType;
 import com.untangle.uvm.logging.LogEvent;
 import com.untangle.uvm.util.I18nUtil;
@@ -75,7 +77,7 @@ public class CaptivePortalUserEvent extends LogEvent
         java.sql.PreparedStatement pstmt = getStatementFromCache(sql, statementCache, conn);
 
         int i = 0;
-        pstmt.setTimestamp(++i, getTimeStamp());
+        pstmt.setTimestamp(++i, new Timestamp(getTimeStamp()));
         pstmt.setInt(++i, getPolicyId());
         pstmt.setString(++i, getLoginName());
         pstmt.setString(++i, getEvent().toString());

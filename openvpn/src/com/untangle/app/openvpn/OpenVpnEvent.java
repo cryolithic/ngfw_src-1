@@ -6,6 +6,7 @@ package com.untangle.app.openvpn;
 
 import java.io.Serializable;
 import java.net.InetAddress;
+import java.sql.Timestamp;
 
 import com.untangle.uvm.logging.LogEvent;
 import com.untangle.uvm.util.I18nUtil;
@@ -66,7 +67,7 @@ public class OpenVpnEvent extends LogEvent implements Serializable, org.json.JSO
         java.sql.PreparedStatement pstmt = getStatementFromCache( sql, statementCache, conn );        
 
         int i=0;
-        pstmt.setTimestamp(++i,getTimeStamp());
+        pstmt.setTimestamp(++i, new Timestamp(getTimeStamp()));
         pstmt.setObject(++i, getAddress().getHostAddress(), java.sql.Types.OTHER);
         pstmt.setObject(++i, getPoolAddress().getHostAddress(), java.sql.Types.OTHER);
         pstmt.setString(++i, getClientName());

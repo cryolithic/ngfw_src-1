@@ -29,36 +29,33 @@ public abstract class LogEvent implements Serializable, JSONString
     protected static String schemaPrefix = "reports.";
     protected static boolean partitionsSupported = true;
     
-    protected Timestamp timeStamp = new Timestamp((new Date()).getTime());
+    protected long timeStamp = System.currentTimeMillis();
     private String tag; /* syslog tag */
 
     protected LogEvent() { }
 
-    public Timestamp getTimeStamp() { return timeStamp; }
-    public void setTimeStamp( Timestamp timeStamp ) { this.timeStamp = timeStamp; }
+    public long getTimeStamp() { return timeStamp; }
+    public void setTimeStamp( long timeStamp ) { this.timeStamp = timeStamp; }
 
     public String getTag() { return this.tag; }
     public void setTag( String newValue ) { this.tag = newValue; }
 
-    public Timestamp timeStampPlusHours( int hours )
+    public long timeStampPlusHours( int hours )
     {
-        long time = this.timeStamp.getTime();
-        time += hours*60*60*1000;
-        return new Timestamp(time);
+        this.timeStamp += hours*60*60*1000;
+        return timeStamp;
     }
 
-    public Timestamp timeStampPlusMinutes( int min )
+    public long timeStampPlusMinutes( int min )
     {
-        long time = this.timeStamp.getTime();
-        time += min*60*1000;
-        return new Timestamp(time);
+        this.timeStamp += min*60*1000;
+        return this.timeStamp;
     }
 
-    public Timestamp timeStampPlusSeconds( int sec )
+    public long timeStampPlusSeconds( int sec )
     {
-        long time = this.timeStamp.getTime();
-        time += sec*1000;
-        return new Timestamp(time);
+        this.timeStamp += sec*1000;
+        return this.timeStamp;
     }
     
     public abstract void compileStatements( Connection conn, Map<String,PreparedStatement> statementCache ) throws Exception;
@@ -93,7 +90,7 @@ public abstract class LogEvent implements Serializable, JSONString
         if ( !partitionsSupported )
             return "";
         
-        return getPartitionTablePostfix( this.timeStamp );
+        return getPartitionTablePostfix( new Timestamp(this.timeStamp) );
     }
 
     public String getPartitionTablePostfix( Timestamp ts )

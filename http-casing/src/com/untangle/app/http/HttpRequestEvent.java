@@ -4,6 +4,7 @@
 package com.untangle.app.http;
 
 import java.net.URI;
+import java.sql.Timestamp;
 
 import com.untangle.uvm.logging.LogEvent;
 import com.untangle.uvm.app.SessionEvent;
@@ -178,7 +179,7 @@ public class HttpRequestEvent extends LogEvent
         java.sql.PreparedStatement pstmt = getStatementFromCache( sql, statementCache, conn );        
 
         int i=0;
-        pstmt.setTimestamp(++i, getTimeStamp());
+        pstmt.setTimestamp(++i, new Timestamp(getTimeStamp()));
         pstmt.setLong(++i, getSessionEvent().getSessionId());
         pstmt.setInt(++i, getSessionEvent().getClientIntf());
         pstmt.setInt(++i, getSessionEvent().getServerIntf());

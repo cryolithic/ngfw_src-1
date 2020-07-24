@@ -4,6 +4,7 @@
 package com.untangle.app.web_filter;
 
 import java.net.URI;
+import java.sql.Timestamp;
 
 import com.untangle.app.http.RequestLine;
 import com.untangle.uvm.logging.LogEvent;
@@ -118,7 +119,7 @@ public class WebFilterQueryEvent extends LogEvent
         java.sql.PreparedStatement pstmt = getStatementFromCache( sql, statementCache, conn );        
 
         int i=0;
-        pstmt.setTimestamp(++i, getTimeStamp());
+        pstmt.setTimestamp(++i, new Timestamp(getTimeStamp()));
         pstmt.setLong(++i, getSessionEvent().getSessionId());
         pstmt.setInt(++i, getSessionEvent().getClientIntf());
         pstmt.setInt(++i, getSessionEvent().getServerIntf());

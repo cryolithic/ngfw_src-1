@@ -348,8 +348,8 @@ public class EventWriterImpl implements Runnable
          */
         LogEvent first = null;
         try {first = logQueue.getFirst();} catch (Exception e) {}
-        if (first != null && first.getTimeStamp() != null) {
-            this.writeDelaySec = (System.currentTimeMillis() - first.getTimeStamp().getTime())/1000L;
+        if (first != null && first.getTimeStamp() != 0L) {
+            this.writeDelaySec = (System.currentTimeMillis() - first.getTimeStamp());
         }
         
         int count = logQueue.size();

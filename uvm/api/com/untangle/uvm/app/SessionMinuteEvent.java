@@ -3,6 +3,8 @@
  */
 package com.untangle.uvm.app;
 
+import java.sql.Timestamp;
+
 import com.untangle.uvm.logging.LogEvent;
 
 /**
@@ -153,7 +155,7 @@ public class SessionMinuteEvent extends LogEvent
         java.sql.PreparedStatement pstmt = getStatementFromCache( sql, statementCache, conn );        
 
         int i=0;
-        pstmt.setTimestamp(++i,getTimeStamp());
+        pstmt.setTimestamp(++i, new Timestamp(getTimeStamp()));
         pstmt.setLong(++i,getC2sBytes());
         pstmt.setLong(++i,getS2cBytes());
         pstmt.setLong(++i,getSessionId());
@@ -193,7 +195,7 @@ public class SessionMinuteEvent extends LogEvent
     
     public int hashCode()
     {
-        return ((int)sessionId) + getTimeStamp().hashCode();
+        return ((int)sessionId) + new Timestamp(getTimeStamp()).hashCode();
     }
 
     private String getSessionTablePostfix()

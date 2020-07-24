@@ -4,6 +4,7 @@
 package com.untangle.uvm.app;
 
 import java.net.InetAddress;
+import java.sql.Timestamp;
 
 import com.untangle.uvm.logging.LogEvent;
 import com.untangle.uvm.app.SessionTuple;
@@ -225,7 +226,7 @@ public class SessionEvent extends LogEvent
         }
     }
     
-    public static String determineBestHostname( InetAddress clientAddr, int clientIntf, InetAddress serverAddr, int serverIntf )
+    public static String determineBestHostname( InetAddress clientAddr, int clientIntf, InetAddress serverAddr, int serverIntf, boolean clientIsWanInterface )
     {
         try {
 
@@ -242,7 +243,7 @@ public class SessionEvent extends LogEvent
             /**
              * 2) If the client is on a WAN - check for the hostname of the server (the local address)
              */
-            if ( clientIntf != 0 && UvmContextFactory.context().networkManager().isWanInterface( clientIntf ) ) {
+            if ( clientIntf != 0 && clientIsWanInterface ) {
                 HostTableEntry serverEntry = null;
                 if ( serverAddr != null )
                     serverEntry = UvmContextFactory.context().hostTable().getHostTableEntry( serverAddr );
@@ -254,7 +255,7 @@ public class SessionEvent extends LogEvent
             /**
              * 3) If neither is known just use the address if fallbackToIp otherwise null
              */
-            if ( clientIntf != 0 && UvmContextFactory.context().networkManager().isWanInterface( clientIntf ) ) {
+            if ( clientIntf != 0 && clientIsWanInterface ) {
                 return (serverAddr != null ? serverAddr.getHostAddress() : "");
             } else {
                 return (clientAddr != null ? clientAddr.getHostAddress() : "");
@@ -279,10 +280,10 @@ public class SessionEvent extends LogEvent
         pstmt.setLong(++i,getSessionId());
         pstmt.setBoolean(++i,getBypassed());
         pstmt.setBoolean(++i,getEntitled());
-        pstmt.setTimestamp(++i,getTimeStamp());
+        pstmt.setTimestamp(++i, new Timestamp(getTimeStamp()));
         pstmt.setInt(++i,getProtocol());
         pstmt.setObject(++i,getIcmpType(), java.sql.Types.OTHER);
-        pstmt.setTimestamp(++i,timeStampPlusSeconds(1)); // default end_time
+        pstmt.setTimestamp(++i, new Timestamp(timeStampPlusSeconds(1)));
         pstmt.setString(++i, getHostname());
         pstmt.setString(++i, getUsername());
         pstmt.setString(++i, getFilterPrefix());
