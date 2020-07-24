@@ -1026,10 +1026,10 @@ public class UvmContextImpl extends UvmContextBase implements UvmContext
     {
         if (this.reportsApp == null)
             getReportsApp();
-        if (this.reportsApp == null)
-            return;
 
-        this.reportsApp.logEvent(evt);
+        if (this.reportsApp != null){
+            this.reportsApp.logEvent(evt);
+        }
         this.eventManager.logEvent(evt);
     }
 
