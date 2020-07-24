@@ -44,6 +44,7 @@ public class HttpParserEventHandler extends AbstractEventHandler
 
     private static final int TIMEOUT = 30000;
     private static final Pattern COLON_MATCH = Pattern.compile("(?<!:)/+");
+    private static final Pattern WHITESPACE_MATCH = Pattern.compile("(?<!:)/+");
 
     private static enum BodyEncoding {
         NO_BODY, // no body
@@ -709,8 +710,8 @@ public class HttpParserEventHandler extends AbstractEventHandler
                      * XXX what is this: .replaceAll("(?<!:)/+", "/")
                      * -dmorris
                      */
-                    String uri = COLON_MATCH.matcher(state.requestLineToken.getRequestLine().getRequestUri().normalize().toString()).replaceAll("/");
-                    String path = state.requestLineToken.getRequestLine().getRequestUri().normalize().getPath();
+                    URI requestUri =  state.requestLineToken.getRequestLine().getRequestUri().normalize();
+                    String uri = COLON_MATCH.matcher(requestUri.toString()).replaceAll("/");
                     HostTableEntry hostEntry = null;
                     DeviceTableEntry deviceEntry = null;
                     if ( clientAddr != null )
@@ -729,29 +730,28 @@ public class HttpParserEventHandler extends AbstractEventHandler
                     String fname = null;
                     String fext = null;
                     int loc;
-                    try {
-                        // extract the full file path ignoring all params
-                        fpath = (new URI(path)).toString();
-                        fname = fpath;
 
-                        // find the last slash to extract the file name
-                        loc = fpath.lastIndexOf("/");
-                        if (loc != -1) fname = fpath.substring(loc + 1);
-                        else fname = fpath;
+                    // extract the full file path ignoring all params
+                    fpath = requestUri.getPath().toString();
+                    fname = fpath;
 
-                        // find the last dot to extract the file extension
-                        loc = fname.lastIndexOf(".");
-                        if (loc != -1) fext = fname.substring(loc + 1);
+                    // find the last slash to extract the file name
+                    loc = fpath.lastIndexOf("/");
+                    if (loc != -1) fname = fpath.substring(loc + 1);
+                    else fname = fpath;
 
-                        if (fpath != null) session.globalAttach(AppSession.KEY_HTTP_REQUEST_FILE_PATH, fpath);
-                        // FILE_NAME can be set from earlier in the header, only overwrite if it is null
-                        if (fname != null && session.globalAttachment(AppSession.KEY_HTTP_REQUEST_FILE_NAME) == null) {
-                            session.globalAttach(AppSession.KEY_HTTP_REQUEST_FILE_NAME, fname);
-                        }
-                        // FILE_EXTENSION can be set from earlier in the header, only overwrite if it is null
-                        if (fext != null && session.globalAttachment(AppSession.KEY_HTTP_REQUEST_FILE_EXTENSION) == null)
-                            session.globalAttach(AppSession.KEY_HTTP_REQUEST_FILE_EXTENSION, fext);
-                    } catch (URISyntaxException e) {}
+                    // find the last dot to extract the file extension
+                    loc = fname.lastIndexOf(".");
+                    if (loc != -1) fext = fname.substring(loc + 1);
+
+                    if (fpath != null) session.globalAttach(AppSession.KEY_HTTP_REQUEST_FILE_PATH, fpath);
+                    // FILE_NAME can be set from earlier in the header, only overwrite if it is null
+                    if (fname != null && session.globalAttachment(AppSession.KEY_HTTP_REQUEST_FILE_NAME) == null) {
+                        session.globalAttach(AppSession.KEY_HTTP_REQUEST_FILE_NAME, fname);
+                    }
+                    // FILE_EXTENSION can be set from earlier in the header, only overwrite if it is null
+                    if (fext != null && session.globalAttachment(AppSession.KEY_HTTP_REQUEST_FILE_EXTENSION) == null)
+                        session.globalAttach(AppSession.KEY_HTTP_REQUEST_FILE_EXTENSION, fext);
 
                     if ( agentString != null ) {
                         if ( hostEntry != null )
@@ -1700,7 +1700,7 @@ public class HttpParserEventHandler extends AbstractEventHandler
 
         filename = filename.replace("\"","");
         filename = filename.replace("'","");
-        filename = filename.replaceAll("\\s","");
+        filename = WHITESPACE_MATCH.matcher(filename).replaceAll("");
 
         return filename;
     }
