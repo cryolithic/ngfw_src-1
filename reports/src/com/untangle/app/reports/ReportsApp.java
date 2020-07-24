@@ -78,6 +78,8 @@ public class ReportsApp extends AppBase implements Reporting, HostnameLookup
 
     private final FixedReportsQueue fixedReportsQueue;
 
+    private boolean running = false;
+
     /**
      * Initialize reports application.
      *
@@ -380,14 +382,16 @@ public class ReportsApp extends AppBase implements Reporting, HostnameLookup
     }
 
     /** 
-     * Send the sevent to the event writer.
+     * Send the event to the event writer.
      *
      * @param evt
      *  Event to log.
      */
     public void logEvent( LogEvent evt )
     {
-        ReportsApp.eventWriter.logEvent( evt );
+        if(this.running){
+            ReportsApp.eventWriter.logEvent( evt );
+        }
     }
 
     /**
@@ -594,6 +598,7 @@ public class ReportsApp extends AppBase implements Reporting, HostnameLookup
 
         /* Enable to run event writing performance tests */
         this.fixedReportsQueue.start();
+        this.running = true;
     }
 
     /**
@@ -604,6 +609,7 @@ public class ReportsApp extends AppBase implements Reporting, HostnameLookup
     @Override
     protected void postStop( boolean isPermanentTransition )
     {
+        this.running = false;
         try{
             this.fixedReportsQueue.stop();
         }catch( Exception e ){
