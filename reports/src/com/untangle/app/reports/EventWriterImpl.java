@@ -558,6 +558,7 @@ public class EventWriterImpl implements Runnable
     {
         this.app = app;
         UvmContextFactory.context().newThread(this).start();
+        Thread.currentThread().setPriority(4);
     }
 
     /**
@@ -569,6 +570,7 @@ public class EventWriterImpl implements Runnable
         // forceFlush(); /* flush last few events */
 
         Thread tmp = thread;
+        inputQueue.clear();
         thread = null; /* thread will exit if thread is null */
         if (tmp != null) {
             tmp.interrupt();
