@@ -64,6 +64,29 @@ public class EventManagerImpl implements EventManager
 
     private static final Logger logger = Logger.getLogger(EventManagerImpl.class);
 
+    /**
+     * If the event queue length reaches the high water mark
+     * Then the eventWriter is not able to keep up with demand
+     * In this case the overloadedFlag is set to true
+     */
+    private static int HIGH_WATER_MARK = 1000000;
+
+    /**
+     * If overloadedFlag is set to true and the queue shrinks to this size
+     * then overloadedFlag will be set to false
+     */
+    private static int LOW_WATER_MARK = 100000;
+    /**
+     * If true then the eventWriter is considered "overloaded" and can not keep up with demand
+     * This is set if the event queue length reaches the high water mark
+     * In this case we stop logging events entirely until we are no longer overloaded
+     */
+    private boolean localOverloadedFlag = false;
+    private boolean remoteOverloadedFlag = false;
+
+    private long lastLocalLoggedWarningTime = System.currentTimeMillis();
+    private long lastRemoteLoggedWarningTime = System.currentTimeMillis();
+
     private static EventManagerImpl instance = null;
 
     private final String settingsFilename = System.getProperty("uvm.settings.dir") + "/untangle-vm/" + "events.js";
@@ -954,12 +977,28 @@ public class EventManagerImpl implements EventManager
      */
     public void logEvent( LogEvent event )
     {
-        if(classesToProcess.size() == 0 ||
-            classesToProcess.get(event.getClass().getSimpleName()) != null){
-            localEventWriter.inputQueue.offer(event);
+        if ( this.localOverloadedFlag ) {
+            if ( System.currentTimeMillis() - this.lastLocalLoggedWarningTime > 60000 ) {
+                logger.warn("Local event queue overloaded, discarding event");
+                this.lastLocalLoggedWarningTime = System.currentTimeMillis();
+            }
+            return;
+        }else{
+            if(classesToProcess.size() == 0 ||
+                classesToProcess.get(event.getClass().getSimpleName()) != null){
+                localEventWriter.inputQueue.offer(event);
+            }
         }
-        if(remoteEventWriter.enabled){
-            remoteEventWriter.inputQueue.offer(event);
+        if ( this.remoteOverloadedFlag ) {
+            if ( System.currentTimeMillis() - this.lastRemoteLoggedWarningTime > 60000 ) {
+                logger.warn("Remote event queue overloaded, discarding event");
+                this.lastRemoteLoggedWarningTime = System.currentTimeMillis();
+            }
+            return;
+        }else{
+            if(remoteEventWriter.enabled){
+                remoteEventWriter.inputQueue.offer(event);
+            }
         }
     }
 
@@ -1484,6 +1523,17 @@ public class EventManagerImpl implements EventManager
                         }
 
                         runEvent( inputQueue.take() );
+                        /**
+                         * Check queue lengths
+                         */
+                        if (!localOverloadedFlag && inputQueue.size() > HIGH_WATER_MARK)  {
+                            logger.warn("OVERLOAD: High Water Mark reached for local event queue.");
+                            localOverloadedFlag = true;
+                        }
+                        if (localOverloadedFlag && inputQueue.size() < LOW_WATER_MARK) {
+                            logger.warn("OVERLOAD: Low Water Mark reached for local event queue. Continuing normal operation.");
+                            localOverloadedFlag = false;
+                        }
 
                     } catch (Exception e) {
                         logger.warn("Failed to run event rules.", e);
@@ -1545,6 +1595,17 @@ public class EventManagerImpl implements EventManager
                         }
 
                         UvmContextFactory.context().hookManager().callCallbacks( HookManager.REPORTS_EVENT_LOGGED, inputQueue.take());
+                        /**
+                         * Check queue lengths
+                         */
+                        if (!remoteOverloadedFlag && inputQueue.size() > HIGH_WATER_MARK)  {
+                            logger.warn("OVERLOAD: High Water Mark reached for remote event queue.");
+                            remoteOverloadedFlag = true;
+                        }
+                        if (remoteOverloadedFlag && inputQueue.size() < LOW_WATER_MARK) {
+                            logger.warn("OVERLOAD: Low Water Mark reached for remote event queue. Continuing normal operation.");
+                            remoteOverloadedFlag = false;
+                        }
 
                     } catch (Exception e) {
                         logger.warn("Failed to run event rules.", e);
