@@ -12,6 +12,9 @@ import java.util.regex.Pattern;
 import java.net.InetAddress;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import org.apache.log4j.Logger;
@@ -34,6 +37,8 @@ import com.untangle.uvm.app.SessionEvent;
 public class SessionMonitorImpl implements SessionMonitor
 {
     private final Logger logger = Logger.getLogger(getClass());
+
+    private final String conntrackCommand = "/usr/sbin/conntrack -L -f ipv6";
 
     public static final short PROTO_TCP = 6;
     public static final short PROTO_UDP = 17;
@@ -435,21 +440,31 @@ public class SessionMonitorImpl implements SessionMonitor
      */
     private List<SessionMonitorEntry> parseProcNetIpConntrack()
     {
-        BufferedReader br = null;
-        String line;
         LinkedList<SessionMonitorEntry> list = new LinkedList<>();
-        String conntrackFilename;
-        if ( Files.exists(Paths.get("/proc/net/ip_conntrack")) )
-            conntrackFilename = "/proc/net/ip_conntrack";
-        else
-            conntrackFilename = "/proc/net/nf_conntrack";
 
+        Process proc = null;
+        OutputStreamWriter out = null;
+        BufferedReader in = null;
+
+        // Reading the results of running the conntrack command instead of reading /proc/net/ip_conntrack
+        // is magnitudes faster, especially on systems with 100k+ sessions.
+        try {
+            proc = Runtime.getRuntime().exec(conntrackCommand);
+        } catch (IOException e) {
+            logger.error("Couldn't start parseProcNetIpConntrack", e);
+            return list;
+        }
+
+        String line;
+        // Cache for parsed IP addresseses.  This may sound a little ridiculous, but it helps
+        // memory on large 100k+ session systems.
         Map<String, InetAddress> parsedInetAddresses = new HashMap<>();
+        out = new OutputStreamWriter(proc.getOutputStream());
+        in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
 
         try {
-            br = new BufferedReader(new FileReader(conntrackFilename));
-            int partsIndexStart = ( conntrackFilename == "/proc/net/nf_conntrack" ) ? 2 : 0;
-            while ((line = br.readLine()) != null) {
+            int partsIndexStart = 0;
+            while ((line = in.readLine()) != null) {
                 try {
                     if ( logger.isDebugEnabled() )
                         logger.debug("parseProcNetIpConntrack line: " + line);
@@ -550,12 +565,24 @@ public class SessionMonitorImpl implements SessionMonitor
                     logger.warn("Failed to parse /proc/net/ip_conntrack line: " + line, lineException);
                 }
             }
-        } catch (Exception e) {
-            logger.warn("Failed to parse /proc/net/ip_conntrack",e);
-        } finally {
-            if ( br != null ) {
-                try {br.close();} catch(Exception ex) {}
-            }
+        } catch (IOException exn) {
+            logger.warn("Exception reading conntrack", exn);
+        }finally{
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (Exception ex) {}
+            try {
+                if (out != null) {
+                    out.close();
+                }
+            } catch (Exception ex) {}
+            try {
+                if (proc != null) {
+                    proc.destroy();
+                }
+            } catch (Exception ex) {}
         }
 
         return list;
