@@ -9,6 +9,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.File;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.LinkedList;
 import java.util.Timer;
 
@@ -138,6 +139,15 @@ public class IpsecVpnApp extends AppBase
             listenList.add(item);
         }
 
+        InetAddress exampleAddress = null;
+
+        try {
+            // Default Client Address
+            exampleAddress = InetAddress.getByName("203.0.113.1");
+        } catch(UnknownHostException ue) {
+            logger.warn(ue);
+        }
+
         settings.setVirtualListenList(listenList);
 
         NetspaceManager nsmgr = UvmContextFactory.context().netspaceManager();
@@ -151,8 +161,8 @@ public class IpsecVpnApp extends AppBase
         tmp.setDescription("Example 1");
         tmp.setSecret("NOTICEhowWEuseAniceLONGstringINthisEXAMPLEwhichWILLbeMUCHmoreSECUREthanAsingleWORD");
         tmp.setRunmode("start");
-        tmp.setLeft("198.51.100.1");
-        tmp.setRight("203.0.113.1");
+        tmp.setLeft(firstWan);
+        tmp.setRight(exampleAddress);
 
         tmp.setLeftSubnet(nsmgr.getAvailableAddressSpace(IPVersion.IPv4, 0, 24).toString());
         tmp.setRightSubnet(nsmgr.getAvailableAddressSpace(IPVersion.IPv4, 0, 24).toString());
@@ -166,8 +176,8 @@ public class IpsecVpnApp extends AppBase
         tmp.setDescription("Example 2");
         tmp.setSecret("thisISanotherGREATexampleOFaPREsharedSECRETthatISveryLONGandTHUSreasonablySECURE");
         tmp.setRunmode("start");
-        tmp.setLeft("198.51.100.1");
-        tmp.setRight("203.0.113.1");
+        tmp.setLeft(firstWan);
+        tmp.setRight(exampleAddress);
 
         tmp.setLeftSubnet(nsmgr.getAvailableAddressSpace(IPVersion.IPv4, 0, 24).toString());
         tmp.setRightSubnet(nsmgr.getAvailableAddressSpace(IPVersion.IPv4, 0, 24).toString());
@@ -770,8 +780,8 @@ public class IpsecVpnApp extends AppBase
         record.setId(Integer.toString(tunnel.getId()));
         record.setDescription(tunnel.getDescription());
         record.setProto(tunnel.getDescription());
-        record.setSrc(tunnel.getLeft());
-        record.setDst(tunnel.getRight());
+        record.setSrc(tunnel.getLeft().toString());
+        record.setDst(tunnel.getRight().toString());
         record.setTmplSrc(tunnel.getLeftSubnet());
         record.setTmplDst(tunnel.getRightSubnet());
         record.setMode("inactive");

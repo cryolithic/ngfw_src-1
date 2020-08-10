@@ -5,6 +5,7 @@
 package com.untangle.app.ipsec_vpn;
 
 import java.io.Serializable;
+import java.net.InetAddress;
 
 import org.json.JSONObject;
 import org.json.JSONString;
@@ -38,13 +39,13 @@ public class IpsecVpnTunnel implements JSONString, Serializable
     private String phase2Hash = "md5";
     private String phase2Group = "modp2048";
     private String phase2Lifetime = "3600";
-    private String left;
-    private String leftId;
+    private InetAddress left;
+    private InetAddress leftId;
     private String leftSubnet;
     private String leftProtoPort;
     private String leftNextHop;
-    private String right;
-    private String rightId;
+    private InetAddress right;
+    private InetAddress rightId;
     private String rightSubnet;
     private String rightProtoPort;
     private String rightNextHop;
@@ -115,11 +116,11 @@ public class IpsecVpnTunnel implements JSONString, Serializable
     public void setPhase2Lifetime(String phase2Lifetime) { this.phase2Lifetime = phase2Lifetime; }
 
     
-    public String getLeft() { return (left); }
-    public void setLeft(String left) { this.left = left; }
+    public InetAddress getLeft() { return (left); }
+    public void setLeft(InetAddress left) { this.left = left; }
 
-    public String getLeftId() { return (leftId); }
-    public void setLeftId(String leftId) { this.leftId = leftId; }
+    public InetAddress getLeftId() { return (leftId); }
+    public void setLeftId(InetAddress leftId) { this.leftId = leftId; }
 
     public String getLeftSubnet() { return (leftSubnet); }
     public void setLeftSubnet(String leftSubnet) { this.leftSubnet = leftSubnet; }
@@ -130,11 +131,11 @@ public class IpsecVpnTunnel implements JSONString, Serializable
     public String getLeftNextHop() { return (leftNextHop); }
     public void setLeftNextHop(String leftNextHop) { this.leftNextHop = leftNextHop; }
 
-    public String getRight() { return (right); }
-    public void setRight(String right) { this.right = right; }
+    public InetAddress getRight() { return (right); }
+    public void setRight(InetAddress right) { this.right = right; }
 
-    public String getRightId() { return (rightId); }
-    public void setRightId(String rightId) { this.rightId = rightId; }
+    public InetAddress getRightId() { return (rightId); }
+    public void setRightId(InetAddress rightId) { this.rightId = rightId; }
 
     public String getRightSubnet() { return (rightSubnet); }
     public void setRightSubnet(String rightSubnet) { this.rightSubnet = rightSubnet; }

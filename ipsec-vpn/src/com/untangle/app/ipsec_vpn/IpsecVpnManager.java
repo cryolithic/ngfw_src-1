@@ -316,20 +316,20 @@ public class IpsecVpnManager
                         ipsec_conf.write(TAB + "dpdaction=restart" + RET);
                     }
 
-                    ipsec_conf.write(TAB + "left=" + this.resolveLeftAddress(data.getLeft()) + RET);
+                    ipsec_conf.write(TAB + "left=" + this.resolveLeftAddress(data.getLeft().toString()) + RET);
 
                     // use the configured leftid if available otherwise use left
-                    if ((data.getLeftId() != null) && (data.getLeftId().length() > 0)) {
-                        ipsec_conf.write(TAB + "leftid=" + data.getLeftId() + RET);
+                    if (data.getLeftId() != null) {
+                        ipsec_conf.write(TAB + "leftid=" + data.getLeftId().toString() + RET);
                     } else {
-                        ipsec_conf.write(TAB + "leftid=" + data.getLeft() + RET);
+                        ipsec_conf.write(TAB + "leftid=" + data.getLeft().toString() + RET);
                     }
 
                     ipsec_conf.write(TAB + "leftsubnet=" + data.getLeftSubnet() + RET);
                     ipsec_conf.write(TAB + "right=" + data.getRight() + RET);
 
                     // use the configured rightid if available otherwise use right
-                    if ((data.getRightId() != null) && (data.getRightId().length() > 0)) {
+                    if (data.getRightId() != null) {
                         ipsec_conf.write(TAB + "rightid=" + data.getRightId() + RET);
                     } else {
                         ipsec_conf.write(TAB + "rightid=" + data.getRight() + RET);
@@ -341,15 +341,15 @@ public class IpsecVpnManager
 
                     // add the tunnel PSK to the ipsec.secrets file
                     ipsec_secrets.write("# " + workname + RET);
-                    ipsec_secrets.write(data.getLeft() + " " + data.getRight().replaceAll("\\s*,\\s*", " ") + " : PSK 0x" + StringHexify(data.getSecret()) + RET);
+                    ipsec_secrets.write(data.getLeft().toString() + " " + data.getRight().toString().replaceAll("\\s*,\\s*", " ") + " : PSK 0x" + StringHexify(data.getSecret()) + RET);
 
                     // start with left but prefer leftid if not null and not empty
-                    String lid = data.getLeft();
-                    if ((data.getLeftId() != null) && (data.getLeftId().length() > 0)) lid = data.getLeftId();
+                    InetAddress lid = data.getLeft();
+                    if (data.getLeftId() != null) lid = data.getLeftId();
 
                     // start with right but prefer rightid if not null and not empty
-                    String rid = data.getRight();
-                    if ((data.getRightId() != null) && (data.getRightId().length() > 0)) rid = data.getRightId();
+                    InetAddress rid = data.getRight();
+                    if (data.getRightId() != null) rid = data.getRightId();
 
                     // if lid != left or rid != right add another secret using those values
                     if ((!data.getLeft().equals(lid)) || (!data.getRight().equals(rid))) {
