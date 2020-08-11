@@ -780,8 +780,8 @@ public class IpsecVpnApp extends AppBase
         record.setId(Integer.toString(tunnel.getId()));
         record.setDescription(tunnel.getDescription());
         record.setProto(tunnel.getDescription());
-        record.setSrc(tunnel.getLeft().toString());
-        record.setDst(tunnel.getRight().toString());
+        record.setSrc(tunnel.getLeft().getHostAddress());
+        record.setDst(tunnel.getRight().getHostAddress());
         record.setTmplSrc(tunnel.getLeftSubnet());
         record.setTmplDst(tunnel.getRightSubnet());
         record.setMode("inactive");
