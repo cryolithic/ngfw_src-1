@@ -6,6 +6,8 @@ package com.untangle.uvm.network;
 import java.io.Serializable;
 import java.util.List;
 
+import org.apache.commons.lang3.builder.*;
+
 import org.json.JSONObject;
 import org.json.JSONString;
 
@@ -18,7 +20,7 @@ import com.untangle.uvm.network.StaticRoute;
  * Network settings.
  */
 @SuppressWarnings("serial")
-public class NetworkSettings implements Serializable, JSONString
+public class NetworkSettings implements Serializable, JSONString, Diffable<NetworkSettings>
 {
     public static final String PUBLIC_URL_EXTERNAL_IP = "external";
     public static final String PUBLIC_URL_HOSTNAME = "hostname";
@@ -220,5 +222,24 @@ public class NetworkSettings implements Serializable, JSONString
     {
         JSONObject jO = new JSONObject(this);
         return jO.toString();
+    }
+
+    public DiffResult diff(NetworkSettings netSets) {
+        DiffBuilder diffBuild = new DiffBuilder(this, netSets, ToStringStyle.SHORT_PREFIX_STYLE);
+        //Use the larger interface list for getting diffs
+        List<InterfaceSettings> intfAList = this.interfaces.size() >= netSets.interfaces.size() ? this.interfaces : netSets.interfaces;
+        List<InterfaceSettings> intfBList = intfAList.hashCode() == this.interfaces.hashCode() ? netSets.interfaces : this.interfaces;
+
+        for(int i = 0; i < intfAList.size(); i++) {
+            InterfaceSettings aItem = intfAList.get(i);
+            InterfaceSettings bItem = intfBList.get(i);
+
+            if(bItem == null) {
+                diffBuild.append("interface", aItem, null);
+            }
+
+            diffBuild.append("interface", aItem.diff(bItem));
+        }
+        return diffBuild.build();
     }
 }

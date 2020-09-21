@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.net.InetAddress;
 
+import org.apache.commons.lang3.builder.*;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 import org.json.JSONString;
@@ -16,7 +17,7 @@ import org.json.JSONString;
  * Interface settings.
  */
 @SuppressWarnings("serial")
-public class InterfaceSettings implements Serializable, JSONString
+public class InterfaceSettings implements Serializable, JSONString, Diffable<InterfaceSettings>
 {
     private static final Logger logger = Logger.getLogger( InterfaceSettings.class );
 
@@ -130,6 +131,11 @@ public class InterfaceSettings implements Serializable, JSONString
     {
         JSONObject jO = new JSONObject(this);
         return jO.toString();
+    }
+
+    public DiffResult diff(InterfaceSettings diffObj) {
+        return new ReflectionDiffBuilder(this, diffObj, ToStringStyle.SHORT_PREFIX_STYLE)
+            .build();
     }
 
     public int getInterfaceId( ) { return this.interfaceId; }

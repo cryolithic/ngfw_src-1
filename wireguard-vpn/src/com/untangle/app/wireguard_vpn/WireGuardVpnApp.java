@@ -13,6 +13,7 @@ import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.builder.*;
 import org.apache.log4j.Logger;
 
 import com.untangle.uvm.UvmContextFactory;
@@ -615,6 +616,8 @@ public class WireGuardVpnApp extends AppBase
         public void callback(Object... args)
         {
             Object o = args[0];
+            Object oldSettings = args[1];
+            
             if (!(o instanceof NetworkSettings)) {
                 logger.warn("Invalid network settings: " + o);
                 return;
@@ -622,7 +625,17 @@ public class WireGuardVpnApp extends AppBase
 
             NetworkSettings settings = (NetworkSettings) o;
 
+            DiffResult settingsDiff = (DiffResult) oldSettings;
+
             if (logger.isDebugEnabled()) logger.debug("network settings changed:" + settings);
+
+            if (settingsDiff.getNumberOfDiffs() > 0) {
+                for(var netDiff : settingsDiff.getDiffs()) {
+                //    if(netDiff.getFieldName() == "interfaces") {
+                        logger.info("Diff: " + netDiff);
+               //     }
+                }
+            }
 
             try {
                 networkSettingsEvent();

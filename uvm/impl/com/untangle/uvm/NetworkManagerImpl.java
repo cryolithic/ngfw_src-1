@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Collections;
 import java.util.Comparator;
 import java.net.InetAddress;
+import org.apache.commons.lang3.builder.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -232,6 +233,18 @@ public class NetworkManagerImpl implements NetworkManager
             return;
         }
 
+        // Get a diff of the network settings 
+        DiffResult netDiffs = null;
+
+        try {
+
+            netDiffs = this.networkSettings.diff(newSettings);
+
+            logger.info(netDiffs);
+        } catch (Exception e) {
+            logger.warn("Unable to diff settings", e);
+        }
+
         /**
          * Change current settings
          */
@@ -243,7 +256,7 @@ public class NetworkManagerImpl implements NetworkManager
         UvmContextFactory.context().syncSettings().run(this.settingsFilename);
         
         // notify interested parties that the settings have changed
-        UvmContextFactory.context().hookManager().callCallbacksSynchronous( HookManager.NETWORK_SETTINGS_CHANGE, this.networkSettings );
+        UvmContextFactory.context().hookManager().callCallbacksSynchronous( HookManager.NETWORK_SETTINGS_CHANGE, this.networkSettings, netDiffs );
     }
 
     /**
